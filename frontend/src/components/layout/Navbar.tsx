@@ -20,7 +20,7 @@ const Navbar = () => {
 
   // Links para miembros aprobados
   const enlacesMiembro = [
-    { label: 'Dashboard', ruta: '/dashboard' },
+    { label: 'Inicio', ruta: '/dashboard' },
     { label: 'Directorio', ruta: '/directorio' },
     { label: 'Reuniones', ruta: '/eventos' },
     { label: 'Servicios', ruta: '/servicios' },

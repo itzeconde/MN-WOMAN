@@ -52,7 +52,7 @@ export default function Login() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+    <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
       <div style={{ background: 'white', borderRadius: '16px', padding: '40px', width: '100%', maxWidth: '420px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
 
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
@@ -83,7 +83,7 @@ export default function Login() {
           )}
 
           <button type="submit" disabled={cargando}
-            style={{ width: '100%', background: '#6366f1', color: 'white', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '15px' }}>
+            style={{ width: '100%', background: '#c27d8b', color: 'white', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '15px' }}>
             {cargando ? 'Verificando...' : 'Iniciar sesión'}
           </button>
         </form>

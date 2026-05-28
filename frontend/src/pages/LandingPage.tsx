@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Shield, Users, TrendingUp, Heart, Clock, MapPin, Calendar } from 'lucide-react'
+import BannerSlot from '../components/BannerSlot'
 
 const API_BASE = 'http://127.0.0.1:8000/api'
 
@@ -47,9 +48,9 @@ interface Institucion {
 
 const LandingPage = () => {
   const navigate = useNavigate()
-  const [articles, setArticles] = useState<Article[]>([])
-  const [eventos, setEventos] = useState<Evento[]>([])
-  const [cursos, setCursos] = useState<Curso[]>([])
+  const [articles, setArticles]         = useState<Article[]>([])
+  const [eventos, setEventos]           = useState<Evento[]>([])
+  const [cursos, setCursos]             = useState<Curso[]>([])
   const [instituciones, setInstituciones] = useState<Institucion[]>([])
 
   useEffect(() => {
@@ -59,12 +60,11 @@ const LandingPage = () => {
     fetch(`${API_BASE}/linea911/public/`).then(r => r.json()).then(d => setInstituciones(Array.isArray(d) ? d.slice(0, 4) : [])).catch(() => {})
   }, [])
 
-  const formatFecha = (fecha: string) => {
-    return new Date(fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
-  }
+  const formatFecha = (fecha: string) =>
+    new Date(fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
 
   const nivelLabel: Record<string, string> = {
-    basico: 'Básico', intermedio: 'Intermedio', avanzado: 'Avanzado'
+    basico: 'Básico', intermedio: 'Intermedio', avanzado: 'Avanzado',
   }
 
   return (
@@ -73,10 +73,8 @@ const LandingPage = () => {
       {/* HERO */}
       <section style={{
         background: 'linear-gradient(135deg, #fdf0f2 0%, #fce7f0 100%)',
-        padding: '100px 48px',
-        minHeight: '90vh',
-        display: 'flex',
-        alignItems: 'center',
+        padding: '100px 48px', minHeight: '90vh',
+        display: 'flex', alignItems: 'center',
       }}>
         <div style={{ maxWidth: '650px' }}>
           <h1 style={{ fontSize: '56px', fontWeight: '800', lineHeight: '1.2', color: '#111827' }}>
@@ -110,10 +108,10 @@ const LandingPage = () => {
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
             {[
-              { icon: <Shield size={24} color="#B66878" />, title: 'Liderazgo', desc: 'Potenciamos habilidades directivas y estratégicas para que tomes el control de tu destino empresarial.' },
-              { icon: <Users size={24} color="#B66878" />, title: 'Conexión', desc: 'Creamos puentes reales entre profesionales, mentoras e inversoras de toda la región.' },
+              { icon: <Shield size={24} color="#B66878" />, title: 'Liderazgo',   desc: 'Potenciamos habilidades directivas y estratégicas para que tomes el control de tu destino empresarial.' },
+              { icon: <Users size={24} color="#B66878" />,  title: 'Conexión',    desc: 'Creamos puentes reales entre profesionales, mentoras e inversoras de toda la región.' },
               { icon: <TrendingUp size={24} color="#B66878" />, title: 'Impulso', desc: 'Acceso a formación de vanguardia y recursos diseñados para el impulso personal de las mujeres.' },
-              { icon: <Heart size={24} color="#B66878" />, title: 'Solidaridad', desc: 'Fomentamos una cultura de apoyo mutuo y responsabilidad social entre nuestras miembros.' },
+              { icon: <Heart size={24} color="#B66878" />,  title: 'Solidaridad', desc: 'Fomentamos una cultura de apoyo mutuo y responsabilidad social entre nuestras miembros.' },
             ].map(pilar => (
               <div key={pilar.title} style={{ border: '1px solid #f3e8ea', borderRadius: '12px', padding: '32px 24px', textAlign: 'center' }}>
                 <div style={{ width: '56px', height: '56px', backgroundColor: '#FDF0F2', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
@@ -126,6 +124,9 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      {/* BANNER — entre secciones (después de pilares) */}
+      <BannerSlot posicion="landing_entre_secciones" titulo="Patrocinadores" />
 
       {/* PRÓXIMOS EVENTOS */}
       {eventos.length > 0 && (
@@ -288,7 +289,7 @@ const LandingPage = () => {
                   <div style={{ width: '44px', height: '44px', background: '#B66878', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', fontSize: '20px' }}>🛡️</div>
                   <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', margin: '0 0 8px' }}>{inst.nombre}</h3>
                   {inst.telefono && <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 4px' }}>📞 {inst.telefono}</p>}
-                  {inst.horario && <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 4px' }}>🕐 {inst.horario}</p>}
+                  {inst.horario  && <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 4px' }}>🕐 {inst.horario}</p>}
                   {inst.direccion && <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0' }}>📍 {inst.direccion}</p>}
                 </div>
               ))}
@@ -297,13 +298,15 @@ const LandingPage = () => {
         </section>
       )}
 
+      {/* BANNER — antes del footer */}
+      <BannerSlot posicion="landing_pre_footer" titulo="Presencia" />
 
       {/* COLABORADORES */}
       <section style={{ padding: '48px', backgroundColor: '#fff', borderTop: '1px solid #f3e8ea' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', textAlign: 'center' }}>
           <p style={{ fontSize: '13px', color: '#9ca3af', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '32px', fontWeight: '500' }}>Con el respaldo de</p>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '48px', flexWrap: 'wrap' }}>
-            {['CANACO', 'INMUJERES Tlaxcala', 'DIF Tlaxcala', 'SEDECO', 'INADEM'].map(colab => (
+            {['Revista Momento', 'Las Hijas de la Malinche', 'Festival Tlaxqui', 'Networking'].map(colab => (
               <span key={colab} style={{ fontSize: '16px', fontWeight: '600', color: '#d1d5db', letterSpacing: '0.05em' }}>{colab}</span>
             ))}
           </div>
@@ -311,9 +314,9 @@ const LandingPage = () => {
       </section>
 
       {/* CTA */}
-      <section style={{ backgroundColor: '#B66878', padding: '80px 48px', textAlign: 'center' }}>
+      <section style={{ backgroundColor: 'rgb(225, 157, 171)', padding: '80px 48px', textAlign: 'center' }}>
         <h2 style={{ fontSize: '36px', fontWeight: '700', color: '#fff', marginBottom: '16px' }}>¿Lista para transformar tu negocio?</h2>
-        <p style={{ fontSize: '18px', color: '#fce7f0', marginBottom: '32px' }}>Únete a más de 1,284 mujeres líderes de Tlaxcala.</p>
+        <p style={{ fontSize: '18px', color: '#fce7f0', marginBottom: '32px' }}></p>
         <button onClick={() => navigate('/register')} style={{
           padding: '14px 40px', backgroundColor: '#fff', color: '#B66878',
           border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: '700', cursor: 'pointer',

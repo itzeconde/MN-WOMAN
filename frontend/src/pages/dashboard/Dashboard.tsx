@@ -5,6 +5,9 @@ import { getEventos, confirmarAsistencia } from '../../api/eventos'
 import { getMisOportunidades } from '../../api/oportunidades'
 import { getMisServicios } from '../../api/servicios'
 
+// ✅ FIX #9: Tipo discriminado en lugar de string genérico
+type RespuestaAsistencia = 'si' | 'no' | null
+
 interface Evento {
   id: number
   title: string
@@ -33,6 +36,69 @@ interface Oportunidad {
   vence_el: string
 }
 
+// ✅ FIX #5 y #8: Función centralizada de formato de fechas
+const formatearFecha = (fecha: string): string => {
+  const d = new Date(fecha)
+  if (isNaN(d.getTime())) return fecha // fallback si el string es inválido
+  return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+// ✅ FIX #7: Estilos extraídos como constantes reutilizables
+const styles = {
+  card: {
+    background: 'white',
+    borderRadius: '16px',
+    padding: '24px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    border: '1px solid #f3f4f6',
+  } as React.CSSProperties,
+
+  btnAsistencia: (activo: boolean, colorActivo: string): React.CSSProperties => ({
+    flex: 1,
+    padding: '10px',
+    borderRadius: '8px',
+    border: '2px solid',
+    borderColor: activo ? colorActivo : '#e5e7eb',
+    background: activo ? (colorActivo === '#B66878' ? '#fdf2f4' : '#fef2f2') : 'white',
+    color: activo ? colorActivo : '#374151',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '14px',
+  }),
+
+  btnPrimario: {
+    background: '#B66878',
+    color: 'white',
+    padding: '8px 20px',
+    borderRadius: '8px',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+  } as React.CSSProperties,
+
+  btnTexto: {
+    background: 'none',
+    border: 'none',
+    color: '#B66878',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+  } as React.CSSProperties,
+
+  badgeUrgencia: (urgencia: string): React.CSSProperties => ({
+    fontSize: '11px',
+    padding: '2px 8px',
+    borderRadius: '20px',
+    background:
+      urgencia === 'alta' ? '#fef2f2' :
+      urgencia === 'media' ? '#fffbeb' : '#f0fdf4',
+    color:
+      urgencia === 'alta' ? '#ef4444' :
+      urgencia === 'media' ? '#f59e0b' : '#22c55e',
+  }),
+}
+
 export default function Dashboard() {
   const { usuario } = useAuth()
   const navigate = useNavigate()
@@ -40,8 +106,12 @@ export default function Dashboard() {
   const [proximoEvento, setProximoEvento] = useState<Evento | null>(null)
   const [misServicios, setMisServicios] = useState<Servicio[]>([])
   const [misOportunidades, setMisOportunidades] = useState<Oportunidad[]>([])
-  const [asistencia, setAsistencia] = useState<string | null>(null)
+  // ✅ FIX #9: Tipo fuerte para asistencia
+  const [asistencia, setAsistencia] = useState<RespuestaAsistencia>(null)
   const [cargando, setCargando] = useState(true)
+  // ✅ FIX #6: Estado de error visible para el usuario
+  const [errorCarga, setErrorCarga] = useState<string | null>(null)
+  const [errorAsistencia, setErrorAsistencia] = useState<string | null>(null)
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -51,11 +121,24 @@ export default function Dashboard() {
           getMisServicios(),
           getMisOportunidades(),
         ])
-        if (eventos.length > 0) setProximoEvento(eventos[0])
+
+        // ✅ FIX #3: Filtrar eventos futuros y ordenar por fecha ascendente
+        const hoy = new Date()
+        hoy.setHours(0, 0, 0, 0)
+        const futuros = eventos
+          .filter((e: Evento) => new Date(e.date) >= hoy)
+          .sort(
+            (a: Evento, b: Evento) =>
+              new Date(a.date).getTime() - new Date(b.date).getTime()
+          )
+        if (futuros.length > 0) setProximoEvento(futuros[0])
+
         setMisServicios(servicios)
         setMisOportunidades(oportunidades)
       } catch (err) {
         console.error(err)
+        // ✅ FIX #6: Mostrar error al usuario en lugar de pantalla vacía silenciosa
+        setErrorCarga('No se pudieron cargar los datos. Por favor, intenta de nuevo.')
       } finally {
         setCargando(false)
       }
@@ -63,29 +146,46 @@ export default function Dashboard() {
     cargarDatos()
   }, [])
 
-  const handleAsistencia = async (valor: string) => {
-    if (!proximoEvento) return
-    try {
-      await confirmarAsistencia(proximoEvento.id)
-      setAsistencia(valor)
-    } catch {
-      setAsistencia(valor)
+const handleAsistencia = async (valor: RespuestaAsistencia) => {
+  if (!proximoEvento || !valor) return
+  setErrorAsistencia(null)
+  try {
+    const res = await confirmarAsistencia(proximoEvento.id, valor)
+    setAsistencia(valor)
+
+    // ✅ Si el backend avisa cupo agotado en respuesta exitosa
+    if (res.cupo_agotado) {
+      setErrorAsistencia('El cupo para este evento está agotado.')
+    }
+  } catch (err: any) {
+    // ✅ Manejar el 409 específicamente
+    if (err.response?.status === 409) {
+      setErrorAsistencia('Este evento ya no tiene lugares disponibles.')
+    } else {
+      setErrorAsistencia('No se pudo guardar tu respuesta. Intenta de nuevo.')
     }
   }
-
+}
   if (cargando) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
       <p style={{ color: '#B66878', fontWeight: '600' }}>Cargando...</p>
     </div>
   )
 
-  const cardStyle = {
-    background: 'white',
-    borderRadius: '16px',
-    padding: '24px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-    border: '1px solid #f3f4f6',
-  }
+  // ✅ FIX #6: Pantalla de error en lugar de dashboard vacío
+  if (errorCarga) return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', gap: '12px' }}>
+      <p style={{ color: '#ef4444', fontWeight: '600' }}>{errorCarga}</p>
+      <button onClick={() => window.location.reload()} style={styles.btnPrimario}>
+        Reintentar
+      </button>
+    </div>
+  )
+
+  // ✅ FIX #10: Texto de bienvenida en forma neutra
+  const saludo = usuario?.first_name
+    ? `Hola, ${usuario.first_name}`
+    : 'Bienvenido/a'  // ✅ FIX #4: fallback si no hay nombre
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
@@ -94,10 +194,10 @@ export default function Dashboard() {
         {/* Saludo */}
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '30px', fontWeight: '800', color: '#111827', marginBottom: '4px' }}>
-            Hola, {usuario?.first_name} 
+            {saludo}
           </h1>
           <p style={{ color: '#6b7280', fontSize: '15px' }}>
-            {usuario?.company ? `${usuario.company} • ` : ''}Bienvenida a tu espacio empresarial
+            {usuario?.company ? `${usuario.company} • ` : ''}Bienvenido/a a tu espacio empresarial
           </p>
         </div>
 
@@ -106,9 +206,14 @@ export default function Dashboard() {
           {[
             { label: 'Servicios publicados', valor: misServicios.length, icono: '💼' },
             { label: 'Oportunidades activas', valor: misOportunidades.length, icono: '🚀' },
-            { label: 'Próximo evento', valor: proximoEvento ? proximoEvento.date : 'Sin eventos', icono: '📅' },
+            // ✅ FIX #8: Fecha formateada en la stat card
+            {
+              label: 'Próximo evento',
+              valor: proximoEvento ? formatearFecha(proximoEvento.date) : 'Sin eventos',
+              icono: '📅',
+            },
           ].map((stat) => (
-            <div key={stat.label} style={{ ...cardStyle, borderLeft: '4px solid #B66878' }}>
+            <div key={stat.label} style={{ ...styles.card, borderLeft: '4px solid #B66878' }}>
               <span style={{ fontSize: '24px' }}>{stat.icono}</span>
               <p style={{ fontSize: '28px', fontWeight: '800', color: '#111827', margin: '8px 0 4px' }}>{stat.valor}</p>
               <p style={{ fontSize: '13px', color: '#6b7280' }}>{stat.label}</p>
@@ -119,34 +224,36 @@ export default function Dashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
 
           {/* Próximo evento */}
-          <div style={cardStyle}>
+          <div style={styles.card}>
             <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>📅 Próximo Evento</h2>
             {proximoEvento ? (
               <>
                 <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '10px', color: '#1f2937' }}>{proximoEvento.title}</h3>
-                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}>📆 {proximoEvento.date}</p>
+                {/* ✅ FIX #5: Fechas formateadas */}
+                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}>📆 {formatearFecha(proximoEvento.date)}</p>
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}>🕐 {proximoEvento.start_time} - {proximoEvento.end_time}</p>
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}>📍 {proximoEvento.hotel || proximoEvento.location}</p>
 
                 <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>¿Vas a asistir?</p>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => handleAsistencia('si')}
-                    style={{
-                      flex: 1, padding: '10px', borderRadius: '8px', border: '2px solid',
-                      borderColor: asistencia === 'si' ? '#B66878' : '#e5e7eb',
-                      background: asistencia === 'si' ? '#fdf2f4' : 'white',
-                      color: asistencia === 'si' ? '#B66878' : '#374151',
-                      cursor: 'pointer', fontWeight: '600', fontSize: '14px'
-                    }}>✓ Asistiré</button>
-                  <button onClick={() => handleAsistencia('no')}
-                    style={{
-                      flex: 1, padding: '10px', borderRadius: '8px', border: '2px solid',
-                      borderColor: asistencia === 'no' ? '#ef4444' : '#e5e7eb',
-                      background: asistencia === 'no' ? '#fef2f2' : 'white',
-                      color: asistencia === 'no' ? '#ef4444' : '#374151',
-                      cursor: 'pointer', fontWeight: '600', fontSize: '14px'
-                    }}>✗ No asistiré</button>
+                  {/* ✅ FIX #1 y #2: handleAsistencia tipado y sin actualizar estado en error */}
+                  <button
+                    onClick={() => handleAsistencia('si')}
+                    style={styles.btnAsistencia(asistencia === 'si', '#B66878')}
+                  >
+                    ✓ Asistiré
+                  </button>
+                  <button
+                    onClick={() => handleAsistencia('no')}
+                    style={styles.btnAsistencia(asistencia === 'no', '#ef4444')}
+                  >
+                    ✗ No asistiré
+                  </button>
                 </div>
+                {/* ✅ FIX #1: Mensaje de error de asistencia visible */}
+                {errorAsistencia && (
+                  <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px' }}>{errorAsistencia}</p>
+                )}
               </>
             ) : (
               <p style={{ color: '#6b7280', fontSize: '14px' }}>No hay eventos próximos por ahora.</p>
@@ -154,11 +261,10 @@ export default function Dashboard() {
           </div>
 
           {/* Mis Servicios */}
-          <div style={cardStyle}>
+          <div style={styles.card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827' }}>💼 Mis Servicios</h2>
-              <button onClick={() => navigate('/servicios')}
-                style={{ background: 'none', border: 'none', color: '#B66878', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
+              <button onClick={() => navigate('/servicios')} style={styles.btnTexto}>
                 Ver todos →
               </button>
             </div>
@@ -168,7 +274,7 @@ export default function Dashboard() {
                   <div key={s.id} style={{ padding: '12px', background: '#f9fafb', borderRadius: '10px', borderLeft: '3px solid #EFC3CA' }}>
                     <p style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px', color: '#1f2937' }}>{s.titulo}</p>
                     <p style={{ color: '#6b7280', fontSize: '13px' }}>
-                      {s.precio_personalizado ? 'Precio personalizado' : `$${s.precio} MXN`}
+                      {s.precio_personalizado ? 'Precio personalizado' : `$${s.precio.toLocaleString('es-MX')} MXN`}
                     </p>
                   </div>
                 ))}
@@ -176,8 +282,7 @@ export default function Dashboard() {
             ) : (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '12px' }}>Aún no tienes servicios publicados.</p>
-                <button onClick={() => navigate('/servicios')}
-                  style={{ background: '#B66878', color: 'white', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
+                <button onClick={() => navigate('/servicios')} style={styles.btnPrimario}>
                   Publicar servicio
                 </button>
               </div>
@@ -185,11 +290,10 @@ export default function Dashboard() {
           </div>
 
           {/* Mis Oportunidades */}
-          <div style={{ ...cardStyle, gridColumn: '1 / -1' }}>
+          <div style={{ ...styles.card, gridColumn: '1 / -1' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827' }}>🚀 Mis Oportunidades</h2>
-              <button onClick={() => navigate('/oportunidades')}
-                style={{ background: 'none', border: 'none', color: '#B66878', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
+              <button onClick={() => navigate('/oportunidades')} style={styles.btnTexto}>
                 Ver todas →
               </button>
             </div>
@@ -199,21 +303,17 @@ export default function Dashboard() {
                   <div key={o.id} style={{ padding: '12px', background: '#f9fafb', borderRadius: '10px', borderLeft: '3px solid #EFC3CA' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <p style={{ fontWeight: '600', fontSize: '14px', color: '#1f2937' }}>{o.titulo}</p>
-                      <span style={{
-                        fontSize: '11px', padding: '2px 8px', borderRadius: '20px',
-                        background: o.urgencia === 'alta' ? '#fef2f2' : o.urgencia === 'media' ? '#fffbeb' : '#f0fdf4',
-                        color: o.urgencia === 'alta' ? '#ef4444' : o.urgencia === 'media' ? '#f59e0b' : '#22c55e',
-                      }}>{o.urgencia}</span>
+                      <span style={styles.badgeUrgencia(o.urgencia)}>{o.urgencia}</span>
                     </div>
-                    <p style={{ color: '#6b7280', fontSize: '13px' }}>Vence: {o.vence_el}</p>
+                    {/* ✅ FIX #5: Fecha de vencimiento formateada */}
+                    <p style={{ color: '#6b7280', fontSize: '13px' }}>Vence: {formatearFecha(o.vence_el)}</p>
                   </div>
                 ))}
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '12px' }}>Aún no tienes oportunidades publicadas.</p>
-                <button onClick={() => navigate('/oportunidades')}
-                  style={{ background: '#B66878', color: 'white', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
+                <button onClick={() => navigate('/oportunidades')} style={styles.btnPrimario}>
                   Publicar oportunidad
                 </button>
               </div>

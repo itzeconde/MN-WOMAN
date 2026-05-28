@@ -20,13 +20,15 @@ class EventoSerializer(serializers.ModelSerializer):
     agenda = AgendaItemSerializer(many=True, read_only=True)
     total_asistentes = serializers.SerializerMethodField()
     meta_referidos = serializers.SerializerMethodField()
+    cupo_lleno = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
         fields = (
             'id', 'title', 'description', 'date', 'start_time',
             'end_time', 'location', 'hotel', 'status', 'cover_image',
-            'referral_goal', 'total_asistentes', 'meta_referidos', 'agenda', 'created_at'
+            'referral_goal', 'total_asistentes', 'meta_referidos',
+            'cupo_lleno', 'agenda', 'created_at'
         )
 
     def get_total_asistentes(self, obj):
@@ -34,6 +36,12 @@ class EventoSerializer(serializers.ModelSerializer):
 
     def get_meta_referidos(self, obj):
         return obj.referral_goal
+
+    def get_cupo_lleno(self, obj):
+        if obj.limite_asistentes is None:
+            return False
+        confirmadas = obj.attendances.filter(status='confirmada').count()
+        return confirmadas >= obj.limite_asistentes
 
 
 class AsistenciaSerializer(serializers.ModelSerializer):

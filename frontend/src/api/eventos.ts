@@ -11,8 +11,8 @@ export const getEvento = async (id: number) => {
   return data
 }
 
-export const confirmarAsistencia = async (id: number) => {
-  const { data } = await api.post(`/eventos/${id}/asistencia/`)
+export const confirmarAsistencia = async (id: number, respuesta: 'si' | 'no') => {
+  const { data } = await api.post(`/eventos/${id}/asistencia/`, { asistencia: respuesta })
   return data
 }
 

@@ -25,8 +25,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             'phone', 'company', 'business_sector', 'location', 'years_leading'
         )
 
-    # ── Validaciones de unicidad con mensajes en español ──────────────────────
-
     def validate_email(self, value):
         if User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError('Este correo ya está registrado.')
@@ -53,12 +51,11 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
-        # Notificar al admin por WhatsApp
         try:
             from .whatsapp import notificar_nueva_solicitud
             notificar_nueva_solicitud(user)
         except Exception:
-            pass  # No romper el registro si falla WhatsApp
+            pass
         return user
 
 
@@ -85,12 +82,11 @@ class PerfilSerializer(serializers.ModelSerializer):
             'first_name', 'last_name', 'phone', 'company',
             'business_sector', 'location', 'years_leading',
             'bio', 'profile_picture', 'linkedin', 'instagram',
-            'twitter', 'website'
+            'twitter', 'website',
         )
 
 
 class SolicitudSerializer(serializers.ModelSerializer):
-    """Para que el admin vea y gestione solicitudes"""
     nombre_completo = serializers.SerializerMethodField()
 
     class Meta:

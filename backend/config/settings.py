@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'courses',
     'opportunities',
     'line911',
+    'banners',
     
 ]
 

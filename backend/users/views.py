@@ -3,7 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import User
-from .serializers import UserSerializer, RegisterSerializer, DirectorioSerializer, PerfilSerializer, SolicitudSerializer
+from .serializers import (
+    UserSerializer, RegisterSerializer, DirectorioSerializer,
+    PerfilSerializer, SolicitudSerializer,
+)
 
 
 class EsAdmin(permissions.BasePermission):
@@ -46,13 +49,13 @@ class DirectorioView(generics.ListAPIView):
         ).exclude(role='administrador').order_by('-member_since')
 
         sector = self.request.query_params.get('sector')
-        location = self.request.query_params.get('location')      # ← antes: municipio
+        location = self.request.query_params.get('location')
         es_fundadora = self.request.query_params.get('fundadora')
 
         if sector:
-            queryset = queryset.filter(business_sector__icontains=sector)  # icontains porque ahora es texto libre
+            queryset = queryset.filter(business_sector__icontains=sector)
         if location:
-            queryset = queryset.filter(location__icontains=location)       # icontains porque es texto libre
+            queryset = queryset.filter(location__icontains=location)
         if es_fundadora:
             queryset = queryset.filter(is_founder=True)
 
@@ -65,7 +68,7 @@ class PerfilPublicoView(generics.RetrieveAPIView):
     queryset = User.objects.filter(is_active=True, status='aprobada').exclude(role='administrador')
 
 
-# ── VISTAS ADMIN ──────────────────────────────────────────
+# ── VISTAS ADMIN ───────────────────────────────────────────────────────────────
 
 class AdminSolicitudesView(generics.ListAPIView):
     serializer_class = SolicitudSerializer

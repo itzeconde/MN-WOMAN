@@ -20,6 +20,8 @@ class Event(models.Model):
     status = models.CharField(max_length=20, choices=STATUS, default='proximo')
     cover_image = models.ImageField(upload_to='events/', blank=True, null=True)
     referral_goal = models.PositiveIntegerField(default=100)
+    # ✅ NUEVO: null=True significa sin límite
+    limite_asistentes = models.PositiveIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -30,8 +32,9 @@ class Attendance(models.Model):
 
     STATUS = (
         ('confirmada', 'Confirmada'),
+        ('cancelada', 'Cancelada'),  # ✅ NUEVO: reemplaza el flujo de 'no asistiré'
         ('pendiente', 'Pendiente'),
-        ('ausente', 'Ausente'),
+        ('ausente', 'Ausente'),      # lo asigna el admin después del evento
     )
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='attendances')

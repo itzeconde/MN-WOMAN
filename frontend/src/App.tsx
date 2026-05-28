@@ -22,9 +22,9 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminEventos from './pages/admin/AdminEventos'
 import AdminSolicitudes from './pages/admin/AdminSolicitudes'
 import AdminArticulos from './pages/admin/articulos'
+import AdminBanners from './pages/admin/AdminBanners'
 import Articulos from './pages/articulos/Articulos'
 
-// Solo redirige si está autenticado y aprobado — pendientes/rechazadas ven la landing
 function RutaLanding({ children }: { children: React.ReactNode }) {
   const { usuario, cargando } = useAuth()
   if (cargando) return <div>Cargando...</div>
@@ -33,7 +33,6 @@ function RutaLanding({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-// Rutas que requieren login Y estar aprobada
 function RutaPrivada({ children }: { children: React.ReactNode }) {
   const { estaAutenticado, cargando, usuario } = useAuth()
   if (cargando) return <div>Cargando...</div>
@@ -42,7 +41,6 @@ function RutaPrivada({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-// Rutas públicas — redirige si ya está autenticado
 function RutaPublica({ children }: { children: React.ReactNode }) {
   const { usuario, cargando } = useAuth()
   if (cargando) return <div>Cargando...</div>
@@ -58,7 +56,6 @@ function RutaAdmin({ children }: { children: React.ReactNode }) {
   return usuario?.role === 'administrador' ? <>{children}</> : <Navigate to="/dashboard" />
 }
 
-// Páginas semi-públicas: visibles sin login, pero con contenido limitado
 function RutaSemiPublica({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
@@ -67,7 +64,6 @@ function AppRoutes() {
   return (
     <Routes>
 
-      {/* Landing — redirige si ya está aprobada */}
       <Route path="/" element={
         <RutaLanding>
           <Navbar />
@@ -79,15 +75,14 @@ function AppRoutes() {
       <Route path="/login" element={<RutaPublica><Login /></RutaPublica>} />
       <Route path="/register" element={<RutaPublica><Register /></RutaPublica>} />
 
-      {/* Panel Admin */}
       <Route path="/admin" element={<RutaAdmin><AdminLayout /></RutaAdmin>}>
         <Route index element={<AdminDashboard />} />
         <Route path="eventos" element={<AdminEventos />} />
         <Route path="solicitudes" element={<AdminSolicitudes />} />
         <Route path="articulos" element={<AdminArticulos />} />
+        <Route path="banners" element={<AdminBanners />} />
       </Route>
 
-      {/* Páginas accesibles SIN login (cursos, linea911, artículos) */}
       <Route path="/cursos" element={
         <>
           <Navbar />
@@ -110,7 +105,6 @@ function AppRoutes() {
         </>
       } />
 
-      {/* Rutas privadas con Navbar */}
       <Route path="/*" element={
         <>
           <Navbar />

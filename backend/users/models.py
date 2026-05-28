@@ -28,9 +28,9 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, blank=True)
     company = models.CharField(max_length=100, blank=True)
 
-    # ── Texto libre — ya no choices fijos ────────────────────────────────────
+    # ── Texto libre — ya no choices fijos ─────────────────────────────────────
     business_sector = models.CharField(max_length=100, blank=True)
-    location = models.CharField(max_length=120, blank=True)  # antes: municipality con choices
+    location = models.CharField(max_length=120, blank=True)
 
     years_leading = models.CharField(max_length=10, choices=YEARS_LEADING, blank=True)
     bio = models.TextField(blank=True)
@@ -42,6 +42,8 @@ class User(AbstractUser):
     is_verified = models.BooleanField(default=False)
     is_founder = models.BooleanField(default=False)
     member_since = models.DateTimeField(auto_now_add=True)
+
+    # banner_imagen y en_rotacion eliminados — los banners ahora los gestiona el admin
 
     def __str__(self):
         return f"{self.get_full_name()} - {self.company}"

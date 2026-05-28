@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -29,20 +30,59 @@ class ConfirmarAsistenciaView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, evento_id):
+        valor = request.data.get('asistencia')
+        if valor not in ('si', 'no'):
+            return Response(
+                {'error': 'El campo asistencia debe ser "si" o "no"'},
+                status=400
+            )
+
         try:
             event = Event.objects.get(pk=evento_id)
         except Event.DoesNotExist:
             return Response({'error': 'Evento no encontrado'}, status=404)
 
-        asistencia, creada = Attendance.objects.get_or_create(
-            event=event,
-            user=request.user,
-            defaults={'status': 'confirmada'}
-        )
-        if not creada:
-            asistencia.status = 'confirmada'
-            asistencia.save()
-        return Response({'status': asistencia.status})
+        status_valor = 'confirmada' if valor == 'si' else 'cancelada'
+
+        with transaction.atomic():
+            # ✅ Verificar cupo ANTES de crear/actualizar el registro
+            if status_valor == 'confirmada' and event.limite_asistentes is not None:
+                ya_confirmada = Attendance.objects.filter(
+                    event=event,
+                    user=request.user,
+                    status='confirmada'
+                ).exists()
+
+                if not ya_confirmada:
+                    confirmadas = Attendance.objects.select_for_update().filter(
+                        event=event,
+                        status='confirmada'
+                    ).count()
+
+                    if confirmadas >= event.limite_asistentes:
+                        return Response(
+                            {
+                                'error': 'Este evento ya alcanzó su límite de asistentes',
+                                'cupo_agotado': True,
+                            },
+                            status=409
+                        )
+
+            # Ahora sí crear o actualizar
+            asistencia, creada = Attendance.objects.get_or_create(
+                event=event,
+                user=request.user,
+                defaults={'status': status_valor}
+            )
+
+            if not creada and asistencia.status != status_valor:
+                asistencia.status = status_valor
+                asistencia.save()
+
+        return Response({
+            'status': asistencia.status,
+            'cupo_agotado': False,
+        })
 
 
 class MiAsistenciaView(APIView):
@@ -62,6 +102,8 @@ class MisEventosView(generics.ListAPIView):
 
     def get_queryset(self):
         return Attendance.objects.filter(user=self.request.user)
+
+
 class EventoPublicListView(generics.ListAPIView):
     serializer_class = EventoSerializer
     permission_classes = [permissions.AllowAny]
@@ -101,6 +143,3 @@ class AdminAsistentesView(generics.ListAPIView):
         asistencia.status = request.data['status']
         asistencia.save()
         return Response({'status': asistencia.status})
-    
-        
-    

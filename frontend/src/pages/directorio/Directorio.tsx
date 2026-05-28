@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDirectorio } from '../../api/usuarios'
 
+const API_BASE = 'http://127.0.0.1:8000/api'
+
 interface Usuaria {
   id: number
   nombre_completo: string
@@ -14,6 +16,13 @@ interface Usuaria {
   profile_picture: string
   is_verified: boolean
   is_founder: boolean
+}
+
+interface Banner {
+  id: number
+  titulo: string
+  imagen_url: string | null
+  url_destino: string
 }
 
 const sectores: Record<string, string> = {
@@ -34,6 +43,81 @@ const municipios: Record<string, string> = {
   chiautempan: 'Chiautempan',
   tlaxco: 'Tlaxco',
   zacatelco: 'Zacatelco',
+}
+
+function SidebarBanners() {
+  const [banners, setBanners] = useState<Banner[]>([])
+
+  useEffect(() => {
+    fetch(`${API_BASE}/banners/public/?posicion=directorio`)
+      .then(r => r.json())
+      .then(d => setBanners(Array.isArray(d) ? d : []))
+      .catch(() => {})
+  }, [])
+
+  if (banners.length === 0) return null
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ flex: 1, height: '1px', background: '#f3e8ea' }} />
+        <p style={{ fontSize: '10px', color: '#B66878', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: '600', margin: 0 }}>
+          Destacadas
+        </p>
+        <div style={{ flex: 1, height: '1px', background: '#f3e8ea' }} />
+      </div>
+
+      {banners.map(banner => (
+        <a
+          key={banner.id}
+          href={banner.url_destino}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none', display: 'block' }}
+        >
+          <div
+            style={{
+              borderRadius: '14px', overflow: 'hidden',
+              border: '1px solid #f3e8ea',
+              boxShadow: '0 2px 8px rgba(182,104,120,0.1)',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              background: 'white',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'
+              ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 6px 20px rgba(182,104,120,0.2)'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'
+              ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 8px rgba(182,104,120,0.1)'
+            }}
+          >
+            {banner.imagen_url ? (
+              <img
+                src={banner.imagen_url}
+                alt={banner.titulo}
+                style={{ width: '100%', height: '140px', objectFit: 'cover', display: 'block' }}
+              />
+            ) : (
+              <div style={{
+                height: '140px', background: 'linear-gradient(135deg, #FDF0F2, #f9d0d8)',
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', gap: '8px',
+              }}>
+                <span style={{ fontSize: '24px' }}>📢</span>
+                <span style={{ fontSize: '12px', color: '#B66878', fontWeight: '700', textAlign: 'center', padding: '0 12px' }}>
+                  {banner.titulo}
+                </span>
+              </div>
+            )}
+            <div style={{ padding: '10px 12px' }}>
+              <p style={{ fontSize: '12px', fontWeight: '600', color: '#111827', margin: 0 }}>{banner.titulo}</p>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  )
 }
 
 export default function Directorio() {
@@ -91,59 +175,63 @@ export default function Directorio() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '24px', alignItems: 'start' }}>
 
-          {/* Filtros */}
-          <div style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f3f4f6', height: 'fit-content' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>🔍 Filtros</h2>
+          {/* Sidebar — filtros + banners */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-            {/* Búsqueda */}
-            <input
-              placeholder="Buscar líder o empresa..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '14px', marginBottom: '20px', boxSizing: 'border-box' as const }}
-            />
+            {/* Filtros */}
+            <div style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f3f4f6' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>🔍 Filtros</h2>
 
-            {/* Sector */}
-            <div style={{ marginBottom: '20px' }}>
-              <p style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '10px' }}>Sector de Negocio</p>
-              {Object.entries(sectores).map(([val, label]) => (
-                <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer', fontSize: '14px', color: '#6b7280' }}>
-                  <input type="radio" name="sector" value={val}
-                    checked={filtroSector === val}
-                    onChange={() => setFiltroSector(filtroSector === val ? '' : val)}
-                    style={{ accentColor: '#B66878' }} />
-                  {label}
-                </label>
-              ))}
+              <input
+                placeholder="Buscar líder o empresa..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '14px', marginBottom: '20px', boxSizing: 'border-box' as const }}
+              />
+
+              <div style={{ marginBottom: '20px' }}>
+                <p style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '10px' }}>Sector de Negocio</p>
+                {Object.entries(sectores).map(([val, label]) => (
+                  <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer', fontSize: '14px', color: '#6b7280' }}>
+                    <input type="radio" name="sector" value={val}
+                      checked={filtroSector === val}
+                      onChange={() => setFiltroSector(filtroSector === val ? '' : val)}
+                      style={{ accentColor: '#B66878' }} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <p style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '10px' }}>Municipio</p>
+                {Object.entries(municipios).map(([val, label]) => (
+                  <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer', fontSize: '14px', color: '#6b7280' }}>
+                    <input type="radio" name="municipio" value={val}
+                      checked={filtroMunicipio === val}
+                      onChange={() => setFiltroMunicipio(filtroMunicipio === val ? '' : val)}
+                      style={{ accentColor: '#B66878' }} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>
+                <input type="checkbox" checked={filtroFundadora} onChange={(e) => setFiltroFundadora(e.target.checked)}
+                  style={{ accentColor: '#B66878' }} />
+                Solo Fundadoras
+              </label>
+
+              <button onClick={limpiarFiltros}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', color: '#B66878', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
+                Limpiar filtros
+              </button>
             </div>
 
-            {/* Municipio */}
-            <div style={{ marginBottom: '20px' }}>
-              <p style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '10px' }}>Municipio</p>
-              {Object.entries(municipios).map(([val, label]) => (
-                <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer', fontSize: '14px', color: '#6b7280' }}>
-                  <input type="radio" name="municipio" value={val}
-                    checked={filtroMunicipio === val}
-                    onChange={() => setFiltroMunicipio(filtroMunicipio === val ? '' : val)}
-                    style={{ accentColor: '#B66878' }} />
-                  {label}
-                </label>
-              ))}
-            </div>
+            {/* Banners sidebar */}
+            <SidebarBanners />
 
-            {/* Fundadoras */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>
-              <input type="checkbox" checked={filtroFundadora} onChange={(e) => setFiltroFundadora(e.target.checked)}
-                style={{ accentColor: '#B66878' }} />
-              Solo Fundadoras
-            </label>
-
-            <button onClick={limpiarFiltros}
-              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', color: '#B66878', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
-              Limpiar filtros
-            </button>
           </div>
 
           {/* Grid de usuarias */}
@@ -159,8 +247,7 @@ export default function Directorio() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                 {usuariasFiltradas.map((u) => (
                   <div key={u.id} style={{ background: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f3f4f6' }}>
-                    
-                    {/* Header tarjeta */}
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                       <div style={{
                         width: '48px', height: '48px', borderRadius: '50%',
@@ -187,7 +274,6 @@ export default function Directorio() {
                       )}
                     </div>
 
-                    {/* Info */}
                     <div style={{ display: 'grid', gap: '4px', marginBottom: '14px' }}>
                       {u.business_sector && (
                         <p style={{ fontSize: '13px', color: '#6b7280' }}>🏢 {sectores[u.business_sector] || u.business_sector}</p>
@@ -200,7 +286,6 @@ export default function Directorio() {
                       )}
                     </div>
 
-                    {/* Botones */}
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button onClick={() => navigate(`/directorio/${u.id}`)}
                         style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', color: '#374151', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>
