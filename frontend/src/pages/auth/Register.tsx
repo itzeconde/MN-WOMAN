@@ -173,7 +173,7 @@ export default function Register() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FDF0F2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+    <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
 
       <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', textAlign: 'center', color: '#1f2937' }}>
         Únete a nuestra Red de Liderazgo
@@ -284,7 +284,7 @@ export default function Register() {
                           (/[A-Z]/.test(form.password) ? 1 : 0) +
                           (/[0-9]/.test(form.password) ? 1 : 0) +
                           (/[^a-zA-Z0-9]/.test(form.password) ? 1 : 0)
-                        const color = strength >= 4 ? '#22c55e' : strength >= 3 ? '#84cc16' : strength >= 2 ? '#f59e0b' : '#ef4444'
+                        const color = strength >= 4 ? '#9ae7b6' : strength >= 3 ? '#84cc16' : strength >= 2 ? '#f59e0b' : '#ef4444'
                         return <div key={n} style={{ flex: 1, height: '4px', borderRadius: '2px', background: n <= strength ? color : '#e5e7eb', transition: 'background 0.3s' }} />
                       })}
                     </div>

@@ -22,7 +22,7 @@ class ListaEventosView(generics.ListAPIView):
 
 class DetalleEventoView(generics.RetrieveAPIView):
     serializer_class = EventoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # ← era IsAuthenticated
     queryset = Event.objects.all()
 
 

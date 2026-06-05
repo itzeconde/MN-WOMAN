@@ -17,6 +17,7 @@ interface Evento {
   cover_image: string | null
   total_asistentes: number
   referral_goal: number
+  costo: number | null
 }
 
 interface Asistente {
@@ -42,7 +43,7 @@ const asistenciaConfig = {
 
 const formInicial = {
   title: '', description: '', date: '', start_time: '', end_time: '',
-  location: '', hotel: '', status: 'proximo', referral_goal: '100',
+  location: '', hotel: '', status: 'proximo', referral_goal: '100', costo: '',
 }
 
 export default function AdminEventos() {
@@ -124,6 +125,7 @@ export default function AdminEventos() {
       start_time: evento.start_time.slice(0, 5), end_time: evento.end_time.slice(0, 5),
       location: evento.location, hotel: evento.hotel, status: evento.status,
       referral_goal: String(evento.referral_goal),
+      costo: evento.costo != null ? String(evento.costo) : '',
     })
     setImagen(null)
     setPrevisualizacion(evento.cover_image || '')
@@ -144,7 +146,10 @@ export default function AdminEventos() {
     setGuardando(true); setError('')
     try {
       const formData = new FormData()
-      Object.entries(form).forEach(([k, v]) => formData.append(k, v))
+      Object.entries(form).forEach(([k, v]) => {
+        // Si costo está vacío, enviarlo como vacío (el backend lo interpretará como null/gratuito)
+        formData.append(k, v)
+      })
       if (imagen) formData.append('cover_image', imagen)
       if (eventoEditando) {
         const actualizado = await adminEditarEvento(eventoEditando.id, formData)
@@ -172,7 +177,11 @@ export default function AdminEventos() {
     return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
-  // Normaliza valores que el backend pueda devolver distintos
+  const formatCosto = (costo: number | null) => {
+    if (costo == null || costo === 0) return 'Gratuito'
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(costo)
+  }
+
   const normalizarStatus = (s: string): Asistente['status'] => {
     const map: Record<string, Asistente['status']> = {
       si: 'confirmed', confirmed: 'confirmed', yes: 'confirmed', confirmada: 'confirmed',
@@ -244,6 +253,14 @@ export default function AdminEventos() {
                       <span style={{ background: cfg.bg, color: cfg.color, fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px' }}>
                         {cfg.label}
                       </span>
+                      {/* Badge de costo */}
+                      <span style={{
+                        background: (evento.costo == null || evento.costo === 0) ? '#f0fdf4' : '#fef9ec',
+                        color: (evento.costo == null || evento.costo === 0) ? '#16a34a' : '#92400e',
+                        fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px',
+                      }}>
+                        {formatCosto(evento.costo)}
+                      </span>
                     </div>
                     <p style={{ fontWeight: '700', color: '#111827', fontSize: '15px', margin: '0 0 2px 0' }}>{evento.title}</p>
                     <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
@@ -295,7 +312,6 @@ export default function AdminEventos() {
               <p style={{ color: '#6b7280', textAlign: 'center', padding: '40px 0' }}>Cargando asistentes...</p>
             ) : (
               <>
-                {/* Tarjetas conteo — clicables para filtrar */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '20px' }}>
                   {(['confirmed', 'declined', 'pending'] as const).map(s => {
                     const cfg = asistenciaConfig[s]
@@ -316,7 +332,6 @@ export default function AdminEventos() {
                   })}
                 </div>
 
-                {/* Subtítulo con total */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                   <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
                     {filtro === 'todos'
@@ -331,7 +346,6 @@ export default function AdminEventos() {
                   )}
                 </div>
 
-                {/* Lista */}
                 {asistentesFiltrados.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af', fontSize: '14px' }}>
                     {asistentes.length === 0 ? 'Nadie se ha registrado aún.' : 'Sin resultados para este filtro.'}
@@ -348,7 +362,6 @@ export default function AdminEventos() {
                           background: '#f9fafb', border: '1px solid #f3f4f6',
                           opacity: ocupado ? 0.6 : 1
                         }}>
-                          {/* Avatar con foto o inicial */}
                           <div style={{
                             width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
                             background: 'linear-gradient(135deg, #EFC3CA, #B66878)',
@@ -361,8 +374,6 @@ export default function AdminEventos() {
                               : (a.nombre?.charAt(0)?.toUpperCase() || '?')
                             }
                           </div>
-
-                          {/* Nombre y empresa */}
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ fontWeight: '600', color: '#111827', fontSize: '14px', margin: '0 0 1px 0' }}>
                               {a.nombre || 'Sin nombre'}
@@ -371,8 +382,6 @@ export default function AdminEventos() {
                               {a.empresa || '—'}
                             </p>
                           </div>
-
-                          {/* Selector de status */}
                           <select
                             value={a.status}
                             disabled={ocupado}
@@ -480,7 +489,7 @@ export default function AdminEventos() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={labelStyle}>Estado</label>
                   <select name="status" value={form.status} onChange={handleChange} style={inputStyle}>
@@ -493,6 +502,21 @@ export default function AdminEventos() {
                   <label style={labelStyle}>Meta de asistentes</label>
                   <input type="number" name="referral_goal" value={form.referral_goal} onChange={handleChange}
                     min="1" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>
+                    Costo{' '}
+                    <span style={{ color: '#9ca3af', fontWeight: '400' }}>(MXN)</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="costo"
+                    value={form.costo}
+                    onChange={handleChange}
+                    min="0"
+                    placeholder="0 = Gratuito"
+                    style={inputStyle}
+                  />
                 </div>
               </div>
 

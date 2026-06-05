@@ -12,17 +12,17 @@ interface Banner {
 
 interface Props {
   posicion: string
-  titulo?: string  // Texto del separador, ej: "Presencia" o "Patrocinadores"
+  titulo?: string
 }
 
 const cardHover = {
   onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
     e.currentTarget.style.transform = 'translateY(-4px)'
-    e.currentTarget.style.boxShadow = '0 8px 30px rgba(182,104,120,0.25)'
+    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'
   },
   onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
     e.currentTarget.style.transform = 'translateY(0)'
-    e.currentTarget.style.boxShadow = '0 4px 20px rgba(182,104,120,0.15)'
+    e.currentTarget.style.boxShadow = 'none'
   },
 }
 
@@ -41,22 +41,22 @@ export default function BannerSlot({ posicion, titulo = 'Presencia' }: Props) {
   return (
     <section style={{
       padding: '48px 24px',
-      background: 'linear-gradient(135deg, #fff5f7 0%, #fdf0f2 100%)',
-      borderTop: '2px solid #f3e8ea',
-      borderBottom: '2px solid #f3e8ea',
+      backgroundColor: '#fff',
+      borderTop: '1px solid #f0e6e9',
+      borderBottom: '1px solid #f0e6e9',
     }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
         {/* Separador con título */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' }}>
-          <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #e8b4bc)' }} />
+          <div style={{ flex: 1, height: '1px', background: '#f0e6e9' }} />
           <p style={{
             fontSize: '10px', color: '#B66878', letterSpacing: '0.2em',
             textTransform: 'uppercase', fontWeight: '600', margin: 0,
           }}>
             {titulo}
           </p>
-          <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #e8b4bc)' }} />
+          <div style={{ flex: 1, height: '1px', background: '#f0e6e9' }} />
         </div>
 
         {/* Grid de banners */}
@@ -70,9 +70,8 @@ export default function BannerSlot({ posicion, titulo = 'Presencia' }: Props) {
               style={{
                 borderRadius: '16px',
                 overflow: 'hidden',
-                boxShadow: '0 4px 20px rgba(182,104,120,0.15)',
+                border: '1px solid #f0e6e9',
                 transition: 'transform 0.25s, box-shadow 0.25s',
-                border: '1px solid #f3e8ea',
                 display: 'block',
                 cursor: 'pointer',
                 textDecoration: 'none',
@@ -88,7 +87,7 @@ export default function BannerSlot({ posicion, titulo = 'Presencia' }: Props) {
               ) : (
                 <div style={{
                   height: '240px', width: '200px',
-                  background: 'linear-gradient(135deg, #FDF0F2, #f9d0d8)',
+                  background: '#faf8f9',
                   display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center', gap: '8px',
                 }}>

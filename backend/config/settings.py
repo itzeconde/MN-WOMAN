@@ -111,6 +111,7 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
+    "https://38k2xqlr-5174.usw3.devtunnels.ms", 
 ]
 
 # Modelo de usuario personalizado

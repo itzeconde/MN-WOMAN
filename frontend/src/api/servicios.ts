@@ -14,7 +14,13 @@ export const publicarServicio = async (formData: Record<string, unknown>) => {
   const { data } = await api.post('/servicios/publicar/', formData)
   return data
 }
+
 export const getMisServicios = async () => {
-  const { data } = await api.get("/servicios/mis-servicios/")
+  const { data } = await api.get('/servicios/mis-servicios/')
+  return data
+}
+
+export const getCategoriasServicios = async (): Promise<string[]> => {
+  const { data } = await api.get('/servicios/categorias/')
   return data
 }

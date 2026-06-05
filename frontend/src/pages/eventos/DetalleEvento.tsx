@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getEvento, confirmarAsistencia, getMiAsistencia } from '../../api/eventos'
 
@@ -24,33 +25,42 @@ interface Evento {
   cover_image: string | null
   total_asistentes: number
   referral_goal: number
+  costo: number | null
   agenda: AgendaItem[]
 }
 
 const statusConfig = {
-  proximo: { label: 'Próximo Evento', color: '#6366f1', bg: '#eef2ff' },
-  en_curso: { label: 'En Curso', color: '#16a34a', bg: '#dcfce7' },
-  finalizado: { label: 'Finalizado', color: '#6b7280', bg: '#f3f4f6' },
+  proximo:    { label: 'Próximo Evento', color: '#6366f1', bg: '#eef2ff' },
+  en_curso:   { label: 'En Curso',       color: '#16a34a', bg: '#dcfce7' },
+  finalizado: { label: 'Finalizado',     color: '#6b7280', bg: '#f3f4f6' },
 }
 
 export default function DetalleEvento() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [evento, setEvento] = useState<Evento | null>(null)
+
+  const [evento, setEvento]         = useState<Evento | null>(null)
   const [miAsistencia, setMiAsistencia] = useState<string | null>(null)
-  const [cargando, setCargando] = useState(true)
+  const [cargando, setCargando]     = useState(true)
   const [confirmando, setConfirmando] = useState(false)
-  const [errorCupo, setErrorCupo] = useState(false)
+  const [errorCupo, setErrorCupo]   = useState(false)
+
+  const { estaAutenticado: autenticado } = useAuth()
 
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [ev, asistencia] = await Promise.all([
-          getEvento(Number(id)),
-          getMiAsistencia(Number(id)),
-        ])
-        setEvento(ev)
-        setMiAsistencia(asistencia.status)
+        if (autenticado) {
+          const [ev, asistencia] = await Promise.all([
+            getEvento(Number(id)),
+            getMiAsistencia(Number(id)),
+          ])
+          setEvento(ev)
+          setMiAsistencia(asistencia.status)
+        } else {
+          const ev = await getEvento(Number(id))
+          setEvento(ev)
+        }
       } catch (err) {
         console.error(err)
       } finally {
@@ -64,17 +74,13 @@ export default function DetalleEvento() {
     setConfirmando(true)
     setErrorCupo(false)
     try {
-      // ✅ Se pasa 'si' como segundo argumento
       const res = await confirmarAsistencia(Number(id), 'si')
       setMiAsistencia(res.status)
       if (evento && res.status === 'confirmada') {
         setEvento({ ...evento, total_asistentes: evento.total_asistentes + 1 })
       }
     } catch (err: any) {
-      // Cupo agotado (409)
-      if (err?.response?.data?.cupo_agotado) {
-        setErrorCupo(true)
-      }
+      if (err?.response?.data?.cupo_agotado) setErrorCupo(true)
       console.error(err)
     } finally {
       setConfirmando(false)
@@ -84,7 +90,6 @@ export default function DetalleEvento() {
   const handleCancelar = async () => {
     setConfirmando(true)
     try {
-      // ✅ 'no' para cancelar asistencia
       const res = await confirmarAsistencia(Number(id), 'no')
       setMiAsistencia(res.status)
       if (evento) {
@@ -103,6 +108,11 @@ export default function DetalleEvento() {
   }
 
   const formatHora = (hora: string) => hora.slice(0, 5)
+
+  const formatCosto = (costo: number | null) => {
+    if (costo == null || costo === 0) return 'Gratuito'
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(costo)
+  }
 
   if (cargando) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
@@ -145,13 +155,17 @@ export default function DetalleEvento() {
             {evento.title}
           </h1>
         </div>
-        <button onClick={() => navigate('/eventos')}
+        <button
+          onClick={() => navigate(autenticado ? '/eventos' : '/')}
           style={{
             position: 'absolute', top: '20px', left: '48px',
             background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white',
             padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px',
             backdropFilter: 'blur(4px)'
-          }}>← Volver</button>
+          }}
+        >
+          ← Volver
+        </button>
       </div>
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 20px' }}>
@@ -181,6 +195,12 @@ export default function DetalleEvento() {
                   <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>LUGAR</p>
                   <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
                     📍 {evento.hotel || evento.location}
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>COSTO</p>
+                  <p style={{ fontSize: '14px', fontWeight: '600', color: (evento.costo == null || evento.costo === 0) ? '#16a34a' : '#111827' }}>
+                    🎟️ {formatCosto(evento.costo)}
                   </p>
                 </div>
               </div>
@@ -278,44 +298,64 @@ export default function DetalleEvento() {
                 </p>
               </div>
 
-              {/* Error cupo agotado */}
-              {errorCupo && (
-                <div style={{
-                  background: '#fff5f5', border: '1px solid #fee2e2', borderRadius: '10px',
-                  padding: '10px 14px', marginBottom: '12px',
-                  fontSize: '13px', color: '#ef4444', fontWeight: '600'
-                }}>
-                  😔 Este evento ya no tiene cupo disponible.
-                </div>
-              )}
-
-              {/* Botones según estado */}
-              {evento.status !== 'finalizado' && (
-                miAsistencia === 'confirmada' ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{
-                      background: '#dcfce7', borderRadius: '10px', padding: '12px',
-                      textAlign: 'center', color: '#16a34a', fontWeight: '600', fontSize: '14px'
-                    }}>
-                      ✓ Asistencia confirmada
-                    </div>
-                    <button onClick={handleCancelar} disabled={confirmando} style={{
-                      width: '100%', padding: '10px', borderRadius: '10px',
-                      background: 'white', color: '#6b7280', border: '1px solid #e5e7eb',
-                      cursor: 'pointer', fontWeight: '600', fontSize: '13px'
-                    }}>
-                      {confirmando ? 'Cancelando...' : 'Cancelar asistencia'}
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={handleConfirmar} disabled={confirmando} style={{
+              {/* Sin sesión: invitar a registrarse */}
+              {!autenticado ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <p style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', margin: '0 0 4px' }}>
+                    Inicia sesión para confirmar tu asistencia
+                  </p>
+                  <button onClick={() => navigate('/login', { state: { redirect: `/eventos/${id}` } })} style={{
                     width: '100%', padding: '12px', borderRadius: '10px',
                     background: '#B66878', color: 'white', border: 'none',
                     cursor: 'pointer', fontWeight: '700', fontSize: '14px'
                   }}>
-                    {confirmando ? 'Confirmando...' : '✓ Confirmar Asistencia'}
+                    Iniciar sesión
                   </button>
-                )
+                  <button onClick={() => navigate('/register')} style={{
+                    width: '100%', padding: '10px', borderRadius: '10px',
+                    background: 'white', color: '#B66878', border: '1.5px solid #B66878',
+                    cursor: 'pointer', fontWeight: '600', fontSize: '13px'
+                  }}>
+                    Solicitar ingreso
+                  </button>
+                </div>
+              ) : evento.status !== 'finalizado' && (
+                <>
+                  {errorCupo && (
+                    <div style={{
+                      background: '#fff5f5', border: '1px solid #fee2e2', borderRadius: '10px',
+                      padding: '10px 14px', marginBottom: '12px',
+                      fontSize: '13px', color: '#ef4444', fontWeight: '600'
+                    }}>
+                      😔 Este evento ya no tiene cupo disponible.
+                    </div>
+                  )}
+                  {miAsistencia === 'confirmada' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{
+                        background: '#dcfce7', borderRadius: '10px', padding: '12px',
+                        textAlign: 'center', color: '#16a34a', fontWeight: '600', fontSize: '14px'
+                      }}>
+                        ✓ Asistencia confirmada
+                      </div>
+                      <button onClick={handleCancelar} disabled={confirmando} style={{
+                        width: '100%', padding: '10px', borderRadius: '10px',
+                        background: 'white', color: '#6b7280', border: '1px solid #e5e7eb',
+                        cursor: 'pointer', fontWeight: '600', fontSize: '13px'
+                      }}>
+                        {confirmando ? 'Cancelando...' : 'Cancelar asistencia'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={handleConfirmar} disabled={confirmando} style={{
+                      width: '100%', padding: '12px', borderRadius: '10px',
+                      background: '#B66878', color: 'white', border: 'none',
+                      cursor: 'pointer', fontWeight: '700', fontSize: '14px'
+                    }}>
+                      {confirmando ? 'Confirmando...' : '✓ Confirmar Asistencia'}
+                    </button>
+                  )}
+                </>
               )}
             </div>
 
@@ -328,8 +368,11 @@ export default function DetalleEvento() {
                 📅 {formatFecha(evento.date).toUpperCase()}
               </p>
               <p style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>{evento.hotel || evento.location}</p>
-              <p style={{ fontSize: '13px', opacity: 0.8 }}>
+              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '8px' }}>
                 {formatHora(evento.start_time)} - {formatHora(evento.end_time)}
+              </p>
+              <p style={{ fontSize: '13px', fontWeight: '700', opacity: 0.9, margin: 0 }}>
+                🎟️ {formatCosto(evento.costo)}
               </p>
             </div>
 

@@ -17,7 +17,7 @@ class Servicio(models.Model):
     proveedora = models.ForeignKey(User, on_delete=models.CASCADE, related_name='servicios')
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField()
-    categoria = models.CharField(max_length=20, choices=CATEGORIAS)
+    categoria = models.CharField(max_length=80)
     precio = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     precio_personalizado = models.BooleanField(default=False)
     activo = models.BooleanField(default=True)

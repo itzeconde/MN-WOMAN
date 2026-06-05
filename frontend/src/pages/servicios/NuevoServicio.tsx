@@ -2,16 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { publicarServicio } from '../../api/servicios'
 
-const CATEGORIAS = [
-  { value: 'consultoria', label: 'Consultoría' },
-  { value: 'workshop', label: 'Workshop' },
-  { value: 'estrategia', label: 'Estrategia' },
-  { value: 'branding', label: 'Branding' },
-  { value: 'tecnologia', label: 'Tecnología' },
-  { value: 'marketing', label: 'Marketing' },
-  { value: 'educacion', label: 'Educación' },
-]
-
 export default function NuevoServicio() {
   const navigate = useNavigate()
   const [cargando, setCargando] = useState(false)
@@ -134,17 +124,17 @@ export default function NuevoServicio() {
 
               <div>
                 <label style={labelStyle}>Categoría *</label>
-                <select
+                <input
                   name="categoria"
                   value={form.categoria}
                   onChange={handleChange}
+                  placeholder="Ej: Consultoría, Branding, Tecnología, Marketing..."
                   style={inputStyle}
-                >
-                  <option value="">Selecciona una categoría</option>
-                  {CATEGORIAS.map((cat) => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                  ))}
-                </select>
+                  maxLength={80}
+                />
+                <p style={{ color: '#9ca3af', fontSize: '11px', marginTop: '4px' }}>
+                  Escríbela con tus propias palabras
+                </p>
               </div>
 
               <div>

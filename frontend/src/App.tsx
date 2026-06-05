@@ -72,8 +72,8 @@ function AppRoutes() {
         </RutaLanding>
       } />
 
-      <Route path="/login" element={<RutaPublica><Login /></RutaPublica>} />
-      <Route path="/register" element={<RutaPublica><Register /></RutaPublica>} />
+      <Route path="/login" element={<RutaPublica><Navbar /><Login /></RutaPublica>} />
+      <Route path="/register" element={<RutaPublica><Navbar /><Register /></RutaPublica>} />
 
       <Route path="/admin" element={<RutaAdmin><AdminLayout /></RutaAdmin>}>
         <Route index element={<AdminDashboard />} />
@@ -83,26 +83,18 @@ function AppRoutes() {
         <Route path="banners" element={<AdminBanners />} />
       </Route>
 
+      {/* Rutas semi-públicas: visibles sin login */}
       <Route path="/cursos" element={
-        <>
-          <Navbar />
-          <RutaSemiPublica><Cursos /></RutaSemiPublica>
-          <Footer />
-        </>
+        <><Navbar /><RutaSemiPublica><Cursos /></RutaSemiPublica><Footer /></>
       } />
       <Route path="/linea911" element={
-        <>
-          <Navbar />
-          <RutaSemiPublica><Linea911 /></RutaSemiPublica>
-          <Footer />
-        </>
+        <><Navbar /><RutaSemiPublica><Linea911 /></RutaSemiPublica><Footer /></>
       } />
       <Route path="/articulos" element={
-        <>
-          <Navbar />
-          <RutaSemiPublica><Articulos /></RutaSemiPublica>
-          <Footer />
-        </>
+        <><Navbar /><RutaSemiPublica><Articulos /></RutaSemiPublica><Footer /></>
+      } />
+      <Route path="/eventos/:id" element={
+        <><Navbar /><RutaSemiPublica><DetalleEvento /></RutaSemiPublica><Footer /></>
       } />
 
       <Route path="/*" element={
@@ -114,7 +106,6 @@ function AppRoutes() {
             <Route path="/directorio/:id" element={<RutaPrivada><PerfilPublico /></RutaPrivada>} />
             <Route path="/cursos/:id" element={<RutaPrivada><DetalleCurso /></RutaPrivada>} />
             <Route path="/eventos" element={<RutaPrivada><Eventos /></RutaPrivada>} />
-            <Route path="/eventos/:id" element={<RutaPrivada><DetalleEvento /></RutaPrivada>} />
             <Route path="/oportunidades" element={<RutaPrivada><Oportunidades /></RutaPrivada>} />
             <Route path="/servicios" element={<RutaPrivada><Servicios /></RutaPrivada>} />
             <Route path="/servicios/nuevo" element={<RutaPrivada><NuevoServicio /></RutaPrivada>} />
