@@ -59,7 +59,7 @@ const situaciones = [
   },
   {
     icono: 'ti-alert-triangle',
-    titulo: 'Estoy en riesgo ahora',
+    titulo: 'Pendiente',
     descripcion: 'Sientes que estás en peligro o que algo puede escalar.',
     instituciones: ['Refugio Temporal La Esperanza', 'Fiscalía General del Estado (FGE)'],
     bg: '#fff7ed', border: '#fdba74', icoBg: '#ffedd5', icoColor: '#c2410c', actBorder: '#c2410c',

@@ -1,30 +1,28 @@
 from rest_framework import serializers
-from .models import Course, Enrollment
+from .models import Curso
 
 
-class CursoSerializer(serializers.ModelSerializer):
-    nombre_instructora = serializers.SerializerMethodField()
-    total_inscritas = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Course
-        fields = (
-            'id', 'title', 'description', 'instructor', 'nombre_instructora',
-            'category', 'level', 'duration_hours', 'thumbnail',
-            'is_active', 'total_inscritas', 'created_at'
-        )
-
-    def get_nombre_instructora(self, obj):
-        return obj.instructor.get_full_name() if obj.instructor else None
-
-    def get_total_inscritas(self, obj):
-        return obj.enrollments.count()
-
-
-class InscripcionSerializer(serializers.ModelSerializer):
-    curso = CursoSerializer(read_only=True)
+class CursoPublicSerializer(serializers.ModelSerializer):
+    """Serializer de solo lectura para usuarios normales."""
+    categoria_display = serializers.CharField(source='get_categoria_display', read_only=True)
+    nivel_display = serializers.CharField(source='get_nivel_display', read_only=True)
 
     class Meta:
-        model = Enrollment
-        fields = ('id', 'curso', 'status', 'enrolled_at', 'completed_at')
-        read_only_fields = ('enrolled_at',)
+        model = Curso
+        fields = [
+            'id', 'titulo', 'descripcion', 'imagen',
+            'categoria', 'categoria_display',
+            'nivel', 'nivel_display',
+            'duracion_horas', 'link_externo', 'instructor',
+            'fecha_creacion',
+        ]
+
+
+class CursoAdminSerializer(serializers.ModelSerializer):
+    """Serializer completo para administradores (CRUD)."""
+    categoria_display = serializers.CharField(source='get_categoria_display', read_only=True)
+    nivel_display = serializers.CharField(source='get_nivel_display', read_only=True)
+
+    class Meta:
+        model = Curso
+        fields = '__all__'

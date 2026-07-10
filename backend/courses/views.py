@@ -1,47 +1,43 @@
-from rest_framework import generics, permissions
-from .models import Course, Enrollment
-from .serializers import CursoSerializer, InscripcionSerializer
+from rest_framework import viewsets, permissions, filters
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from django.core.exceptions import ValidationError
+from .models import Curso
+from .serializers import CursoPublicSerializer, CursoAdminSerializer
 
 
-class ListaCursosView(generics.ListAPIView):
-    serializer_class = CursoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class EsAdmin(permissions.BasePermission):
+    """Permiso que solo permite acceso a usuarios con role='administrador'."""
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return getattr(request.user, 'role', None) == 'administrador'
+
+
+class CursoPublicViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    GET /api/cursos/       → lista paginada de cursos activos
+    GET /api/cursos/<id>/  → detalle de un curso
+    """
+    serializer_class = CursoPublicSerializer
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['titulo', 'descripcion', 'instructor']
+    ordering_fields = ['fecha_creacion', 'duracion_horas']
 
     def get_queryset(self):
-        queryset = Course.objects.filter(is_active=True)
-
+        qs = Curso.objects.filter(activo=True)
         categoria = self.request.query_params.get('categoria')
         nivel = self.request.query_params.get('nivel')
-
         if categoria:
-            queryset = queryset.filter(category=categoria)
+            qs = qs.filter(categoria=categoria)
         if nivel:
-            queryset = queryset.filter(level=nivel)
-
-        return queryset
-
-
-class DetalleCursoView(generics.RetrieveAPIView):
-    serializer_class = CursoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = Course.objects.filter(is_active=True)
+            qs = qs.filter(nivel=nivel)
+        return qs
 
 
-class InscribirseView(generics.CreateAPIView):
-    serializer_class = InscripcionSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-class MisCursosView(generics.ListAPIView):
-    serializer_class = InscripcionSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return Enrollment.objects.filter(user=self.request.user)
-class CursoPublicListView(generics.ListAPIView):
-    serializer_class = CursoSerializer
-    permission_classes = [permissions.AllowAny]
-    queryset = Course.objects.filter(is_active=True)
+class CursoAdminViewSet(viewsets.ModelViewSet):
+    """CRUD completo solo para administradores."""
+    queryset = Curso.objects.all().order_by('-fecha_creacion')
+    serializer_class = CursoAdminSerializer
+    permission_classes = [EsAdmin]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]

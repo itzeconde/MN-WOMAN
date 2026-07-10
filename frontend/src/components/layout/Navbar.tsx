@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import logo from '../../assets/logo.jpeg'
+import logo from '../../assets/logoMN.jpeg'
 
 const Navbar = () => {
   const { usuario, estaAutenticado, logout } = useAuth()
@@ -47,12 +47,14 @@ const Navbar = () => {
     { label: 'Cursos', ruta: '/cursos' },
     { label: 'Línea 911', ruta: '/linea911' },
     { label: 'Temas de Interés', ruta: '/articulos' },
+    { label: 'Sobre Nosotros', ruta: '/sobre-nosotros' },
   ]
 
   const enlacesPublicos = [
     { label: 'Cursos', ruta: '/cursos' },
     { label: 'Línea 911', ruta: '/linea911' },
     { label: 'Temas de Interés', ruta: '/articulos' },
+    { label: 'Sobre Nosotros', ruta: '/sobre-nosotros' },
   ]
 
   const enlaces = estaAutenticado ? enlacesMiembro : enlacesPublicos
@@ -151,7 +153,7 @@ const Navbar = () => {
           padding: 12px 16px;
           text-decoration: none;
           color: #374151;
-          font-size: 15px;
+          font-size: 17px;
           font-weight: 500;
           border-radius: 10px;
           transition: background 0.15s;
@@ -242,7 +244,7 @@ const Navbar = () => {
       <nav className="navbar">
         {/* Logo */}
         <Link to="/" onClick={() => setMenuMovilAbierto(false)}>
-          <img src={logo} alt="MN WOMAN" style={{ height: '55px', cursor: 'pointer' }} />
+          <img src={logo} alt="MN WOMAN" style={{ height: '80px', cursor: 'pointer' }} />
         </Link>
 
         {/* Links desktop */}
@@ -252,7 +254,7 @@ const Navbar = () => {
               <Link to={item.ruta} style={{
                 textDecoration: 'none',
                 color: '#374151',
-                fontSize: '14px',
+                fontSize: '16px',
                 fontWeight: '500',
               }}>{item.label}</Link>
             </li>
@@ -392,7 +394,7 @@ const menuItemStyle: React.CSSProperties = {
   border: 'none',
   textAlign: 'left',
   cursor: 'pointer',
-  fontSize: '14px',
+  fontSize: '15px',
   color: '#374151',
   borderRadius: '8px',
 }

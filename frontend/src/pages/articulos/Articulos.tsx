@@ -127,7 +127,6 @@ export default function Articulos() {
           </div>
         ) : articles.length === 0 ? (
           <div style={{ textAlign: "center", padding: "80px", background: "white", borderRadius: "16px", border: `1px solid ${COLORS.light}` }}>
-            <p style={{ fontSize: "40px", margin: "0 0 12px" }}>📭</p>
             <p style={{ color: "#6b7280", fontSize: "15px" }}>No hay artículos en esta categoría aún.</p>
           </div>
         ) : (

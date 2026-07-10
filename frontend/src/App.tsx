@@ -20,10 +20,12 @@ import Perfil from './pages/perfil/Perfil'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminEventos from './pages/admin/AdminEventos'
+import AdminCursos from './pages/admin/AdminCursos'
 import AdminSolicitudes from './pages/admin/AdminSolicitudes'
 import AdminArticulos from './pages/admin/articulos'
 import AdminBanners from './pages/admin/AdminBanners'
 import Articulos from './pages/articulos/Articulos'
+import Sobrenosotros from './pages/Sobrenosotros'
 
 function RutaLanding({ children }: { children: React.ReactNode }) {
   const { usuario, cargando } = useAuth()
@@ -78,6 +80,7 @@ function AppRoutes() {
       <Route path="/admin" element={<RutaAdmin><AdminLayout /></RutaAdmin>}>
         <Route index element={<AdminDashboard />} />
         <Route path="eventos" element={<AdminEventos />} />
+        <Route path="cursos" element={<AdminCursos />} />
         <Route path="solicitudes" element={<AdminSolicitudes />} />
         <Route path="articulos" element={<AdminArticulos />} />
         <Route path="banners" element={<AdminBanners />} />
@@ -93,6 +96,12 @@ function AppRoutes() {
       <Route path="/articulos" element={
         <><Navbar /><RutaSemiPublica><Articulos /></RutaSemiPublica><Footer /></>
       } />
+      
+      <Route path="/sobre-nosotros" element={
+        <><Navbar /><RutaSemiPublica><Sobrenosotros /></RutaSemiPublica><Footer /></>
+      } />
+
+
       <Route path="/eventos/:id" element={
         <><Navbar /><RutaSemiPublica><DetalleEvento /></RutaSemiPublica><Footer /></>
       } />
@@ -110,6 +119,7 @@ function AppRoutes() {
             <Route path="/servicios" element={<RutaPrivada><Servicios /></RutaPrivada>} />
             <Route path="/servicios/nuevo" element={<RutaPrivada><NuevoServicio /></RutaPrivada>} />
             <Route path="/perfil" element={<RutaPrivada><Perfil /></RutaPrivada>} />
+
           </Routes>
           <Footer />
         </>

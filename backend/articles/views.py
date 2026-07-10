@@ -41,4 +41,10 @@ class ArticleAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
 class ArticlePublicListView(generics.ListAPIView):
     serializer_class = ArticleSerializer
     permission_classes = [permissions.AllowAny]
-    queryset = Article.objects.filter(is_active=True)
+    
+    def get_queryset(self):                              # ← cambio aquí
+        qs = Article.objects.filter(is_active=True)
+        category = self.request.query_params.get('category')
+        if category:
+            qs = qs.filter(category=category)
+        return qs

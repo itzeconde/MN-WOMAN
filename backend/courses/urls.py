@@ -1,10 +1,16 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import CursoPublicViewSet, CursoAdminViewSet
+
+router_public = DefaultRouter()
+router_public.register(r'cursos', CursoPublicViewSet, basename='cursos-public')
+
+router_admin = DefaultRouter()
+router_admin.register(r'cursos', CursoAdminViewSet, basename='cursos-admin')
 
 urlpatterns = [
-    path('', views.ListaCursosView.as_view(), name='lista_cursos'),
-    path('<int:pk>/', views.DetalleCursoView.as_view(), name='detalle_curso'),
-    path('<int:pk>/inscribirse/', views.InscribirseView.as_view(), name='inscribirse'),
-    path('mis-cursos/', views.MisCursosView.as_view(), name='mis_cursos'),
-    path('public/', views.CursoPublicListView.as_view()),
+    # Público: GET /api/cursos/
+    path('api/', include(router_public.urls)),
+    # Admin:   CRUD /api/admin/cursos/
+    path('api/admin/', include(router_admin.urls)),
 ]
