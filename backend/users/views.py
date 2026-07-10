@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import User
 from .serializers import (
@@ -14,14 +15,35 @@ class EsAdmin(permissions.BasePermission):
         return request.user.is_authenticated and request.user.role == 'administrador'
 
 
+# ── Throttles dedicados para endpoints públicos sensibles ──────────────────
+# Requiere agregar en settings.py:
+#
+# REST_FRAMEWORK = {
+#     ...
+#     'DEFAULT_THROTTLE_RATES': {
+#         'register': '5/hour',
+#         'login_status': '10/min',
+#     }
+# }
+
+class RegisterThrottle(AnonRateThrottle):
+    scope = 'register'
+
+
+class LoginStatusThrottle(AnonRateThrottle):
+    scope = 'login_status'
+
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [RegisterThrottle]
 
 
 class LoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [LoginStatusThrottle]
 
 
 class PerfilView(generics.RetrieveUpdateAPIView):
@@ -137,20 +159,32 @@ class AdminToggleUsuarioView(APIView):
 
 
 class ConsultarStatusView(APIView):
+    """
+    Verifica el status de una solicitud SIN depender de authenticate(),
+    porque authenticate() de Django siempre regresa None para usuarios
+    con is_active=False (pendientes y rechazadas) sin importar si la
+    contraseña es correcta. Aquí se valida la contraseña directamente
+    con check_password(), que sí funciona independientemente de is_active.
+    """
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [LoginStatusThrottle]
 
     def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
+        username = request.data.get('username', '')
+        password = request.data.get('password', '')
+
+        if not username or not password:
+            return Response({'error': 'Credenciales incorrectas'}, status=401)
+
         try:
-            user = User.objects.get(username=username)
-            from django.contrib.auth import authenticate
-            auth = authenticate(username=username, password=password)
-            if auth is None and user.status != 'rechazada':
-                return Response({'error': 'Credenciales incorrectas'}, status=401)
-            return Response({
-                'status': user.status,
-                'rechazo_motivo': user.rechazo_motivo,
-            })
+            user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
             return Response({'error': 'Credenciales incorrectas'}, status=401)
+
+        if not user.check_password(password):
+            return Response({'error': 'Credenciales incorrectas'}, status=401)
+
+        return Response({
+            'status': user.status,
+            'rechazo_motivo': user.rechazo_motivo,
+        })

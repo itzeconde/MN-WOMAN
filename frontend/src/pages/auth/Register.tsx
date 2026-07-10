@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { register } from '../../api/auth'
 
-const API_BASE = "http://127.0.0.1:8000/api";
-
 export default function Register() {
   const [paso, setPaso] = useState(1)
   const [cargando, setCargando] = useState(false)
@@ -14,7 +12,6 @@ export default function Register() {
     last_name: '',
     email: '',
     phone: '',
-    username: '',
     password: '',
     company: '',
     business_sector: '',
@@ -22,16 +19,19 @@ export default function Register() {
     years_leading: '',
   })
 
-  // ── Auto-sugerir username cuando cambia nombre o apellido ──────────────────
+  // ── Preview del username (solo visual) ──────────────────────────────────
+  // El backend genera el username real a partir de first_name/last_name;
+  // esto es únicamente para que la usuaria vea cómo va a quedar antes de
+  // confirmar. No se envía como dato editable.
+  const [usernamePreview, setUsernamePreview] = useState('')
+
   useEffect(() => {
-    if (form.first_name || form.last_name) {
-      const nombre = form.first_name.trim().replace(/\s+/g, '')
-      const apellido = form.last_name.trim().replace(/\s+/g, '')
-      const sugerido = `MNW_${nombre}${apellido}`
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita tildes
-        .replace(/[^a-zA-Z0-9_]/g, '')
-      setForm(prev => ({ ...prev, username: sugerido }))
-    }
+    const nombre = form.first_name.trim().replace(/\s+/g, '')
+    const apellido = form.last_name.trim().replace(/\s+/g, '')
+    const sugerido = `MNW_${nombre}${apellido}`
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita tildes
+      .replace(/[^a-zA-Z0-9_]/g, '')
+    setUsernamePreview(sugerido || 'MNW_...')
   }, [form.first_name, form.last_name])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -55,11 +55,6 @@ export default function Register() {
       }
       if (form.phone && !/^\d{10}$/.test(form.phone.replace(/\s|-/g, ''))) {
         e.phone = 'El teléfono debe tener 10 dígitos'
-      }
-      if (!form.username.trim()) {
-        e.username = 'El usuario es obligatorio'
-      } else if (!/^[a-zA-Z0-9_]{4,30}$/.test(form.username)) {
-        e.username = 'Solo letras, números y guion bajo (4–30 caracteres)'
       }
       if (!form.password) {
         e.password = 'La contraseña es obligatoria'
@@ -107,7 +102,6 @@ export default function Register() {
         const campoLabel: Record<string, string> = {
           email: 'Correo',
           phone: 'Teléfono',
-          username: 'Usuario',
           password: 'Contraseña',
           first_name: 'Nombre',
           last_name: 'Apellido',
@@ -128,7 +122,7 @@ export default function Register() {
         if (Object.keys(mapped).length > 0) {
           setErrors(mapped)
           // Si el error es del paso 1, regresar al paso 1 automáticamente
-          const camposPaso1 = ['first_name', 'last_name', 'email', 'phone', 'username', 'password']
+          const camposPaso1 = ['first_name', 'last_name', 'email', 'phone', 'password']
           if (Object.keys(mapped).some(k => camposPaso1.includes(k))) {
             setPaso(1)
           } else {
@@ -247,27 +241,31 @@ export default function Register() {
                 {errorText('phone')}
               </div>
 
-              {/* Usuario auto-sugerido editable */}
+              {/* Usuario — solo lectura, generado por el backend */}
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={labelStyle}>
-                  Usuario *
+                  Tu usuario será
                   <span style={{ fontWeight: '400', color: '#9ca3af', marginLeft: '6px', fontSize: '12px' }}>
-                    (sugerido automáticamente, puedes cambiarlo)
+                    (se genera automáticamente a partir de tu nombre)
                   </span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
-                    name="username"
-                    placeholder="MNW_ValentinaSanchez"
-                    onChange={handleChange}
-                    value={form.username}
-                    style={{ ...inputStyle('username'), paddingLeft: '36px' }}
-                    maxLength={30}
+                    readOnly
+                    value={usernamePreview}
+                    style={{
+                      ...inputStyle('username_preview'),
+                      paddingLeft: '36px',
+                      background: '#f9fafb',
+                      color: '#6b7280',
+                      cursor: 'not-allowed',
+                    }}
                   />
                   <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#B66878', fontSize: '14px', pointerEvents: 'none', marginTop: '2px' }}>@</span>
                 </div>
-                {errorText('username')}
-                <p style={{ color: '#9ca3af', fontSize: '11px', marginTop: '4px' }}>Solo letras, números y _ · 4 a 30 caracteres</p>
+                <p style={{ color: '#9ca3af', fontSize: '11px', marginTop: '4px' }}>
+                  Si ya existe, se le agregará un número automáticamente
+                </p>
               </div>
 
               <div style={{ gridColumn: '1 / -1' }}>
@@ -386,7 +384,7 @@ export default function Register() {
             <div style={{ background: '#FDF0F2', borderRadius: '12px', padding: '20px', display: 'grid', gap: '10px', fontSize: '14px' }}>
               {[
                 ['Nombre', `${form.first_name} ${form.last_name}`],
-                ['Usuario', `@${form.username}`],
+                ['Usuario', `@${usernamePreview}`],
                 ['Email', form.email],
                 ['Teléfono', form.phone || 'No proporcionado'],
                 ['Empresa', form.company || 'No proporcionada'],

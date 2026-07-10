@@ -12,7 +12,16 @@ export const register = async (formData: Record<string, string>) => {
   return data
 }
 
-export const logout = () => {
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('refresh_token')
+export const logout = async () => {
+  const refresh = localStorage.getItem('refresh_token')
+  try {
+    if (refresh) {
+      await api.post('/users/logout/', { refresh })
+    }
+  } catch {
+    // Si el backend no responde o el token ya expiró, igual limpiamos localmente.
+  } finally {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+  }
 }

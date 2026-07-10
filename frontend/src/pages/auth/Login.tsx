@@ -4,6 +4,8 @@ import { login } from '../../api/auth'
 import { useAuth } from '../../context/AuthContext'
 import { consultarStatus } from '../../api/usuarios'
 
+const PREFIJO_USUARIO = 'MNW_'
+
 export default function Login() {
   const navigate = useNavigate()
   const { login: doLogin } = useAuth()
@@ -22,8 +24,12 @@ export default function Login() {
     if (!form.password) return setError('La contraseña es obligatoria')
     setCargando(true)
     setError('')
+
+    // El usuario solo escribe la parte después de MNW_, se arma el username completo aquí
+    const usernameCompleto = `${PREFIJO_USUARIO}${form.username.trim()}`
+
     try {
-      const statusData = await consultarStatus(form.username, form.password)
+      const statusData = await consultarStatus(usernameCompleto, form.password)
 
       if (statusData.status === 'pendiente') {
         setError('Tu solicitud está en revisión. Te contactaremos cuando sea aprobada.')
@@ -37,7 +43,7 @@ export default function Login() {
         return
       }
 
-      const data = await login(form.username, form.password)
+      const data = await login(usernameCompleto, form.password)
       const perfil = await doLogin(data.access, data.refresh)
       if (perfil.role === 'administrador') {
         navigate('/admin')
@@ -64,8 +70,26 @@ export default function Login() {
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px' }}>
             <label style={{ fontSize: '14px', fontWeight: '500' }}>Usuario</label>
-            <input name="username" placeholder="Ej. valentina_s" onChange={handleChange} value={form.username}
-              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', marginTop: '4px', fontSize: '14px', boxSizing: 'border-box' as const }} />
+            <div style={{ display: 'flex', alignItems: 'stretch', marginTop: '4px' }}>
+              <span style={{
+                display: 'flex', alignItems: 'center', padding: '0 10px',
+                border: '1px solid #e5e7eb', borderRight: 'none',
+                borderRadius: '8px 0 0 8px', background: '#f9fafb',
+                color: '#B66878', fontWeight: '600', fontSize: '14px',
+              }}>
+                {PREFIJO_USUARIO}
+              </span>
+              <input
+                name="username"
+                placeholder="valentinasanchez"
+                onChange={handleChange}
+                value={form.username}
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '0 8px 8px 0',
+                  border: '1px solid #e5e7eb', fontSize: '14px', boxSizing: 'border-box' as const,
+                }}
+              />
+            </div>
           </div>
 
           <div style={{ marginBottom: '16px' }}>
