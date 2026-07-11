@@ -1,26 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Clock, Users, ArrowLeft, BookOpen } from 'lucide-react'
-
-const API_BASE = 'http://127.0.0.1:8000/api'
-
-interface Curso {
-  id: number
-  title: string
-  description: string
-  category: string
-  level: string
-  duration_hours: number
-  thumbnail: string | null
-  nombre_instructora: string | null
-  total_inscritas: number
-}
-
-const nivelLabel: Record<string, string> = {
-  basico: 'Básico',
-  intermedio: 'Intermedio',
-  avanzado: 'Avanzado',
-}
+import { Clock, ArrowLeft, BookOpen, ExternalLink } from 'lucide-react'
+import { getCurso, type Curso } from '../../api/cursos'
 
 const DetalleCurso = () => {
   const { id } = useParams()
@@ -30,12 +11,8 @@ const DetalleCurso = () => {
   const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
-    fetch(`${API_BASE}/cursos/${id}/`)
-      .then(r => {
-        if (!r.ok) { setNotFound(true); return null }
-        return r.json()
-      })
-      .then(d => { if (d) setCurso(d) })
+    getCurso(Number(id))
+      .then(setCurso)
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
   }, [id])
@@ -71,16 +48,16 @@ const DetalleCurso = () => {
           </button>
 
           <span style={{ backgroundColor: '#FDF0F2', color: '#B66878', padding: '4px 14px', borderRadius: '100px', fontSize: '12px', fontWeight: '700' }}>
-            {curso.category}
+            {curso.categoria_display}
           </span>
 
           <h1 style={{ fontSize: '40px', fontWeight: '800', color: '#0f0a0b', margin: '16px 0 12px', letterSpacing: '-0.02em', lineHeight: '1.15' }}>
-            {curso.title}
+            {curso.titulo}
           </h1>
 
-          {curso.nombre_instructora && (
+          {curso.instructor && (
             <p style={{ fontSize: '15px', color: '#7a6870', margin: '0 0 28px' }}>
-              Por <strong style={{ color: '#0f0a0b' }}>{curso.nombre_instructora}</strong>
+              Por <strong style={{ color: '#0f0a0b' }}>{curso.instructor}</strong>
             </p>
           )}
 
@@ -88,15 +65,11 @@ const DetalleCurso = () => {
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff', border: '1px solid #f0e6e9', borderRadius: '100px', padding: '7px 16px' }}>
               <Clock size={13} color="#B66878" />
-              <span style={{ fontSize: '13px', color: '#7a6870', fontWeight: '600' }}>{curso.duration_hours} horas</span>
+              <span style={{ fontSize: '13px', color: '#7a6870', fontWeight: '600' }}>{curso.duracion_horas} horas</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff', border: '1px solid #f0e6e9', borderRadius: '100px', padding: '7px 16px' }}>
               <BookOpen size={13} color="#B66878" />
-              <span style={{ fontSize: '13px', color: '#7a6870', fontWeight: '600' }}>{nivelLabel[curso.level] || curso.level}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff', border: '1px solid #f0e6e9', borderRadius: '100px', padding: '7px 16px' }}>
-              <Users size={13} color="#B66878" />
-              <span style={{ fontSize: '13px', color: '#7a6870', fontWeight: '600' }}>{curso.total_inscritas} inscritas</span>
+              <span style={{ fontSize: '13px', color: '#7a6870', fontWeight: '600' }}>{curso.nivel_display}</span>
             </div>
           </div>
         </div>
@@ -108,16 +81,16 @@ const DetalleCurso = () => {
 
           {/* DESCRIPCIÓN */}
           <div>
-            {curso.thumbnail && (
+            {curso.imagen && (
               <div style={{ borderRadius: '16px', overflow: 'hidden', marginBottom: '36px', border: '1px solid #f0e6e9' }}>
-                <img src={curso.thumbnail} alt={curso.title} style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }} />
+                <img src={curso.imagen} alt={curso.titulo} style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }} />
               </div>
             )}
             <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#0f0a0b', margin: '0 0 16px', letterSpacing: '-0.01em' }}>
               Acerca de este curso
             </h2>
             <p style={{ fontSize: '15px', color: '#5a4a50', lineHeight: '1.8', margin: 0, whiteSpace: 'pre-line' }}>
-              {curso.description || 'Sin descripción disponible.'}
+              {curso.descripcion || 'Sin descripción disponible.'}
             </p>
           </div>
 
@@ -131,41 +104,60 @@ const DetalleCurso = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '13px', color: '#b0a0a6' }}>Nivel</span>
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f0a0b' }}>{nivelLabel[curso.level] || curso.level}</span>
+                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f0a0b' }}>{curso.nivel_display}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '13px', color: '#b0a0a6' }}>Duración</span>
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f0a0b' }}>{curso.duration_hours} horas</span>
+                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f0a0b' }}>{curso.duracion_horas} horas</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '13px', color: '#b0a0a6' }}>Categoría</span>
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f0a0b' }}>{curso.category}</span>
+                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f0a0b' }}>{curso.categoria_display}</span>
                 </div>
-                {curso.nombre_instructora && (
+                {curso.instructor && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '13px', color: '#b0a0a6' }}>Instructora</span>
-                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f0a0b' }}>{curso.nombre_instructora}</span>
+                    <span style={{ fontSize: '13px', color: '#b0a0a6' }}>Instructor</span>
+                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f0a0b' }}>{curso.instructor}</span>
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', color: '#b0a0a6' }}>Inscritas</span>
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f0a0b' }}>{curso.total_inscritas}</span>
-                </div>
               </div>
 
-              <button
-                onClick={() => navigate('/login')}
-                style={{
-                  width: '100%', padding: '14px', backgroundColor: '#B66878',
-                  color: '#fff', border: 'none', borderRadius: '10px',
-                  fontSize: '14px', fontWeight: '700', cursor: 'pointer',
-                  letterSpacing: '0.01em',
-                }}>
-                Inscribirme al curso
-              </button>
-              <p style={{ fontSize: '12px', color: '#b0a0a6', textAlign: 'center', margin: '12px 0 0' }}>
-                Necesitas una cuenta para inscribirte
-              </p>
+             {curso.link_externo ? (
+  <>
+    <a
+      href={curso.link_externo}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        width: '100%',
+        padding: '14px',
+        backgroundColor: '#B66878',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '10px',
+        fontSize: '14px',
+        fontWeight: '700',
+        cursor: 'pointer',
+        letterSpacing: '0.01em',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        textDecoration: 'none',
+        boxSizing: 'border-box',
+      }}
+    >
+      Ver curso <ExternalLink size={14} />
+    </a>
+                  <p style={{ fontSize: '12px', color: '#b0a0a6', textAlign: 'center', margin: '12px 0 0' }}>
+                    Se abre en el sitio del programa
+                  </p>
+                </>
+              ) : (
+                <p style={{ fontSize: '13px', color: '#b0a0a6', textAlign: 'center', margin: 0 }}>
+                  Este curso no tiene un enlace disponible por el momento.
+                </p>
+              )}
             </div>
           </div>
 

@@ -23,3 +23,13 @@ export const getMisOportunidades = async () => {
   const { data } = await api.get("/oportunidades/mis-oportunidades/")
   return data
 }
+
+export const getPostulacionesRecibidas = async (id: number) => {
+  const { data } = await api.get(`/oportunidades/${id}/postulaciones/`)
+  return data
+}
+
+export const cerrarOportunidad = async (id: number) => {
+  const { data } = await api.patch(`/oportunidades/${id}/cerrar/`, {})
+  return data
+}

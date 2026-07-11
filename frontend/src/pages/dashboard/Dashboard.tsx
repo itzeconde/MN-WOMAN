@@ -5,7 +5,6 @@ import { getEventos, confirmarAsistencia } from '../../api/eventos'
 import { getMisOportunidades } from '../../api/oportunidades'
 import { getMisServicios } from '../../api/servicios'
 
-// ✅ FIX #9: Tipo discriminado en lugar de string genérico
 type RespuestaAsistencia = 'si' | 'no' | null
 
 interface Evento {
@@ -34,16 +33,16 @@ interface Oportunidad {
   presupuesto_min: number
   presupuesto_max: number
   vence_el: string
+  total_postulaciones: number
+  postulaciones_pendientes: number
 }
 
-// ✅ FIX #5 y #8: Función centralizada de formato de fechas
 const formatearFecha = (fecha: string): string => {
   const d = new Date(fecha)
-  if (isNaN(d.getTime())) return fecha // fallback si el string es inválido
+  if (isNaN(d.getTime())) return fecha
   return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-// ✅ FIX #7: Estilos extraídos como constantes reutilizables
 const styles = {
   card: {
     background: 'white',
@@ -106,10 +105,8 @@ export default function Dashboard() {
   const [proximoEvento, setProximoEvento] = useState<Evento | null>(null)
   const [misServicios, setMisServicios] = useState<Servicio[]>([])
   const [misOportunidades, setMisOportunidades] = useState<Oportunidad[]>([])
-  // ✅ FIX #9: Tipo fuerte para asistencia
   const [asistencia, setAsistencia] = useState<RespuestaAsistencia>(null)
   const [cargando, setCargando] = useState(true)
-  // ✅ FIX #6: Estado de error visible para el usuario
   const [errorCarga, setErrorCarga] = useState<string | null>(null)
   const [errorAsistencia, setErrorAsistencia] = useState<string | null>(null)
 
@@ -122,7 +119,6 @@ export default function Dashboard() {
           getMisOportunidades(),
         ])
 
-        // ✅ FIX #3: Filtrar eventos futuros y ordenar por fecha ascendente
         const hoy = new Date()
         hoy.setHours(0, 0, 0, 0)
         const futuros = eventos
@@ -137,7 +133,6 @@ export default function Dashboard() {
         setMisOportunidades(oportunidades)
       } catch (err) {
         console.error(err)
-        // ✅ FIX #6: Mostrar error al usuario en lugar de pantalla vacía silenciosa
         setErrorCarga('No se pudieron cargar los datos. Por favor, intenta de nuevo.')
       } finally {
         setCargando(false)
@@ -146,33 +141,31 @@ export default function Dashboard() {
     cargarDatos()
   }, [])
 
-const handleAsistencia = async (valor: RespuestaAsistencia) => {
-  if (!proximoEvento || !valor) return
-  setErrorAsistencia(null)
-  try {
-    const res = await confirmarAsistencia(proximoEvento.id, valor)
-    setAsistencia(valor)
+  const handleAsistencia = async (valor: RespuestaAsistencia) => {
+    if (!proximoEvento || !valor) return
+    setErrorAsistencia(null)
+    try {
+      const res = await confirmarAsistencia(proximoEvento.id, valor)
+      setAsistencia(valor)
 
-    // ✅ Si el backend avisa cupo agotado en respuesta exitosa
-    if (res.cupo_agotado) {
-      setErrorAsistencia('El cupo para este evento está agotado.')
-    }
-  } catch (err: any) {
-    // ✅ Manejar el 409 específicamente
-    if (err.response?.status === 409) {
-      setErrorAsistencia('Este evento ya no tiene lugares disponibles.')
-    } else {
-      setErrorAsistencia('No se pudo guardar tu respuesta. Intenta de nuevo.')
+      if (res.cupo_agotado) {
+        setErrorAsistencia('El cupo para este evento está agotado.')
+      }
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        setErrorAsistencia('Este evento ya no tiene lugares disponibles.')
+      } else {
+        setErrorAsistencia('No se pudo guardar tu respuesta. Intenta de nuevo.')
+      }
     }
   }
-}
+
   if (cargando) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
       <p style={{ color: '#B66878', fontWeight: '600' }}>Cargando...</p>
     </div>
   )
 
-  // ✅ FIX #6: Pantalla de error en lugar de dashboard vacío
   if (errorCarga) return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', gap: '12px' }}>
       <p style={{ color: '#ef4444', fontWeight: '600' }}>{errorCarga}</p>
@@ -182,10 +175,13 @@ const handleAsistencia = async (valor: RespuestaAsistencia) => {
     </div>
   )
 
-  // ✅ FIX #10: Texto de bienvenida en forma neutra
   const saludo = usuario?.first_name
     ? `Hola, ${usuario.first_name}`
-    : 'Bienvenido/a'  // ✅ FIX #4: fallback si no hay nombre
+    : 'Bienvenido/a'
+
+  const totalPendientes = misOportunidades.reduce(
+    (acc, o) => acc + o.postulaciones_pendientes, 0
+  )
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
@@ -202,11 +198,14 @@ const handleAsistencia = async (valor: RespuestaAsistencia) => {
         </div>
 
         {/* Resumen */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: totalPendientes > 0 ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
+          gap: '16px', marginBottom: '28px'
+        }}>
           {[
             { label: 'Servicios publicados', valor: misServicios.length, icono: '💼' },
             { label: 'Oportunidades activas', valor: misOportunidades.length, icono: '🚀' },
-            // ✅ FIX #8: Fecha formateada en la stat card
             {
               label: 'Próximo evento',
               valor: proximoEvento ? formatearFecha(proximoEvento.date) : 'Sin eventos',
@@ -219,6 +218,17 @@ const handleAsistencia = async (valor: RespuestaAsistencia) => {
               <p style={{ fontSize: '13px', color: '#6b7280' }}>{stat.label}</p>
             </div>
           ))}
+
+          {totalPendientes > 0 && (
+            <div
+              onClick={() => navigate('/oportunidades')}
+              style={{ ...styles.card, borderLeft: '4px solid #ef4444', cursor: 'pointer' }}
+            >
+              <span style={{ fontSize: '24px' }}>🔔</span>
+              <p style={{ fontSize: '28px', fontWeight: '800', color: '#ef4444', margin: '8px 0 4px' }}>{totalPendientes}</p>
+              <p style={{ fontSize: '13px', color: '#6b7280' }}>Postulación{totalPendientes !== 1 ? 'es' : ''} sin revisar</p>
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
@@ -229,14 +239,12 @@ const handleAsistencia = async (valor: RespuestaAsistencia) => {
             {proximoEvento ? (
               <>
                 <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '10px', color: '#1f2937' }}>{proximoEvento.title}</h3>
-                {/* ✅ FIX #5: Fechas formateadas */}
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}>📆 {formatearFecha(proximoEvento.date)}</p>
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}>🕐 {proximoEvento.start_time} - {proximoEvento.end_time}</p>
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}>📍 {proximoEvento.hotel || proximoEvento.location}</p>
 
                 <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>¿Vas a asistir?</p>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  {/* ✅ FIX #1 y #2: handleAsistencia tipado y sin actualizar estado en error */}
                   <button
                     onClick={() => handleAsistencia('si')}
                     style={styles.btnAsistencia(asistencia === 'si', '#B66878')}
@@ -250,7 +258,6 @@ const handleAsistencia = async (valor: RespuestaAsistencia) => {
                     ✗ No asistiré
                   </button>
                 </div>
-                {/* ✅ FIX #1: Mensaje de error de asistencia visible */}
                 {errorAsistencia && (
                   <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px' }}>{errorAsistencia}</p>
                 )}
@@ -300,12 +307,31 @@ const handleAsistencia = async (valor: RespuestaAsistencia) => {
             {misOportunidades.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                 {misOportunidades.slice(0, 3).map((o) => (
-                  <div key={o.id} style={{ padding: '12px', background: '#f9fafb', borderRadius: '10px', borderLeft: '3px solid #EFC3CA' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <div
+                    key={o.id}
+                    onClick={() => navigate(
+                      o.postulaciones_pendientes > 0
+                        ? `/oportunidades/${o.id}/postulaciones`
+                        : `/oportunidades/${o.id}`
+                    )}
+                    style={{
+                      padding: '12px', background: '#f9fafb', borderRadius: '10px',
+                      borderLeft: '3px solid #EFC3CA', cursor: 'pointer', position: 'relative',
+                    }}
+                  >
+                    {o.postulaciones_pendientes > 0 && (
+                      <span style={{
+                        position: 'absolute', top: '10px', right: '10px',
+                        background: '#ef4444', color: 'white', fontSize: '11px',
+                        fontWeight: '700', borderRadius: '20px', padding: '2px 8px',
+                      }}>
+                        {o.postulaciones_pendientes} nueva{o.postulaciones_pendientes !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', paddingRight: o.postulaciones_pendientes > 0 ? '70px' : '0' }}>
                       <p style={{ fontWeight: '600', fontSize: '14px', color: '#1f2937' }}>{o.titulo}</p>
                       <span style={styles.badgeUrgencia(o.urgencia)}>{o.urgencia}</span>
                     </div>
-                    {/* ✅ FIX #5: Fecha de vencimiento formateada */}
                     <p style={{ color: '#6b7280', fontSize: '13px' }}>Vence: {formatearFecha(o.vence_el)}</p>
                   </div>
                 ))}

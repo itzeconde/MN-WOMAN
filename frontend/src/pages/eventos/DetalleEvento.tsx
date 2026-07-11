@@ -29,9 +29,10 @@ interface Evento {
   agenda: AgendaItem[]
 }
 
+// Mismos colores que la lista de Eventos, para consistencia
 const statusConfig = {
-  proximo:    { label: 'Próximo Evento', color: '#6366f1', bg: '#eef2ff' },
-  en_curso:   { label: 'En Curso',       color: '#16a34a', bg: '#dcfce7' },
+  proximo:    { label: 'Próximo Evento', color: '#B66878', bg: '#fdf2f4' },
+  en_curso:   { label: '● En Curso',     color: '#16a34a', bg: '#dcfce7' },
   finalizado: { label: 'Finalizado',     color: '#6b7280', bg: '#f3f4f6' },
 }
 
@@ -131,9 +132,17 @@ export default function DetalleEvento() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <style>{`
+        .detalle-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+        @media (max-width: 760px) {
+          .detalle-grid { grid-template-columns: 1fr; }
+          .detalle-cover { height: 200px !important; }
+          .detalle-info-row { gap: 14px !important; }
+        }
+      `}</style>
 
       {/* Cover */}
-      <div style={{
+      <div className="detalle-cover" style={{
         height: '260px', position: 'relative', overflow: 'hidden',
         background: evento.cover_image ? 'none' : 'linear-gradient(135deg, #EFC3CA 0%, #B66878 100%)',
       }}>
@@ -145,20 +154,20 @@ export default function DetalleEvento() {
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)',
         }} />
-        <div style={{ position: 'absolute', bottom: '24px', left: '48px', right: '48px' }}>
+        <div style={{ position: 'absolute', bottom: '24px', left: '24px', right: '24px' }}>
           <span style={{
             background: cfg.bg, color: cfg.color,
             fontSize: '12px', fontWeight: '700', padding: '4px 12px',
             borderRadius: '20px', marginBottom: '10px', display: 'inline-block'
           }}>{cfg.label}</span>
-          <h1 style={{ fontSize: '28px', fontWeight: '800', color: 'white', margin: 0 }}>
+          <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'white', margin: 0 }}>
             {evento.title}
           </h1>
         </div>
         <button
           onClick={() => navigate(autenticado ? '/eventos' : '/')}
           style={{
-            position: 'absolute', top: '20px', left: '48px',
+            position: 'absolute', top: '20px', left: '24px',
             background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white',
             padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px',
             backdropFilter: 'blur(4px)'
@@ -168,44 +177,44 @@ export default function DetalleEvento() {
         </button>
       </div>
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '28px 20px 60px' }}>
+        <div className="detalle-grid">
 
           {/* Columna izquierda */}
           <div>
             <div style={{
-              background: 'white', borderRadius: '16px', padding: '24px',
-              border: '1px solid #f3f4f6', marginBottom: '20px',
+              background: 'white', borderRadius: '16px', padding: '22px',
+              border: '1px solid #f3f4f6', marginBottom: '18px',
               boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
             }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '16px' }}>
+              <div className="detalle-info-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '18px', marginBottom: '14px' }}>
                 <div>
-                  <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>FECHA</p>
+                  <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>FECHA</p>
                   <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', textTransform: 'capitalize' }}>
                     📅 {formatFecha(evento.date)}
                   </p>
                 </div>
                 <div>
-                  <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>HORARIO</p>
+                  <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>HORARIO</p>
                   <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
                     🕐 {formatHora(evento.start_time)} - {formatHora(evento.end_time)}
                   </p>
                 </div>
                 <div>
-                  <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>LUGAR</p>
+                  <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>LUGAR</p>
                   <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
                     📍 {evento.hotel || evento.location}
                   </p>
                 </div>
                 <div>
-                  <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>COSTO</p>
+                  <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>COSTO</p>
                   <p style={{ fontSize: '14px', fontWeight: '600', color: (evento.costo == null || evento.costo === 0) ? '#16a34a' : '#111827' }}>
                     🎟️ {formatCosto(evento.costo)}
                   </p>
                 </div>
               </div>
               {evento.description && (
-                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: '1.7', borderTop: '1px solid #f3f4f6', paddingTop: '16px' }}>
+                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: '1.7', borderTop: '1px solid #f3f4f6', paddingTop: '14px', margin: 0 }}>
                   {evento.description}
                 </p>
               )}
@@ -214,31 +223,31 @@ export default function DetalleEvento() {
             {/* Agenda */}
             {evento.agenda.length > 0 && (
               <div style={{
-                background: 'white', borderRadius: '16px', padding: '24px',
+                background: 'white', borderRadius: '16px', padding: '22px',
                 border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
               }}>
-                <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', marginBottom: '20px', borderBottom: '1px solid #f3f4f6', paddingBottom: '12px' }}>
+                <h2 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', marginBottom: '18px', borderBottom: '1px solid #f3f4f6', paddingBottom: '10px' }}>
                   📋 Agenda del Día
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                   {evento.agenda.map((item, i) => (
-                    <div key={item.id} style={{ display: 'flex', gap: '16px', position: 'relative' }}>
+                    <div key={item.id} style={{ display: 'flex', gap: '14px', position: 'relative' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <div style={{
-                          width: '12px', height: '12px', borderRadius: '50%', flexShrink: 0, marginTop: '4px',
+                          width: '11px', height: '11px', borderRadius: '50%', flexShrink: 0, marginTop: '4px',
                           background: item.is_current ? '#B66878' : '#e5e7eb',
                           border: item.is_current ? '2px solid #B66878' : '2px solid #e5e7eb',
                         }} />
                         {i < evento.agenda.length - 1 && (
-                          <div style={{ width: '2px', flex: 1, background: '#f3f4f6', minHeight: '32px' }} />
+                          <div style={{ width: '2px', flex: 1, background: '#f3f4f6', minHeight: '28px' }} />
                         )}
                       </div>
                       <div style={{
                         flex: 1,
                         background: item.is_current ? '#fdf2f4' : 'transparent',
                         borderRadius: item.is_current ? '8px' : '0',
-                        padding: item.is_current ? '8px 12px' : '0 0 20px 0',
-                        marginBottom: item.is_current ? '12px' : '0',
+                        padding: item.is_current ? '8px 12px' : '0 0 18px 0',
+                        marginBottom: item.is_current ? '10px' : '0',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
                           <span style={{ fontSize: '13px', fontWeight: '700', color: '#B66878' }}>
@@ -266,13 +275,12 @@ export default function DetalleEvento() {
             )}
           </div>
 
-          {/* Columna derecha */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-            {/* Card de asistencia */}
+          {/* Columna derecha — solo la card de asistencia, sin duplicar info */}
+          <div>
             <div style={{
               background: 'white', borderRadius: '16px', padding: '20px',
-              border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+              border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              position: 'sticky', top: '20px'
             }}>
               <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>
                 👥 Asistencia
@@ -358,24 +366,6 @@ export default function DetalleEvento() {
                 </>
               )}
             </div>
-
-            {/* Info de fecha/lugar */}
-            <div style={{
-              background: 'linear-gradient(135deg, #B66878, #8B3E52)',
-              borderRadius: '16px', padding: '20px', color: 'white'
-            }}>
-              <p style={{ fontSize: '12px', fontWeight: '600', opacity: 0.8, marginBottom: '8px' }}>
-                📅 {formatFecha(evento.date).toUpperCase()}
-              </p>
-              <p style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>{evento.hotel || evento.location}</p>
-              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '8px' }}>
-                {formatHora(evento.start_time)} - {formatHora(evento.end_time)}
-              </p>
-              <p style={{ fontSize: '13px', fontWeight: '700', opacity: 0.9, margin: 0 }}>
-                🎟️ {formatCosto(evento.costo)}
-              </p>
-            </div>
-
           </div>
         </div>
       </div>

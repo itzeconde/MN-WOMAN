@@ -1,40 +1,54 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Clock, BookOpen } from 'lucide-react'
+import { Clock } from 'lucide-react'
+import { getCursos, type Curso } from '../../api/cursos'
 
-const API_BASE = 'http://127.0.0.1:8000/api'
+const CATEGORIAS = [
+  { value: '', label: 'Todas las categorías' },
+  { value: 'sensibilizacion', label: 'Formación en Sensibilización' },
+  { value: 'academico', label: 'Programa Académico' },
+  { value: 'liderazgo', label: 'Liderazgo y Negocios' },
+  { value: 'tecnologia', label: 'Tecnología' },
+  { value: 'finanzas', label: 'Finanzas' },
+  { value: 'marketing', label: 'Marketing Digital' },
+  { value: 'otro', label: 'Otro' },
+]
 
-interface Curso {
-  id: number
-  titulo: string
-  descripcion: string
-  imagen: string | null
-  categoria: string
-  categoria_display: string
-  nivel: string
-  nivel_display: string
-  duracion_horas: number
-  link_externo: string | null
-  instructor: string | null
-  fecha_creacion: string
+const NIVELES = [
+  { value: '', label: 'Todos los niveles' },
+  { value: 'basico', label: 'Básico' },
+  { value: 'intermedio', label: 'Intermedio' },
+  { value: 'avanzado', label: 'Avanzado' },
+]
+
+const selectStyle = {
+  padding: '8px 14px', borderRadius: '8px', border: '1px solid #f0e6e9',
+  fontSize: '13px', color: '#0f0a0b', background: '#fff', cursor: 'pointer'
 }
 
 const Cursos = () => {
   const navigate = useNavigate()
   const [cursos, setCursos] = useState<Curso[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const [categoria, setCategoria] = useState('')
+  const [nivel, setNivel] = useState('')
 
   useEffect(() => {
-    fetch(`${API_BASE}/cursos/`)
-      .then(r => r.json())
-      .then(d => setCursos(Array.isArray(d) ? d : (d.results ?? [])))
-      .catch(() => {})
+    const filtros: Record<string, string> = {}
+    if (categoria) filtros.categoria = categoria
+    if (nivel) filtros.nivel = nivel
+
+    setLoading(true)
+    setError(false)
+    getCursos(Object.keys(filtros).length ? filtros : undefined)
+      .then(setCursos)
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
-  }, [])
+  }, [categoria, nivel])
 
   return (
     <main style={{ fontFamily: "'Inter', 'Helvetica Neue', sans-serif", backgroundColor: '#fff', minHeight: '100vh' }}>
-      {/* HEADER */}
       <section style={{ padding: '80px 64px 48px', background: 'linear-gradient(150deg, #fdf2f4 0%, #fce8f0 60%, #fdf6f8 100%)' }}>
         <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
           <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#B66878' }}>
@@ -49,12 +63,29 @@ const Cursos = () => {
         </div>
       </section>
 
-      {/* LISTADO */}
-      <section style={{ padding: '64px', maxWidth: '1120px', margin: '0 auto' }}>
+      <section style={{ padding: '48px 64px 64px', maxWidth: '1120px', margin: '0 auto' }}>
+
+        {/* Filtros */}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
+          <select value={categoria} onChange={e => setCategoria(e.target.value)} style={selectStyle}>
+            {CATEGORIAS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+          <select value={nivel} onChange={e => setNivel(e.target.value)} style={selectStyle}>
+            {NIVELES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
+          </select>
+        </div>
+
         {loading ? (
           <p style={{ color: '#b0a0a6', textAlign: 'center' }}>Cargando cursos...</p>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            <p style={{ color: '#B66878', fontWeight: '600', marginBottom: '4px' }}>No pudimos cargar los cursos.</p>
+            <p style={{ color: '#b0a0a6', fontSize: '13px' }}>Intenta recargar la página en unos momentos.</p>
+          </div>
         ) : cursos.length === 0 ? (
-          <p style={{ color: '#b0a0a6', textAlign: 'center' }}>No hay cursos disponibles por el momento.</p>
+          <p style={{ color: '#b0a0a6', textAlign: 'center' }}>
+            No hay cursos que coincidan con estos filtros.
+          </p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '24px' }}>
             {cursos.map(curso => (

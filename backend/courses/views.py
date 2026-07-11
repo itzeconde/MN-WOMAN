@@ -15,7 +15,7 @@ class EsAdmin(permissions.BasePermission):
 
 class CursoPublicViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    GET /api/cursos/       → lista paginada de cursos activos
+    GET /api/cursos/       → lista de cursos activos, filtrable por categoria y nivel
     GET /api/cursos/<id>/  → detalle de un curso
     """
     serializer_class = CursoPublicSerializer
@@ -26,12 +26,18 @@ class CursoPublicViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = Curso.objects.filter(activo=True)
+
+        # Solo se filtra si el valor recibido es una categoría/nivel real
+        # definida en el modelo. Cualquier otro valor se ignora en silencio,
+        # en vez de dejarlo pasar tal cual a la consulta.
         categoria = self.request.query_params.get('categoria')
-        nivel = self.request.query_params.get('nivel')
-        if categoria:
+        if categoria in dict(Curso.CATEGORIA_CHOICES):
             qs = qs.filter(categoria=categoria)
-        if nivel:
+
+        nivel = self.request.query_params.get('nivel')
+        if nivel in dict(Curso.NIVEL_CHOICES):
             qs = qs.filter(nivel=nivel)
+
         return qs
 
 
