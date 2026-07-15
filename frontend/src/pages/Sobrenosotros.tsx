@@ -1,9 +1,37 @@
 import { useNavigate } from 'react-router-dom'
-import { Users, Sparkles, Handshake } from 'lucide-react'
 
 // Reemplaza por la foto real cuando la tengas (idealmente algo del diagnóstico
 // original con las 70 mujeres, o una foto de comunidad/evento de Revista Momento).
 const FOTO_ORIGEN = 'https://scontent.fpbc4-1.fna.fbcdn.net/v/t39.30808-6/482020279_122181190634263222_4259941826604380873_n.jpg?stp=dst-jpg_tt6&cstp=mx1200x788&ctp=s1200x788&_nc_cat=103&ccb=1-7&_nc_sid=127cfc&_nc_ohc=rIL9yAGku0EQ7kNvwGVdqPh&_nc_oc=Adr7Lir_2B1xrbqEGlugzUFkyIog4kR6pnGcZ3Gjf22ZVSuSlnhGvdKiIiSV4ssn6OBdm3lggpDikFCapj3fNTAh&_nc_zt=23&_nc_ht=scontent.fpbc4-1.fna&_nc_gid=mddJjqzXoQYN6FwcFZSquA&_nc_ss=7d289&oh=00_AQDolvnyBJ8VsWJlp1EYEtCkiYQITQdCVMO7qnigO-gmLw&oe=6A5CC6F5'
+
+// ── FUNDADORAS ──────────────────────────────────────────────────────────
+// Agrega, quita o edita libremente las personas de este arreglo.
+// La cuadrícula se acomoda sola sin importar cuántas sean (1, 2, 3, 5, etc).
+// - foto: pega aquí la URL de la imagen de cada persona.
+// - nombre: nombre completo.
+// - rol: cargo o forma en que quieres que se le identifique.
+// - frase (opcional): quítala si no quieres cita, déjala como '' o bórrala del objeto.
+const FUNDADORAS = [
+  {
+    nombre: 'Nombre Apellido',
+    rol: 'Fundadora de MN WOMAN',
+    foto: 'https://PEGA-AQUI-LA-URL-DE-LA-FOTO-1.jpg',
+    frase: '',
+  },
+  {
+    nombre: 'Marisol Fernandez Muñoz',
+    rol: 'Directora, Revista Momento',
+    foto: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAQ4_xJAb2-GQK-VdtsguS3igBfWcl1u9yTnJ8c14qvVQzL0sNb3lBEQE&s=10',
+    frase: '',
+  },
+  {
+    nombre: 'Nombre Apellido',
+    rol: 'Co-fundadora',
+    foto: 'https://PEGA-AQUI-LA-URL-DE-LA-FOTO-3.jpg',
+    frase: '',
+  },
+  
+]
 
 const SobreNosotros = () => {
   const navigate = useNavigate()
@@ -361,41 +389,49 @@ const SobreNosotros = () => {
         </div>
       </section>
 
-      {/* ── QUIÉNES IMPULSAN LA RED ── */}
+      {/* ── FUNDADORAS ── */}
       <section className="section-pad" style={{ backgroundColor: '#fdf6f8' }}>
         <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
           <div style={{ marginBottom: '48px', textAlign: 'center' }}>
             <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#B66878' }}>
-              Comunidad
+              Nuestras raíces
             </span>
             <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#0f0a0b', margin: '12px 0 10px', letterSpacing: '-0.02em' }}>
-              Quiénes impulsan la red
+              Las mujeres que dieron origen a MN WOMAN
             </h2>
             <p style={{ fontSize: '15px', color: '#7a6870', margin: '0 auto', maxWidth: '560px' }}>
-              MN WOMAN es posible gracias a las organizaciones y aliadas que respaldan
-              este proyecto desde su origen.
+              Un proyecto nacido de la visión y el trabajo de mujeres comprometidas con Tlaxcala.
             </p>
           </div>
 
           <div className="grid-3">
-            {[
-              { icon: <Handshake size={20} color="#B66878" />, title: 'Revista Momento', desc: 'Socio estratégico de lanzamiento y origen del diagnóstico que dio forma a la red.' },
-              { icon: <Users size={20} color="#B66878" />, title: 'Las Hijas de la Malinche', desc: 'Colectivo aliado que impulsa el liderazgo femenino en Tlaxcala.' },
-              { icon: <Sparkles size={20} color="#B66878" />, title: 'Festival Tlaxqui', desc: 'Espacio cultural colaborador en la difusión y visibilidad de la red.' },
-            ].map((item) => (
-              <div key={item.title} className="card-hover" style={{ border: '1px solid #f0e6e9', borderRadius: '16px', padding: '32px 26px', background: '#fff', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+            {FUNDADORAS.map((persona) => (
+              <div key={persona.nombre + persona.rol} className="card-hover" style={{ border: '1px solid #f0e6e9', borderRadius: '16px', padding: '32px 26px', background: '#fff', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, #B66878, #d4889a)' }} />
-                {/* Si tienes el logo real de la organización, reemplaza este div por:
-                    <img src={LOGO_URL} alt={item.title} style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'contain' }} /> */}
-                <div style={{ width: '48px', height: '48px', backgroundColor: '#FDF0F2', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
-                  {item.icon}
+
+                <div style={{
+                  width: '84px', height: '84px', borderRadius: '50%', margin: '0 auto 18px',
+                  overflow: 'hidden', border: '3px solid #FDF0F2',
+                  boxShadow: '0 6px 16px rgba(182,104,120,0.15)',
+                }}>
+                  <img
+                    src={persona.foto}
+                    alt={persona.nombre}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
                 </div>
-                <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '10px', color: '#0f0a0b', letterSpacing: '-0.01em' }}>
-                  {item.title}
+
+                <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '4px', color: '#0f0a0b', letterSpacing: '-0.01em' }}>
+                  {persona.nombre}
                 </h3>
-                <p style={{ fontSize: '13px', color: '#7a6870', lineHeight: '1.6', margin: 0 }}>
-                  {item.desc}
+                <p style={{ fontSize: '13px', color: '#B66878', fontWeight: '600', margin: '0 0 10px' }}>
+                  {persona.rol}
                 </p>
+                {persona.frase && (
+                  <p style={{ fontSize: '13px', color: '#7a6870', lineHeight: '1.6', margin: 0, fontStyle: 'italic' }}>
+                    "{persona.frase}"
+                  </p>
+                )}
               </div>
             ))}
           </div>

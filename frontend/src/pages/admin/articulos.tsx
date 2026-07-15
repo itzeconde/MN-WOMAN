@@ -405,103 +405,105 @@ export default function AdminArticulos() {
           </div>
         )}
 
-        {/* Table */}
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "60px", color: "#9ca3af" }}>Cargando artículos...</div>
-        ) : articles.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px", background: "white", borderRadius: "16px", border: "1px solid #e5e7eb" }}>
-            <p style={{ fontSize: "40px", margin: "0 0 12px" }}>📝</p>
-            <p style={{ color: "#6b7280", fontSize: "15px" }}>Aún no hay artículos. ¡Crea el primero!</p>
-          </div>
-        ) : (
-          <div style={{ background: "white", borderRadius: "16px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "#f9fafb", borderBottom: "1px solid #f3f4f6" }}>
-                  {["Artículo", "Categoría", "Orden", "Estado", "Acciones"].map((h) => (
-                    <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {articles.map((article, i) => (
-                  <tr
-                    key={article.id}
-                    style={{ borderBottom: i < articles.length - 1 ? "1px solid #f3f4f6" : "none" }}
-                  >
-                    <td style={{ padding: "14px 16px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        {article.cover_image_url ? (
-                          <img src={article.cover_image_url} alt={article.title} style={{ width: "52px", height: "38px", objectFit: "cover", borderRadius: "6px", flexShrink: 0 }} />
-                        ) : (
-                          <div style={{ width: "52px", height: "38px", background: "#f3f4f6", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0 }}>🖼️</div>
-                        )}
-                        <div>
-                          <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#111827" }}>{article.title}</p>
-                          {article.is_featured && (
-                            <span style={{ fontSize: "11px", background: "#fef3c7", color: "#d97706", padding: "1px 6px", borderRadius: "4px", fontWeight: "600" }}>⭐ Destacado</span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-
-                    <td style={{ padding: "14px 16px" }}>
-                      <span style={{ fontSize: "12px", background: "#FDF0F2", color: "#B66878", padding: "3px 10px", borderRadius: "20px", fontWeight: "600" }}>
-                        {categoryLabel(article.category)}
-                      </span>
-                    </td>
-
-                    <td style={{ padding: "14px 16px", fontSize: "14px", color: "#6b7280", textAlign: "center" }}>
-                      {article.order}
-                    </td>
-
-                    <td style={{ padding: "14px 16px" }}>
-                      <button
-                        onClick={() => toggleActive(article)}
-                        style={{
-                          background: article.is_active ? "#f0fdf4" : "#fef2f2",
-                          color: article.is_active ? "#16a34a" : "#dc2626",
-                          border: `1px solid ${article.is_active ? "#bbf7d0" : "#fecaca"}`,
-                          borderRadius: "20px", padding: "3px 12px", fontSize: "12px",
-                          fontWeight: "600", cursor: "pointer",
-                        }}
-                      >
-                        {article.is_active ? "● Activo" : "● Inactivo"}
-                      </button>
-                    </td>
-
-                    <td style={{ padding: "14px 16px" }}>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <a
-                          href={article.external_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{ fontSize: "13px", color: "#B66878", fontWeight: "600", textDecoration: "none", padding: "5px 10px", borderRadius: "6px", border: "1px solid #FDF0F2" }}
-                        >
-                          Ver →
-                        </a>
-                        <button
-                          onClick={() => handleEdit(article)}
-                          style={{ fontSize: "13px", color: "#374151", fontWeight: "600", background: "white", border: "1px solid #e5e7eb", borderRadius: "6px", padding: "5px 10px", cursor: "pointer" }}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(article.id)}
-                          disabled={deleting === article.id}
-                          style={{ fontSize: "13px", color: "#dc2626", fontWeight: "600", background: "white", border: "1px solid #fecaca", borderRadius: "6px", padding: "5px 10px", cursor: "pointer" }}
-                        >
-                          {deleting === article.id ? "..." : "Eliminar"}
-                        </button>
-                      </div>
-                    </td>
+        {/* Tabla */}
+        {!showForm && (
+          loading ? (
+            <div style={{ textAlign: "center", padding: "60px", color: "#9ca3af" }}>Cargando artículos...</div>
+          ) : articles.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px", background: "white", borderRadius: "16px", border: "1px solid #e5e7eb" }}>
+              <p style={{ fontSize: "40px", margin: "0 0 12px" }}>📝</p>
+              <p style={{ color: "#6b7280", fontSize: "15px" }}>Aún no hay artículos. ¡Crea el primero!</p>
+            </div>
+          ) : (
+            <div style={{ background: "white", borderRadius: "16px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ background: "#f9fafb", borderBottom: "1px solid #f3f4f6" }}>
+                    {["Artículo", "Categoría", "Orden", "Estado", "Acciones"].map((h) => (
+                      <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {articles.map((article, i) => (
+                    <tr
+                      key={article.id}
+                      style={{ borderBottom: i < articles.length - 1 ? "1px solid #f3f4f6" : "none" }}
+                    >
+                      <td style={{ padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          {article.cover_image_url ? (
+                            <img src={article.cover_image_url} alt={article.title} style={{ width: "52px", height: "38px", objectFit: "cover", borderRadius: "6px", flexShrink: 0 }} />
+                          ) : (
+                            <div style={{ width: "52px", height: "38px", background: "#f3f4f6", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0 }}>🖼️</div>
+                          )}
+                          <div>
+                            <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#111827" }}>{article.title}</p>
+                            {article.is_featured && (
+                              <span style={{ fontSize: "11px", background: "#fef3c7", color: "#d97706", padding: "1px 6px", borderRadius: "4px", fontWeight: "600" }}>⭐ Destacado</span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td style={{ padding: "14px 16px" }}>
+                        <span style={{ fontSize: "12px", background: "#FDF0F2", color: "#B66878", padding: "3px 10px", borderRadius: "20px", fontWeight: "600" }}>
+                          {categoryLabel(article.category)}
+                        </span>
+                      </td>
+
+                      <td style={{ padding: "14px 16px", fontSize: "14px", color: "#6b7280", textAlign: "center" }}>
+                        {article.order}
+                      </td>
+
+                      <td style={{ padding: "14px 16px" }}>
+                        <button
+                          onClick={() => toggleActive(article)}
+                          style={{
+                            background: article.is_active ? "#f0fdf4" : "#fef2f2",
+                            color: article.is_active ? "#16a34a" : "#dc2626",
+                            border: `1px solid ${article.is_active ? "#bbf7d0" : "#fecaca"}`,
+                            borderRadius: "20px", padding: "3px 12px", fontSize: "12px",
+                            fontWeight: "600", cursor: "pointer",
+                          }}
+                        >
+                          {article.is_active ? "● Activo" : "● Inactivo"}
+                        </button>
+                      </td>
+
+                      <td style={{ padding: "14px 16px" }}>
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <a
+                            href={article.external_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ fontSize: "13px", color: "#B66878", fontWeight: "600", textDecoration: "none", padding: "5px 10px", borderRadius: "6px", border: "1px solid #FDF0F2" }}
+                          >
+                            Ver →
+                          </a>
+                          <button
+                            onClick={() => handleEdit(article)}
+                            style={{ fontSize: "13px", color: "#374151", fontWeight: "600", background: "white", border: "1px solid #e5e7eb", borderRadius: "6px", padding: "5px 10px", cursor: "pointer" }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => handleDelete(article.id)}
+                            disabled={deleting === article.id}
+                            style={{ fontSize: "13px", color: "#dc2626", fontWeight: "600", background: "white", border: "1px solid #fecaca", borderRadius: "6px", padding: "5px 10px", cursor: "pointer" }}
+                          >
+                            {deleting === article.id ? "..." : "Eliminar"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         )}
       </div>
     </div>

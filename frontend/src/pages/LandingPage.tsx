@@ -35,14 +35,13 @@ interface Evento {
 
 interface Curso {
   id: number
-  title: string
-  description: string
-  category: string
-  level: string
-  duration_hours: number
-  thumbnail: string | null
-  nombre_instructora: string | null
-  total_inscritas: number
+  titulo: string
+  descripcion: string
+  categoria_display: string
+  nivel_display: string
+  duracion_horas: number
+  imagen: string | null
+  instructor: string | null
 }
 
 interface Institucion {
@@ -61,18 +60,40 @@ const LandingPage = () => {
   const [instituciones, setInstituciones] = useState<Institucion[]>([])
 
   useEffect(() => {
-    fetch(`${API_BASE}/articles/public/`).then(r => r.json()).then(d => setArticles(Array.isArray(d) ? d.slice(0, 6) : [])).catch(() => {})
-    fetch(`${API_BASE}/eventos/public/`).then(r => r.json()).then(d => setEventos(Array.isArray(d) ? d.slice(0, 3) : [])).catch(() => {})
-    fetch(`${API_BASE}/cursos/public/`).then(r => r.json()).then(d => setCursos(Array.isArray(d) ? d.slice(0, 4) : [])).catch(() => {})
+    // Artículos: los más recientes primero (id más alto = creado después)
+    fetch(`${API_BASE}/articles/public/`)
+      .then(r => r.json())
+      .then(d => {
+        const ordenados = Array.isArray(d) ? [...d].sort((a, b) => b.id - a.id) : []
+        setArticles(ordenados.slice(0, 6))
+      })
+      .catch(() => {})
+
+    // Eventos: el más próximo a suceder primero
+    fetch(`${API_BASE}/eventos/public/`)
+      .then(r => r.json())
+      .then(d => {
+        const ordenados = Array.isArray(d)
+          ? [...d].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          : []
+        setEventos(ordenados.slice(0, 3))
+      })
+      .catch(() => {})
+
+    // Cursos: los más recientes primero
+    fetch(`${API_BASE}/cursos/`)
+      .then(r => r.json())
+      .then(d => {
+        const ordenados = Array.isArray(d) ? [...d].sort((a, b) => b.id - a.id) : []
+        setCursos(ordenados.slice(0, 4))
+      })
+      .catch(() => {})
+
     fetch(`${API_BASE}/linea911/public/`).then(r => r.json()).then(d => setInstituciones(Array.isArray(d) ? d.slice(0, 4) : [])).catch(() => {})
   }, [])
 
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
-
-  const nivelLabel: Record<string, string> = {
-    basico: 'Básico', intermedio: 'Intermedio', avanzado: 'Avanzado',
-  }
 
   return (
     <main style={{ fontFamily: "'Inter', 'Helvetica Neue', sans-serif", backgroundColor: '#FBF8F4' }}>
@@ -442,29 +463,29 @@ const LandingPage = () => {
                 <div key={curso.id} className="card-hover" style={{ background: '#fff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #f0e6e9', cursor: 'pointer' }}
                   onClick={() => navigate(`/cursos/${curso.id}`)}>
                   <div style={{ height: '130px', background: '#FDF0F2', overflow: 'hidden' }}>
-                    {curso.thumbnail
-                      ? <img src={curso.thumbnail} alt={curso.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {curso.imagen
+                      ? <img src={curso.imagen} alt={curso.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>🎓</div>
                     }
                   </div>
                   <div style={{ padding: '18px' }}>
                     <span style={{ backgroundColor: '#FDF0F2', color: '#B66878', padding: '3px 10px', borderRadius: '100px', fontSize: '12px', fontWeight: '700' }}>
-                      {curso.category}
+                      {curso.categoria_display}
                     </span>
                     <p style={{ fontSize: '16px', fontWeight: '700', color: '#0f0a0b', margin: '10px 0 4px', lineHeight: '1.4', letterSpacing: '-0.01em' }}>
-                      {curso.title}
+                      {curso.titulo}
                     </p>
-                    {curso.nombre_instructora && (
+                    {curso.instructor && (
                       <p style={{ fontSize: '14px', color: '#b0a0a6', margin: '0 0 10px' }}>
-                        Por {curso.nombre_instructora}
+                        Por {curso.instructor}
                       </p>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid #f0e6e9' }}>
                       <span style={{ fontSize: '13px', color: '#b0a0a6', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Clock size={13} color="#b0a0a6" /> {curso.duration_hours}h
+                        <Clock size={13} color="#b0a0a6" /> {curso.duracion_horas}h
                       </span>
                       <span style={{ fontSize: '12px', color: '#7a6870', background: '#faf8f9', padding: '3px 10px', borderRadius: '100px', border: '1px solid #f0e6e9' }}>
-                        {nivelLabel[curso.level] || curso.level}
+                        {curso.nivel_display}
                       </span>
                     </div>
                   </div>

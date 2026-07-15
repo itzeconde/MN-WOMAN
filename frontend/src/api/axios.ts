@@ -41,6 +41,12 @@ async function refrescarToken(): Promise<string> {
   }
   const { data } = await axios.post(`${API_BASE}/users/token/refresh/`, { refresh })
   localStorage.setItem('access_token', data.access)
+  // ROTATE_REFRESH_TOKENS=True: el backend blacklistea el refresh token usado
+  // y regresa uno nuevo en `data.refresh`. Si no lo guardamos aquí, el próximo
+  // intento de refresh usará el token viejo (ya blacklisteado) y fallará con 401.
+  if (data.refresh) {
+    localStorage.setItem('refresh_token', data.refresh)
+  }
   return data.access
 }
 
