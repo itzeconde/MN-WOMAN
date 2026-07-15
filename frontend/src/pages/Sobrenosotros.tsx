@@ -1,6 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import { Users, Sparkles, Handshake } from 'lucide-react'
 
+// Reemplaza por la foto real cuando la tengas (idealmente algo del diagnóstico
+// original con las 70 mujeres, o una foto de comunidad/evento de Revista Momento).
+const FOTO_ORIGEN = 'https://scontent.fpbc4-1.fna.fbcdn.net/v/t39.30808-6/482020279_122181190634263222_4259941826604380873_n.jpg?stp=dst-jpg_tt6&cstp=mx1200x788&ctp=s1200x788&_nc_cat=103&ccb=1-7&_nc_sid=127cfc&_nc_ohc=rIL9yAGku0EQ7kNvwGVdqPh&_nc_oc=Adr7Lir_2B1xrbqEGlugzUFkyIog4kR6pnGcZ3Gjf22ZVSuSlnhGvdKiIiSV4ssn6OBdm3lggpDikFCapj3fNTAh&_nc_zt=23&_nc_ht=scontent.fpbc4-1.fna&_nc_gid=mddJjqzXoQYN6FwcFZSquA&_nc_ss=7d289&oh=00_AQDolvnyBJ8VsWJlp1EYEtCkiYQITQdCVMO7qnigO-gmLw&oe=6A5CC6F5'
+
 const SobreNosotros = () => {
   const navigate = useNavigate()
 
@@ -24,9 +28,15 @@ const SobreNosotros = () => {
           border-color: #edd8de;
         }
 
+        .origen-grid { display: flex; align-items: center; gap: 56px; }
+        .origen-text { flex: 1 1 420px; }
+        .origen-media { flex: 1 1 280px; max-width: 300px; position: relative; }
+
         @media (max-width: 900px) {
           .section-pad { padding: 64px 32px; }
           .grid-2 { grid-template-columns: 1fr; }
+          .origen-grid { flex-direction: column-reverse; }
+          .origen-media { max-width: 220px; }
         }
         @media (max-width: 600px) {
           .section-pad { padding: 48px 20px; }
@@ -67,268 +77,292 @@ const SobreNosotros = () => {
           </p>
         </div>
       </section>
-{/* ── MISIÓN Y VISIÓN ── */}
-<section
-  className="section-pad"
-  style={{
-    background: 'linear-gradient(160deg, #fdf2f4 0%, #fff 50%, #fce8f0 100%)',
-  }}
->
-  <div style={{ maxWidth: '980px', margin: '0 auto' }}>
-    <span
-      style={{
-        fontSize: '13px',
-        fontWeight: '600',
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: '#B66878',
-      }}
-    >
-      Propósito
-    </span>
 
-    <h2
-      style={{
-        fontSize: '36px',
-        fontWeight: '800',
-        color: '#0f0a0b',
-        margin: '12px 0 40px',
-        letterSpacing: '-0.02em',
-        lineHeight: '1.1',
-      }}
-    >
-      Nuestra Misión y Visión
-    </h2>
-
-    <div className="grid-2">
-
-      {/* MISIÓN */}
-      <div
+      {/* ── MISIÓN Y VISIÓN ── */}
+      <section
+        className="section-pad"
         style={{
-          borderRadius: '18px',
-          padding: '28px 24px',
-          border: '1px solid #f0e6e9',
-          background: '#fff',
-          position: 'relative',
-          overflow: 'hidden',
+          background: 'linear-gradient(160deg, #fdf2f4 0%, #fff 50%, #fce8f0 100%)',
         }}
       >
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '4px',
-            background: 'linear-gradient(90deg, #B66878, #d4889a)',
-          }}
-        />
-
-        <div
-          style={{
-            width: '46px',
-            height: '46px',
-            background: '#FDF0F2',
-            borderRadius: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '16px',
-            border: '1px solid #f0e6e9',
-          }}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#B66878"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <circle cx="12" cy="12" r="6" />
-            <circle cx="12" cy="12" r="2" />
-          </svg>
-        </div>
-
-        <span
-          style={{
-            fontSize: '12px',
-            fontWeight: '700',
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: '#B66878',
-          }}
-        >
-          Misión
-        </span>
-
-        <h3
-          style={{
-            fontSize: '21px',
-            fontWeight: '800',
-            color: '#0f0a0b',
-            margin: '8px 0 12px',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          Lo que hacemos hoy
-        </h3>
-
-        <p
-          style={{
-            fontSize: '16px',
-            color: '#7a6870',
-            lineHeight: '1.6',
-            margin: 0,
-          }}
-        >
-          Conectar, impulsar y visibilizar a las mujeres emprendedoras y líderes
-          de Tlaxcala, brindándoles una plataforma de networking, formación y
-          recursos estratégicos para fortalecer su impacto profesional y
-          personal.
-        </p>
-
-        <div
-          style={{
-            marginTop: '18px',
-            padding: '12px 16px',
-            background: '#fdf8f9',
-            borderLeft: '3px solid #B66878',
-            borderRadius: '0 10px 10px 0',
-          }}
-        >
-          <p
+        <div style={{ maxWidth: '980px', margin: '0 auto' }}>
+          <span
             style={{
-              fontSize: '15px',
-              color: '#9a7880',
-              lineHeight: '1.5',
-              margin: 0,
-              fontStyle: 'italic',
+              fontSize: '13px',
+              fontWeight: '600',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: '#B66878',
             }}
           >
-            Creemos que cuando una mujer crece, toda su comunidad crece con ella.
-          </p>
-        </div>
-      </div>
+            Propósito
+          </span>
 
-      {/* VISIÓN */}
-      <div
-        style={{
-          borderRadius: '18px',
-          padding: '28px 24px',
-          border: '1px solid #f0e6e9',
-          background: '#fff',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '4px',
-            background: 'linear-gradient(90deg, #B66878, #d4889a)',
-          }}
-        />
-
-        <div
-          style={{
-            width: '46px',
-            height: '46px',
-            background: '#FDF0F2',
-            borderRadius: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '16px',
-            border: '1px solid #f0e6e9',
-          }}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#B66878"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <h2
+            style={{
+              fontSize: '36px',
+              fontWeight: '800',
+              color: '#0f0a0b',
+              margin: '12px 0 40px',
+              letterSpacing: '-0.02em',
+              lineHeight: '1.1',
+            }}
           >
-            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
+            Nuestra Misión y Visión
+          </h2>
+
+          <div className="grid-2">
+
+            {/* MISIÓN */}
+            <div
+              style={{
+                borderRadius: '18px',
+                padding: '28px 24px',
+                border: '1px solid #f0e6e9',
+                background: '#fff',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '4px',
+                  background: 'linear-gradient(90deg, #B66878, #d4889a)',
+                }}
+              />
+
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  background: '#FDF0F2',
+                  borderRadius: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                  border: '1px solid #f0e6e9',
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#B66878"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="6" />
+                  <circle cx="12" cy="12" r="2" />
+                </svg>
+              </div>
+
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: '#B66878',
+                }}
+              >
+                Misión
+              </span>
+
+              <h3
+                style={{
+                  fontSize: '21px',
+                  fontWeight: '800',
+                  color: '#0f0a0b',
+                  margin: '8px 0 12px',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Lo que hacemos hoy
+              </h3>
+
+              <p
+                style={{
+                  fontSize: '16px',
+                  color: '#7a6870',
+                  lineHeight: '1.6',
+                  margin: 0,
+                }}
+              >
+                Conectar, impulsar y visibilizar a las mujeres emprendedoras y líderes
+                de Tlaxcala, brindándoles una plataforma de networking, formación y
+                recursos estratégicos para fortalecer su impacto profesional y
+                personal.
+              </p>
+
+              <div
+                style={{
+                  marginTop: '18px',
+                  padding: '12px 16px',
+                  background: '#fdf8f9',
+                  borderLeft: '3px solid #B66878',
+                  borderRadius: '0 10px 10px 0',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: '15px',
+                    color: '#9a7880',
+                    lineHeight: '1.5',
+                    margin: 0,
+                    fontStyle: 'italic',
+                  }}
+                >
+                  Creemos que cuando una mujer crece, toda su comunidad crece con ella.
+                </p>
+              </div>
+            </div>
+
+            {/* VISIÓN */}
+            <div
+              style={{
+                borderRadius: '18px',
+                padding: '28px 24px',
+                border: '1px solid #f0e6e9',
+                background: '#fff',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '4px',
+                  background: 'linear-gradient(90deg, #B66878, #d4889a)',
+                }}
+              />
+
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  background: '#FDF0F2',
+                  borderRadius: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                  border: '1px solid #f0e6e9',
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#B66878"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </div>
+
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: '#B66878',
+                }}
+              >
+                Visión
+              </span>
+
+              <h3
+                style={{
+                  fontSize: '21px',
+                  fontWeight: '800',
+                  color: '#0f0a0b',
+                  margin: '8px 0 12px',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Lo que construimos juntas
+              </h3>
+
+              <p
+                style={{
+                  fontSize: '16px',
+                  color: '#7a6870',
+                  lineHeight: '1.6',
+                  margin: 0,
+                }}
+              >
+                Construir la red empresarial de networking más solida y confiable de México, con empresarias comprometidas, para transformar el ecosistema empresarial mediante la sororidad, la innovación y el liderazgo femenino.
+              </p>
+            </div>
+
+          </div>
         </div>
-
-        <span
-          style={{
-            fontSize: '12px',
-            fontWeight: '700',
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: '#B66878',
-          }}
-        >
-          Visión
-        </span>
-
-        <h3
-          style={{
-            fontSize: '21px',
-            fontWeight: '800',
-            color: '#0f0a0b',
-            margin: '8px 0 12px',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          Lo que construimos juntas
-        </h3>
-
-        <p
-          style={{
-            fontSize: '16px',
-            color: '#7a6870',
-            lineHeight: '1.6',
-            margin: 0,
-          }}
-        >
-          Construir la red empresarial de networking más solida y confiable de México, con empresarias comprometidas, para transformar el ecosistema empresarial mediante la sororidad, la innovación y el liderazgo femenino.
-        </p>
-      </div>
-
-    </div>
-  </div>
-</section>
+      </section>
 
       {/* ── ORIGEN ── */}
       <section className="section-pad" style={{ backgroundColor: '#fff' }}>
-        <div style={{ maxWidth: '980px', margin: '0 auto' }}>
-          <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#B66878' }}>
-            Nuestro origen
-          </span>
-          <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#0f0a0b', margin: '12px 0 24px', letterSpacing: '-0.02em' }}>
-            Nacimos escuchando a las mujeres de Tlaxcala
-          </h2>
-          <p style={{ fontSize: '15px', color: '#7a6870', lineHeight: '1.8', margin: '0 0 20px', maxWidth: '760px' }}>
-            MN WOMAN surgió de un diagnóstico realizado con más de 70 mujeres de la red de
-            Revista Momento, cuyas respuestas definieron los módulos que hoy forman la
-            plataforma: directorio, reuniones y eventos, servicios, oportunidades, cursos,
-            línea de apoyo 911 y temas de interés.
-          </p>
-          <p style={{ fontSize: '15px', color: '#7a6870', lineHeight: '1.8', margin: 0, maxWidth: '760px' }}>
-            Pensamos esta red como una evolución del modelo tradicional de networking,
-            diseñada exclusivamente para mujeres emprendedoras, profesionales y académicas
-            de la región.
-          </p>
+        <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
+          <div className="origen-grid">
+            <div className="origen-text">
+              <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#B66878' }}>
+                Nuestro origen
+              </span>
+              <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#0f0a0b', margin: '12px 0 24px', letterSpacing: '-0.02em' }}>
+                Nacimos escuchando a las mujeres de Tlaxcala
+              </h2>
+              <p style={{ fontSize: '15px', color: '#7a6870', lineHeight: '1.8', margin: '0 0 20px', maxWidth: '560px' }}>
+                MN WOMAN surgió de un diagnóstico realizado con más de 70 mujeres de la red de
+                Revista Momento, cuyas respuestas definieron los módulos que hoy forman la
+                plataforma: directorio, reuniones y eventos, servicios, oportunidades, cursos,
+                línea de apoyo 911 y temas de interés.
+              </p>
+              <p style={{ fontSize: '15px', color: '#7a6870', lineHeight: '1.8', margin: 0, maxWidth: '560px' }}>
+                Pensamos esta red como una evolución del modelo tradicional de networking,
+                diseñada exclusivamente para mujeres emprendedoras, profesionales y académicas
+                de la región.
+              </p>
+            </div>
+
+            <div className="origen-media">
+              {/* halo detrás de la foto */}
+              <div style={{
+                position: 'absolute', top: '-16px', left: '-16px', right: '16px', bottom: '16px',
+                borderRadius: '50%',
+                background: 'linear-gradient(160deg, #fce3e8, #f8d3db)',
+                zIndex: 0,
+              }} />
+              <div style={{
+                position: 'relative', zIndex: 1, width: '100%', aspectRatio: '1 / 1',
+                borderRadius: '50%', overflow: 'hidden',
+                boxShadow: '0 20px 44px rgba(182,104,120,0.2)',
+              }}>
+                <img src={FOTO_ORIGEN} alt="Diagnóstico con mujeres de Tlaxcala" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </div>
+
+             
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── QUIÉNES IMPULSAN LA RED ── */}
-      <section className="section-pad" style={{ backgroundColor: '#fff' }}>
+      <section className="section-pad" style={{ backgroundColor: '#fdf6f8' }}>
         <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
           <div style={{ marginBottom: '48px', textAlign: 'center' }}>
             <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#B66878' }}>
@@ -349,7 +383,10 @@ const SobreNosotros = () => {
               { icon: <Users size={20} color="#B66878" />, title: 'Las Hijas de la Malinche', desc: 'Colectivo aliado que impulsa el liderazgo femenino en Tlaxcala.' },
               { icon: <Sparkles size={20} color="#B66878" />, title: 'Festival Tlaxqui', desc: 'Espacio cultural colaborador en la difusión y visibilidad de la red.' },
             ].map((item) => (
-              <div key={item.title} className="card-hover" style={{ border: '1px solid #f0e6e9', borderRadius: '16px', padding: '32px 26px', background: '#fff', textAlign: 'center' }}>
+              <div key={item.title} className="card-hover" style={{ border: '1px solid #f0e6e9', borderRadius: '16px', padding: '32px 26px', background: '#fff', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, #B66878, #d4889a)' }} />
+                {/* Si tienes el logo real de la organización, reemplaza este div por:
+                    <img src={LOGO_URL} alt={item.title} style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'contain' }} /> */}
                 <div style={{ width: '48px', height: '48px', backgroundColor: '#FDF0F2', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
                   {item.icon}
                 </div>

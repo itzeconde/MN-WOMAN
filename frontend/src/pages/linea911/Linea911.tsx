@@ -69,17 +69,33 @@ const situaciones = [
 export default function Linea911() {
   const [seleccionada, setSeleccionada] = useState<string | null>(null)
 
+  const situacionActiva = situaciones.find((s) => s.titulo === seleccionada) || null
+
   const institucionesFiltradas = seleccionada
-    ? instituciones.filter((inst) =>
-        situaciones.find((s) => s.titulo === seleccionada)?.instituciones.includes(inst.nombre)
-      )
+    ? instituciones.filter((inst) => situacionActiva?.instituciones.includes(inst.nombre))
     : instituciones
+
+  // Color de acento por institución: si hay una situación seleccionada, todas
+  // las tarjetas heredan su color; si no, cada institución usa el color de la
+  // primera situación que la referencia (para que no todo se vea uniforme).
+  const colorParaInstitucion = (nombre: string) => {
+    if (situacionActiva) return situacionActiva
+    return situaciones.find((s) => s.instituciones.includes(nombre)) || null
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
 
-      <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '60px 24px', textAlign: 'center' }}>
+      {/* ── HEADER ── */}
+      <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '72px 24px 64px', textAlign: 'center' }}>
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <div style={{
+            width: '56px', height: '56px', borderRadius: '50%',
+            background: '#fdf2f4', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', margin: '0 auto 24px', fontSize: '24px', color: '#B66878',
+          }}>
+            <i className="ti ti-heart" />
+          </div>
           <span style={{
             display: 'inline-block', fontSize: '12px', fontWeight: 600,
             color: '#B66878', background: '#fdf2f4', padding: '4px 14px',
@@ -88,10 +104,10 @@ export default function Linea911() {
           }}>
             Un espacio para apoyarte
           </span>
-          <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#111827', marginBottom: '16px', lineHeight: 1.3 }}>
+          <h1 style={{ fontSize: '34px', fontWeight: 700, color: '#111827', marginBottom: '18px', lineHeight: 1.3 }}>
             No estás sola.
           </h1>
-          <p style={{ fontSize: '16px', color: '#6b7280', lineHeight: 1.7 }}>
+          <p style={{ fontSize: '16px', color: '#6b7280', lineHeight: 1.75 }}>
             Este es un espacio de orientación para que encuentres el apoyo que necesitas.
             Aquí encontrarás instituciones reales en Tlaxcala que pueden acompañarte,
             con información clara sobre qué esperar cuando acudes a ellas.
@@ -99,17 +115,18 @@ export default function Linea911() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '48px 24px' }}>
+      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '56px 24px' }}>
 
-        <div style={{ marginBottom: '48px' }}>
+        {/* ── SELECTOR DE SITUACIÓN ── */}
+        <div style={{ marginBottom: '64px' }}>
           <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#111827', marginBottom: '8px' }}>
             Cuéntanos un poco cómo te sientes
           </h2>
-          <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px', lineHeight: 1.7 }}>
+          <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px', lineHeight: 1.7 }}>
             No necesitas tener todo claro. Elige lo que más resuene contigo
             y te orientamos hacia las personas que pueden ayudarte.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '16px' }}>
             {situaciones.map((s) => {
               const activa = seleccionada === s.titulo
               return (
@@ -120,7 +137,7 @@ export default function Linea911() {
                     background: s.bg,
                     border: `1.5px solid ${activa ? s.actBorder : s.border}`,
                     borderRadius: '14px',
-                    padding: '20px',
+                    padding: '22px 20px',
                     cursor: 'pointer',
                     transition: 'all 0.15s',
                     boxShadow: activa ? `0 0 0 3px ${s.border}` : 'none',
@@ -130,12 +147,12 @@ export default function Linea911() {
                     width: '38px', height: '38px', borderRadius: '10px',
                     background: s.icoBg, display: 'flex', alignItems: 'center',
                     justifyContent: 'center', fontSize: '17px', color: s.icoColor,
-                    marginBottom: '12px',
+                    marginBottom: '14px',
                   }}>
                     <i className={`ti ${s.icono}`} />
                   </div>
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#111827', marginBottom: '5px' }}>{s.titulo}</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.5 }}>{s.descripcion}</p>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#111827', marginBottom: '6px' }}>{s.titulo}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.55 }}>{s.descripcion}</p>
                 </div>
               )
             })}
@@ -144,7 +161,7 @@ export default function Linea911() {
             <button
               onClick={() => setSeleccionada(null)}
               style={{
-                marginTop: '14px', background: 'none', border: 'none',
+                marginTop: '16px', background: 'none', border: 'none',
                 color: '#B66878', fontSize: '13px', cursor: 'pointer', padding: 0,
               }}
             >
@@ -153,74 +170,85 @@ export default function Linea911() {
           )}
         </div>
 
-        <div style={{ marginBottom: '48px' }}>
+        {/* ── INSTITUCIONES ── */}
+        <div style={{ marginBottom: '64px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', marginBottom: '6px' }}>
             {seleccionada ? 'Instituciones recomendadas para ti' : 'Instituciones en Tlaxcala'}
           </h2>
-          <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>
+          <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>
             Lugares reales, con personas reales. Sabemos que dar el primer paso es difícil,
             por eso te contamos qué pasa exactamente cuando acudes.
           </p>
-          <div style={{ display: 'grid', gap: '16px' }}>
-            {institucionesFiltradas.map((inst) => (
-              <div
-                key={inst.nombre}
-                style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '24px' }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '12px' }}>
-                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>{inst.nombre}</h3>
-                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <i className="ti ti-clock" style={{ fontSize: '13px' }} /> {inst.horario}
-                    </span>
-                    <span style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <i className="ti ti-map-pin" style={{ fontSize: '13px' }} /> {inst.direccion}
-                    </span>
-                  </div>
-                </div>
-                <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px', lineHeight: 1.6 }}>
-                  {inst.descripcion}
-                </p>
-                <div style={{
-                  background: '#fdf2f4', borderLeft: '3px solid #B66878',
-                  borderRadius: '0 8px 8px 0', padding: '12px 16px', marginBottom: '16px',
-                }}>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#B66878', marginBottom: '4px' }}>
-                    Que pasa cuando llegas o llamas
-                  </p>
-                  <p style={{ fontSize: '13px', color: '#7c3d4a', lineHeight: 1.6 }}>
-                    {inst.quePasaCuando}
-                  </p>
-                </div>
-                <a
-                  href={`tel:${inst.telefono}`}
+          <div style={{ display: 'grid', gap: '18px' }}>
+            {institucionesFiltradas.map((inst) => {
+              const color = colorParaInstitucion(inst.nombre)
+              const acento = color?.actBorder || '#B66878'
+              const acentoFondo = color?.icoBg || '#fdf2f4'
+              const acentoTexto = color?.icoColor || '#B66878'
+              return (
+                <div
+                  key={inst.nombre}
                   style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '6px',
-                    fontSize: '13px', fontWeight: 600, color: '#B66878',
-                    textDecoration: 'none', border: '1px solid #B66878',
-                    padding: '8px 16px', borderRadius: '8px',
+                    background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px',
+                    padding: '26px', borderTop: `3px solid ${acento}`,
                   }}
                 >
-                  <i className="ti ti-phone" style={{ fontSize: '14px' }} />
-                  {inst.telefono}
-                </a>
-              </div>
-            ))}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>{inst.nombre}</h3>
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <i className="ti ti-clock" style={{ fontSize: '13px' }} /> {inst.horario}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <i className="ti ti-map-pin" style={{ fontSize: '13px' }} /> {inst.direccion}
+                      </span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '14px', lineHeight: 1.65 }}>
+                    {inst.descripcion}
+                  </p>
+                  <div style={{
+                    background: acentoFondo, borderLeft: `3px solid ${acento}`,
+                    borderRadius: '0 8px 8px 0', padding: '14px 16px', marginBottom: '18px',
+                  }}>
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: acentoTexto, marginBottom: '5px' }}>
+                      Qué pasa cuando llegas o llamas
+                    </p>
+                    <p style={{ fontSize: '13px', color: '#4b4b4b', lineHeight: 1.65 }}>
+                      {inst.quePasaCuando}
+                    </p>
+                  </div>
+                  <a
+                    href={`tel:${inst.telefono}`}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      fontSize: '13px', fontWeight: 600, color: acentoTexto,
+                      textDecoration: 'none', border: `1px solid ${acento}`,
+                      padding: '8px 16px', borderRadius: '8px',
+                    }}
+                  >
+                    <i className="ti ti-phone" style={{ fontSize: '14px' }} />
+                    {inst.telefono}
+                  </a>
+                </div>
+              )
+            })}
           </div>
         </div>
 
-        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '16px', padding: '32px', textAlign: 'center' }}>
+        {/* ── CIERRE ── */}
+        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '16px', padding: '36px', textAlign: 'center' }}>
           <div style={{
             width: '48px', height: '48px', borderRadius: '50%', background: '#fdf2f4',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px', fontSize: '20px', color: '#B66878',
+            margin: '0 auto 18px', fontSize: '20px', color: '#B66878',
           }}>
             <i className="ti ti-heart" />
           </div>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', marginBottom: '10px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', marginBottom: '12px' }}>
             Buscar ayuda es un acto de valentía.
           </h3>
-          <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.7, maxWidth: '480px', margin: '0 auto' }}>
+          <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.75, maxWidth: '480px', margin: '0 auto' }}>
             MN WOMAN está aquí para acompañarte en ese primer paso.
             No tienes que tener todo claro para pedir apoyo,
             basta con saber que algo no está bien.
