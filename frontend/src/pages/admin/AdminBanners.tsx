@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-
-const API_BASE = 'http://127.0.0.1:8000/api'
+import api from '../../api/axios'
 
 interface Banner {
   id: number
@@ -50,10 +49,6 @@ const FORM_VACIO: FormState = {
   fecha_fin: '', posicion: 'landing_pre_footer', imagen: null,
 }
 
-const getHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-})
-
 export default function AdminBanners() {
   const [banners, setBanners] = useState<Banner[]>([])
   const [cargando, setCargando] = useState(true)
@@ -68,8 +63,7 @@ export default function AdminBanners() {
   const cargarBanners = async () => {
     setCargando(true)
     try {
-      const res = await fetch(`${API_BASE}/banners/admin/`, { headers: getHeaders() })
-      const data = await res.json()
+      const { data } = await api.get('/banners/admin/')
       setBanners(Array.isArray(data) ? data : (data.results ?? []))
     } catch {
       console.error('Error al cargar banners')
@@ -137,20 +131,16 @@ export default function AdminBanners() {
     if (form.imagen) fd.append('imagen', form.imagen)
 
     try {
-      const url    = editando ? `${API_BASE}/banners/admin/${editando.id}/` : `${API_BASE}/banners/admin/`
-      const method = editando ? 'PATCH' : 'POST'
-      const res    = await fetch(url, { method, headers: getHeaders(), body: fd })
-
-      if (!res.ok) {
-        const err = await res.json()
-        setError(JSON.stringify(err))
-        return
+      if (editando) {
+        await api.patch(`/banners/admin/${editando.id}/`, fd)
+      } else {
+        await api.post('/banners/admin/', fd)
       }
-
       await cargarBanners()
       cerrarModal()
-    } catch {
-      setError('Error al guardar. Intenta de nuevo.')
+    } catch (err: any) {
+      const data = err?.response?.data
+      setError(data ? JSON.stringify(data) : 'Error al guardar. Intenta de nuevo.')
     } finally {
       setGuardando(false)
     }
@@ -158,14 +148,14 @@ export default function AdminBanners() {
 
   const handleEliminar = async (id: number) => {
     if (!confirm('¿Eliminar este banner?')) return
-    await fetch(`${API_BASE}/banners/admin/${id}/`, { method: 'DELETE', headers: getHeaders() })
+    await api.delete(`/banners/admin/${id}/`)
     await cargarBanners()
   }
 
   const handleToggleActivo = async (banner: Banner) => {
     const fd = new FormData()
     fd.append('activo', String(!banner.activo))
-    await fetch(`${API_BASE}/banners/admin/${banner.id}/`, { method: 'PATCH', headers: getHeaders(), body: fd })
+    await api.patch(`/banners/admin/${banner.id}/`, fd)
     await cargarBanners()
   }
 

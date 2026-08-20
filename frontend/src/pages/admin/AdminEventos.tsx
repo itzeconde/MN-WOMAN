@@ -446,6 +446,14 @@ export default function AdminEventos() {
                   <input type="file" accept="image/*" onChange={handleImagen}
                     style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                 </div>
+                {/* El título y badge de estado se dibujan encima de esta imagen
+                    automáticamente en la vista pública. Si la imagen ya trae
+                    texto propio, se va a ver encimado con ese título — por eso
+                    la nota de abajo. */}
+                <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px', lineHeight: '1.5' }}>
+                  Usa una imagen sin texto — el título del evento se agrega
+                  automáticamente encima. Tamaño recomendado: 1600×500px (horizontal).
+                </p>
               </div>
 
               <div>
@@ -501,7 +509,10 @@ export default function AdminEventos() {
                 <div>
                   <label style={labelStyle}>Meta de asistentes</label>
                   <input type="number" name="referral_goal" value={form.referral_goal} onChange={handleChange}
-                    min="1" style={inputStyle} />
+                    min="10" style={inputStyle} />
+                  {/* Antes el mínimo era 1: con pocos confirmados el % se disparaba
+                      a "100% de la meta" casi de inmediato (ej. 3/1). 10 evita
+                      metas irreales por error de captura. */}
                 </div>
                 <div>
                   <label style={labelStyle}>

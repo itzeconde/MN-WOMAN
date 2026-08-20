@@ -30,6 +30,15 @@ const SECTORES: Record<string, string> = {
   agricultura: 'Agricultura Sostenible',
 }
 
+const MUNICIPIOS: Record<string, string> = {
+  tlaxcala_centro: 'Tlaxcala Centro',
+  apizaco: 'Apizaco',
+  huamantla: 'Huamantla',
+  chiautempan: 'Chiautempan',
+  tlaxco: 'Tlaxco',
+  zacatelco: 'Zacatelco',
+}
+
 const ANIOS: { val: string; label: string }[] = [
   { val: 'menos_1', label: 'Menos de 1' },
   { val: '1_3',     label: '1 a 3' },
@@ -200,7 +209,9 @@ export default function Perfil() {
             </p>
           )}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {form.location && <span style={badgeStyle}>📍 {form.location}</span>}
+            {form.location && (
+              <span style={badgeStyle}>📍 {MUNICIPIOS[form.location] ?? form.location}</span>
+            )}
             {form.years_leading && (
               <span style={badgeStyle}>
                 🕐 {ANIOS.find(a => a.val === form.years_leading)?.label} años
@@ -297,7 +308,12 @@ export default function Perfil() {
           </div>
           <div>
             <label style={labelStyle}>Ubicación</label>
-            <input name="location" value={form.location} onChange={handleChange} placeholder="Ej: Tlaxcala, Tlax." style={inputStyle} />
+            <select name="location" value={form.location} onChange={handleChange} style={inputStyle}>
+              <option value="">Selecciona un municipio</option>
+              {Object.entries(MUNICIPIOS).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </select>
           </div>
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={labelStyle}>Años liderando tu negocio</label>

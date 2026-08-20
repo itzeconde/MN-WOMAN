@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Pencil, Trash2, X, BookOpen, Clock, ExternalLink, AlertCircle } from "lucide-react";
-
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api";
+import api from "../../api/axios";
 
 interface Curso {
   id: number;
@@ -41,15 +40,9 @@ const CATEGORIAS = [
 ];
 
 const COLOR_PRIMARIO = "#B66878";
-const COLOR_PRIMARIO_CLARO = "#fdf2f4";
 const COLOR_BORDE = "#f3f4f6";
 const COLOR_TEXTO = "#374151";
 const COLOR_TEXTO_SUAVE = "#9ca3af";
-
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem("access_token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 export default function AdminCursos() {
   const [cursos, setCursos] = useState<Curso[]>([]);
@@ -65,11 +58,7 @@ export default function AdminCursos() {
     setLoading(true);
     setErrorCarga(false);
     try {
-      const res = await fetch(`${API_BASE}/admin/cursos/`, {
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
+      const { data } = await api.get("/admin/cursos/");
       setCursos(data.results ?? data);
     } catch {
       setErrorCarga(true);
@@ -157,31 +146,25 @@ export default function AdminCursos() {
       formData.append("activo", String(form.activo));
       if (form.imagen_file) formData.append("imagen", form.imagen_file);
 
-      const url = editandoId
-        ? `${API_BASE}/admin/cursos/${editandoId}/`
-        : `${API_BASE}/admin/cursos/`;
-      const method = editandoId ? "PATCH" : "POST";
+      if (editandoId) {
+        await api.patch(`/admin/cursos/${editandoId}/`, formData);
+      } else {
+        await api.post("/admin/cursos/", formData);
+      }
 
-      const res = await fetch(url, {
-        method,
-        headers: getAuthHeaders(),
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+      cerrarModal();
+      fetchCursos();
+    } catch (err: any) {
+      const data = err?.response?.data;
+      if (data && typeof data === "object") {
         const errs: Record<string, string> = {};
         for (const [campo, msgs] of Object.entries(data)) {
           errs[campo] = Array.isArray(msgs) ? msgs[0] : String(msgs);
         }
         setErroresForm(Object.keys(errs).length ? errs : { general: "Error al guardar. Intenta de nuevo." });
-        return;
+      } else {
+        setErroresForm({ general: "Error de conexión con el servidor." });
       }
-
-      cerrarModal();
-      fetchCursos();
-    } catch {
-      setErroresForm({ general: "Error de conexión con el servidor." });
     } finally {
       setGuardando(false);
     }
@@ -190,11 +173,7 @@ export default function AdminCursos() {
   const eliminar = async (id: number, titulo: string) => {
     if (!confirm(`¿Eliminar el curso "${titulo}"? Esta acción no se puede deshacer.`)) return;
     try {
-      const res = await fetch(`${API_BASE}/admin/cursos/${id}/`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error();
+      await api.delete(`/admin/cursos/${id}/`);
       fetchCursos();
     } catch {
       alert("No se pudo eliminar el curso. Intenta de nuevo.");
@@ -350,7 +329,6 @@ export default function AdminCursos() {
                 </div>
               )}
 
-              {/* Título */}
               <div>
                 <label style={labelStyle}>Título *</label>
                 <input name="titulo" value={form.titulo} onChange={handleChange}
@@ -359,7 +337,6 @@ export default function AdminCursos() {
                 {erroresForm.titulo && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0" }}>{erroresForm.titulo}</p>}
               </div>
 
-              {/* Descripción */}
               <div>
                 <label style={labelStyle}>Descripción *</label>
                 <textarea name="descripcion" value={form.descripcion} onChange={handleChange} rows={3}
@@ -368,7 +345,6 @@ export default function AdminCursos() {
                 {erroresForm.descripcion && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0" }}>{erroresForm.descripcion}</p>}
               </div>
 
-              {/* Categoría y Nivel */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={labelStyle}>Categoría</label>
@@ -386,7 +362,6 @@ export default function AdminCursos() {
                 </div>
               </div>
 
-              {/* Duración e Instructor */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={labelStyle}>Duración (horas) *</label>
@@ -402,7 +377,6 @@ export default function AdminCursos() {
                 </div>
               </div>
 
-              {/* Link externo */}
               <div>
                 <label style={labelStyle}>Link externo (plataforma del curso)</label>
                 <input name="link_externo" value={form.link_externo} onChange={handleChange}
@@ -413,7 +387,6 @@ export default function AdminCursos() {
                   : <p style={{ fontSize: "11px", color: COLOR_TEXTO_SUAVE, margin: "4px 0 0" }}>Deja vacío si aún no está disponible.</p>}
               </div>
 
-              {/* Imagen */}
               <div>
                 <label style={labelStyle}>Imagen de portada (máx. 3MB · JPG, PNG, WEBP)</label>
                 <input type="file" name="imagen" accept=".jpg,.jpeg,.png,.webp" onChange={handleChange}
@@ -421,7 +394,6 @@ export default function AdminCursos() {
                 {erroresForm.imagen && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0" }}>{erroresForm.imagen}</p>}
               </div>
 
-              {/* Activo */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <input type="checkbox" id="activo" name="activo" checked={form.activo} onChange={handleChange} />
                 <label htmlFor="activo" style={{ fontSize: "13px", color: COLOR_TEXTO }}>

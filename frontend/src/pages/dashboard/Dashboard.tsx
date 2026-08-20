@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { getEventos, confirmarAsistencia } from '../../api/eventos'
+import { getEventos, confirmarAsistencia, getMiAsistencia } from '../../api/eventos'
 import { getMisOportunidades } from '../../api/oportunidades'
 import { getMisServicios } from '../../api/servicios'
 
@@ -15,6 +15,8 @@ interface Evento {
   end_time: string
   location: string
   hotel: string
+  cupo_lleno?: boolean
+  esta_vencido?: boolean
 }
 
 interface Servicio {
@@ -43,6 +45,14 @@ const formatearFecha = (fecha: string): string => {
   return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+// Respaldo por si el backend aún no manda esta_vencido
+const esEventoFuturo = (evento: Evento): boolean => {
+  if (typeof evento.esta_vencido === 'boolean') return !evento.esta_vencido
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  return new Date(evento.date) >= hoy
+}
+
 const styles = {
   card: {
     background: 'white',
@@ -52,15 +62,19 @@ const styles = {
     border: '1px solid #f3f4f6',
   } as React.CSSProperties,
 
-  btnAsistencia: (activo: boolean, colorActivo: string): React.CSSProperties => ({
+  btnAsistencia: (activo: boolean, colorActivo: string, deshabilitado?: boolean): React.CSSProperties => ({
     flex: 1,
     padding: '10px',
     borderRadius: '8px',
     border: '2px solid',
     borderColor: activo ? colorActivo : '#e5e7eb',
-    background: activo ? (colorActivo === '#B66878' ? '#fdf2f4' : '#fef2f2') : 'white',
-    color: activo ? colorActivo : '#374151',
-    cursor: 'pointer',
+    background: deshabilitado
+      ? '#f3f4f6'
+      : activo
+      ? (colorActivo === '#B66878' ? '#fdf2f4' : '#fef2f2')
+      : 'white',
+    color: deshabilitado ? '#9ca3af' : activo ? colorActivo : '#374151',
+    cursor: deshabilitado ? 'not-allowed' : 'pointer',
     fontWeight: '600',
     fontSize: '14px',
   }),
@@ -96,6 +110,16 @@ const styles = {
       urgencia === 'alta' ? '#ef4444' :
       urgencia === 'media' ? '#f59e0b' : '#22c55e',
   }),
+
+  confirmacionBox: (esSi: boolean): React.CSSProperties => ({
+    padding: '12px 14px',
+    borderRadius: '8px',
+    background: esSi ? '#fdf2f4' : '#f9fafb',
+    border: `1px solid ${esSi ? '#EFC3CA' : '#e5e7eb'}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  }),
 }
 
 export default function Dashboard() {
@@ -107,6 +131,7 @@ export default function Dashboard() {
   const [misOportunidades, setMisOportunidades] = useState<Oportunidad[]>([])
   const [asistencia, setAsistencia] = useState<RespuestaAsistencia>(null)
   const [cargando, setCargando] = useState(true)
+  const [enviandoAsistencia, setEnviandoAsistencia] = useState(false)
   const [errorCarga, setErrorCarga] = useState<string | null>(null)
   const [errorAsistencia, setErrorAsistencia] = useState<string | null>(null)
 
@@ -119,15 +144,27 @@ export default function Dashboard() {
           getMisOportunidades(),
         ])
 
-        const hoy = new Date()
-        hoy.setHours(0, 0, 0, 0)
         const futuros = eventos
-          .filter((e: Evento) => new Date(e.date) >= hoy)
+          .filter(esEventoFuturo)
           .sort(
             (a: Evento, b: Evento) =>
               new Date(a.date).getTime() - new Date(b.date).getTime()
           )
-        if (futuros.length > 0) setProximoEvento(futuros[0])
+
+        if (futuros.length > 0) {
+          const evento = futuros[0]
+          setProximoEvento(evento)
+
+          // Recuperar si el usuario ya había respondido antes (persiste al refrescar)
+          try {
+            const miAsistencia = await getMiAsistencia(evento.id)
+            if (miAsistencia.status === 'confirmada') setAsistencia('si')
+            else if (miAsistencia.status === 'cancelada') setAsistencia('no')
+          } catch (err) {
+            console.error('No se pudo cargar la asistencia previa', err)
+            // no bloquea el resto del dashboard, solo se queda en null
+          }
+        }
 
         setMisServicios(servicios)
         setMisOportunidades(oportunidades)
@@ -144,12 +181,15 @@ export default function Dashboard() {
   const handleAsistencia = async (valor: RespuestaAsistencia) => {
     if (!proximoEvento || !valor) return
     setErrorAsistencia(null)
+    setEnviandoAsistencia(true)
     try {
       const res = await confirmarAsistencia(proximoEvento.id, valor)
-      setAsistencia(valor)
 
       if (res.cupo_agotado) {
-        setErrorAsistencia('El cupo para este evento está agotado.')
+        setErrorAsistencia('El cupo para este evento se acaba de agotar. Intenta con otra respuesta.')
+        // No se marca como confirmado: los botones se quedan visibles
+      } else {
+        setAsistencia(valor)
       }
     } catch (err: any) {
       if (err.response?.status === 409) {
@@ -157,7 +197,14 @@ export default function Dashboard() {
       } else {
         setErrorAsistencia('No se pudo guardar tu respuesta. Intenta de nuevo.')
       }
+    } finally {
+      setEnviandoAsistencia(false)
     }
+  }
+
+  const handleCambiarRespuesta = () => {
+    setAsistencia(null)
+    setErrorAsistencia(null)
   }
 
   if (cargando) return (
@@ -183,6 +230,8 @@ export default function Dashboard() {
     (acc, o) => acc + o.postulaciones_pendientes, 0
   )
 
+  const cupoLlenoYaNoRespondio = proximoEvento?.cupo_lleno && asistencia === null
+
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 20px' }}>
@@ -204,12 +253,12 @@ export default function Dashboard() {
           gap: '16px', marginBottom: '28px'
         }}>
           {[
-            { label: 'Servicios publicados', valor: misServicios.length, icono: '💼' },
-            { label: 'Oportunidades activas', valor: misOportunidades.length, icono: '🚀' },
+            { label: 'Servicios publicados', valor: misServicios.length, icono: '' },
+            { label: 'Oportunidades activas', valor: misOportunidades.length, icono: '' },
             {
               label: 'Próximo evento',
               valor: proximoEvento ? formatearFecha(proximoEvento.date) : 'Sin eventos',
-              icono: '📅',
+              icono: '',
             },
           ].map((stat) => (
             <div key={stat.label} style={{ ...styles.card, borderLeft: '4px solid #B66878' }}>
@@ -221,10 +270,10 @@ export default function Dashboard() {
 
           {totalPendientes > 0 && (
             <div
-              onClick={() => navigate('/oportunidades')}
+              onClick={() => navigate('/mis-oportunidades')}
               style={{ ...styles.card, borderLeft: '4px solid #ef4444', cursor: 'pointer' }}
             >
-              <span style={{ fontSize: '24px' }}>🔔</span>
+              <span style={{ fontSize: '24px' }}></span>
               <p style={{ fontSize: '28px', fontWeight: '800', color: '#ef4444', margin: '8px 0 4px' }}>{totalPendientes}</p>
               <p style={{ fontSize: '13px', color: '#6b7280' }}>Postulación{totalPendientes !== 1 ? 'es' : ''} sin revisar</p>
             </div>
@@ -235,29 +284,50 @@ export default function Dashboard() {
 
           {/* Próximo evento */}
           <div style={styles.card}>
-            <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>📅 Próximo Evento</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827' }}> Próximo Evento</h2>
+              <button onClick={() => navigate('/eventos')} style={styles.btnTexto}>
+                Ver todos →
+              </button>
+            </div>
             {proximoEvento ? (
               <>
                 <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '10px', color: '#1f2937' }}>{proximoEvento.title}</h3>
-                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}>📆 {formatearFecha(proximoEvento.date)}</p>
-                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}>🕐 {proximoEvento.start_time} - {proximoEvento.end_time}</p>
-                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}>📍 {proximoEvento.hotel || proximoEvento.location}</p>
+                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}> {formatearFecha(proximoEvento.date)}</p>
+                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}> {proximoEvento.start_time} - {proximoEvento.end_time}</p>
+                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}> {proximoEvento.hotel || proximoEvento.location}</p>
 
-                <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>¿Vas a asistir?</p>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    onClick={() => handleAsistencia('si')}
-                    style={styles.btnAsistencia(asistencia === 'si', '#B66878')}
-                  >
-                    ✓ Asistiré
-                  </button>
-                  <button
-                    onClick={() => handleAsistencia('no')}
-                    style={styles.btnAsistencia(asistencia === 'no', '#ef4444')}
-                  >
-                    ✗ No asistiré
-                  </button>
-                </div>
+                {asistencia === null ? (
+                  <>
+                    <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>¿Vas a asistir?</p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => handleAsistencia('si')}
+                        disabled={enviandoAsistencia || cupoLlenoYaNoRespondio}
+                        style={styles.btnAsistencia(false, '#B66878', cupoLlenoYaNoRespondio)}
+                      >
+                        {cupoLlenoYaNoRespondio ? 'Cupo lleno' : '✓ Asistiré'}
+                      </button>
+                      <button
+                        onClick={() => handleAsistencia('no')}
+                        disabled={enviandoAsistencia}
+                        style={styles.btnAsistencia(false, '#ef4444')}
+                      >
+                        ✗ No asistiré
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div style={styles.confirmacionBox(asistencia === 'si')}>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: asistencia === 'si' ? '#B66878' : '#374151' }}>
+                      {asistencia === 'si' ? '✓ Confirmaste tu asistencia' : 'Marcaste que no asistirás'}
+                    </span>
+                    <button onClick={handleCambiarRespuesta} style={styles.btnTexto}>
+                      Cambiar respuesta
+                    </button>
+                  </div>
+                )}
+
                 {errorAsistencia && (
                   <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px' }}>{errorAsistencia}</p>
                 )}
@@ -270,8 +340,8 @@ export default function Dashboard() {
           {/* Mis Servicios */}
           <div style={styles.card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827' }}>💼 Mis Servicios</h2>
-              <button onClick={() => navigate('/servicios')} style={styles.btnTexto}>
+              <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827' }}> Mis Servicios</h2>
+              <button onClick={() => navigate('/mis-servicios')} style={styles.btnTexto}>
                 Ver todos →
               </button>
             </div>
@@ -299,8 +369,8 @@ export default function Dashboard() {
           {/* Mis Oportunidades */}
           <div style={{ ...styles.card, gridColumn: '1 / -1' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827' }}>🚀 Mis Oportunidades</h2>
-              <button onClick={() => navigate('/oportunidades')} style={styles.btnTexto}>
+              <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827' }}> Mis Oportunidades</h2>
+              <button onClick={() => navigate('/mis-oportunidades')} style={styles.btnTexto}>
                 Ver todas →
               </button>
             </div>

@@ -6,6 +6,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate()
   const [pendientes, setPendientes] = useState<number>(0)
   const [cargandoBadge, setCargandoBadge] = useState(true)
+  const [errorPendientes, setErrorPendientes] = useState(false)
 
   useEffect(() => {
     cargarPendientes()
@@ -20,8 +21,11 @@ export default function AdminDashboard() {
       const data = await getSolicitudes('pendiente')
       const lista = data.results ?? data
       setPendientes(lista.length)
-    } catch {
-      // si falla, simplemente no mostramos badge, no rompemos el dashboard
+      setErrorPendientes(false)
+    } catch (err) {
+      console.error('No se pudo cargar el conteo de solicitudes pendientes', err)
+      setErrorPendientes(true)
+      // no rompemos el resto del dashboard, solo no mostramos el badge
     } finally {
       setCargandoBadge(false)
     }
@@ -34,6 +38,8 @@ export default function AdminDashboard() {
     { icon: '📝', label: 'Artículos',             ruta: '/admin/articulos' },
     { icon: '📢', label: 'Publicidad / Banners',  ruta: '/admin/banners' },
   ]
+
+  const irA = (ruta: string) => navigate(ruta)
 
   return (
     <div style={{ padding: '40px' }}>
@@ -57,16 +63,41 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+      {errorPendientes && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          background: '#f9fafb', border: '1px solid #e5e7eb',
+          borderRadius: '12px', padding: '10px 18px', marginBottom: '24px'
+        }}>
+          <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
+            No se pudo actualizar el contador de solicitudes pendientes.
+          </p>
+        </div>
+      )}
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '16px'
+      }}>
         {cards.map(card => (
           <div
             key={card.ruta}
-            onClick={() => navigate(card.ruta)}
+            role="button"
+            tabIndex={0}
+            onClick={() => irA(card.ruta)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                irA(card.ruta)
+              }
+            }}
             style={{
               position: 'relative',
               background: 'white', borderRadius: '16px', padding: '24px',
               border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
               cursor: 'pointer', transition: 'box-shadow 0.2s, transform 0.2s',
+              outline: 'none',
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(182,104,120,0.18)'
@@ -76,8 +107,14 @@ export default function AdminDashboard() {
               (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'
               ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'
             }}
+            onFocus={e => {
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 3px rgba(182,104,120,0.35)'
+            }}
+            onBlur={e => {
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'
+            }}
           >
-            {!!card.badge && card.badge > 0 && (
+            {card.badge > 0 && (
               <span style={{
                 position: 'absolute', top: '-8px', right: '-8px',
                 background: '#ef4444', color: 'white',

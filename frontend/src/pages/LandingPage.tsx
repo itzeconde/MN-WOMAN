@@ -2,15 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Shield, Users, TrendingUp, Heart, Clock, MapPin, Calendar } from 'lucide-react'
 import BannerSlot from '../components/BannerSlot'
+import api from '../api/axios'
+import fotoPrincipal from '../assets/hero-1.jpg'
+import fotoSecundaria from '../assets/hero-2.jpg'
 
-const API_BASE = 'http://127.0.0.1:8000/api'
-
-// ── Imágenes del hero ──
-// Reemplaza estas 2 URLs por tus fotos reales cuando las tengas.
-// FOTO_PRINCIPAL: foto grande, formato cuadrado/vertical, recorte "blob" orgánico.
-// FOTO_SECUNDARIA: foto chica, se muestra en círculo, sobrepuesta a la principal.
-const FOTO_PRINCIPAL = 'https://scontent.fpbc4-1.fna.fbcdn.net/v/t39.30808-6/686915631_122240814806263222_7699288192315071541_n.jpg?stp=cp6_dst-jpg_tt6&cstp=mx2048x1536&ctp=s2048x1536&_nc_cat=101&ccb=1-7&_nc_sid=cc71e4&_nc_ohc=iUBVIL5exyoQ7kNvwFLd4aM&_nc_oc=AdpoRTcxMqrwBiiLufB7njNC3BYec_Y834o7Ue4Yv26WugRWt_9XOEG0EPW2KAksCG0iBS8euaI8eKRpZLeKJO6l&_nc_zt=23&_nc_ht=scontent.fpbc4-1.fna&_nc_gid=MZeC1AK4FwMmqp6Fuuobgw&_nc_ss=7d289&oh=00_AQCne1CX_LTrjEzLImBnoHAcArSAdgAEpLOj7YcGp2p8Jg&oe=6A5CC8AA'
-const FOTO_SECUNDARIA = 'https://scontent.fpbc4-1.fna.fbcdn.net/v/t39.30808-6/561244963_122215161728263222_1523564337223235152_n.jpg?stp=dst-jpg_tt6&cstp=mx940x788&ctp=s940x788&_nc_cat=101&ccb=1-7&_nc_sid=127cfc&_nc_ohc=eAQQtC7TMLMQ7kNvwFys5lR&_nc_oc=AdqQ7yzCCux4ul2nOBiIGMgyyzXGUFfjqApeeitvUIdfA5jS1AeuWJ6KFYvKn5urueCadF0X9O6lW4g4AXQ-beXt&_nc_zt=23&_nc_ht=scontent.fpbc4-1.fna&_nc_gid=UjmAYMYo59y762HpP5Y4hg&_nc_ss=7d289&oh=00_AQDRw74DlwyCZBvE_efLu9Fk53nJ5_effAs6xV0G0hnYAQ&oe=6A5CA569'
+const FOTO_PRINCIPAL = fotoPrincipal
+const FOTO_SECUNDARIA = fotoSecundaria
 
 interface Article {
   id: number
@@ -61,35 +58,34 @@ const LandingPage = () => {
 
   useEffect(() => {
     // Artículos: los más recientes primero (id más alto = creado después)
-    fetch(`${API_BASE}/articles/public/`)
-      .then(r => r.json())
-      .then(d => {
-        const ordenados = Array.isArray(d) ? [...d].sort((a, b) => b.id - a.id) : []
+    api.get('/articles/public/')
+      .then(({ data }) => {
+        const ordenados = Array.isArray(data) ? [...data].sort((a, b) => b.id - a.id) : []
         setArticles(ordenados.slice(0, 6))
       })
       .catch(() => {})
 
     // Eventos: el más próximo a suceder primero
-    fetch(`${API_BASE}/eventos/public/`)
-      .then(r => r.json())
-      .then(d => {
-        const ordenados = Array.isArray(d)
-          ? [...d].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    api.get('/eventos/public/')
+      .then(({ data }) => {
+        const ordenados = Array.isArray(data)
+          ? [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
           : []
         setEventos(ordenados.slice(0, 3))
       })
       .catch(() => {})
 
     // Cursos: los más recientes primero
-    fetch(`${API_BASE}/cursos/`)
-      .then(r => r.json())
-      .then(d => {
-        const ordenados = Array.isArray(d) ? [...d].sort((a, b) => b.id - a.id) : []
+    api.get('/cursos/')
+      .then(({ data }) => {
+        const ordenados = Array.isArray(data) ? [...data].sort((a, b) => b.id - a.id) : []
         setCursos(ordenados.slice(0, 4))
       })
       .catch(() => {})
 
-    fetch(`${API_BASE}/linea911/public/`).then(r => r.json()).then(d => setInstituciones(Array.isArray(d) ? d.slice(0, 4) : [])).catch(() => {})
+    api.get('/linea911/public/')
+      .then(({ data }) => setInstituciones(Array.isArray(data) ? data.slice(0, 4) : []))
+      .catch(() => {})
   }, [])
 
   const formatFecha = (fecha: string) =>

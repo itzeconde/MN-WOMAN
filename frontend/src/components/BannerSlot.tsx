@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-
-const API_BASE = 'http://127.0.0.1:8000/api'
+import api from '../api/axios'
 
 interface Banner {
   id: number
@@ -30,10 +29,11 @@ export default function BannerSlot({ posicion, titulo = 'Presencia' }: Props) {
   const [banners, setBanners] = useState<Banner[]>([])
 
   useEffect(() => {
-    fetch(`${API_BASE}/banners/public/?posicion=${posicion}`)
-      .then(r => r.json())
-      .then(d => setBanners(Array.isArray(d) ? d : []))
-      .catch(() => {})
+    api.get('/banners/public/', { params: { posicion } })
+      .then(({ data }) => setBanners(Array.isArray(data) ? data : []))
+      .catch(() => {
+        // Los banners son decorativos: si falla, simplemente no se muestran.
+      })
   }, [posicion])
 
   if (banners.length === 0) return null
@@ -62,8 +62,8 @@ export default function BannerSlot({ posicion, titulo = 'Presencia' }: Props) {
         {/* Grid de banners */}
         <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'stretch' }}>
           {banners.map(banner => (
-            <a
-              key={banner.id}
+            
+              <a key={banner.id}
               href={banner.url_destino}
               target="_blank"
               rel="noopener noreferrer"

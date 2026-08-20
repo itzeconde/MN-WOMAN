@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -26,6 +29,25 @@ class DetalleEventoView(generics.RetrieveAPIView):
     queryset = Event.objects.all()
 
 
+def _evento_ya_paso(event: Event) -> bool:
+    """
+    Un evento ya no acepta confirmaciones si su hora de fin ya quedó atrás,
+    o si alguien lo marcó 'finalizado' manualmente desde el admin. No
+    reutilizamos EventoSerializer.get_status aquí para no acoplar la vista
+    al serializer; la regla es simple y vive junto a donde se aplica.
+    """
+    if event.status == 'finalizado':
+        return True
+
+    fin_naive = datetime.combine(event.date, event.end_time)
+    if timezone.is_aware(timezone.now()):
+        fin = timezone.make_aware(fin_naive, timezone.get_current_timezone())
+    else:
+        fin = fin_naive
+
+    return timezone.now() > fin
+
+
 class ConfirmarAsistenciaView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -37,14 +59,32 @@ class ConfirmarAsistenciaView(APIView):
                 status=400
             )
 
-        try:
-            event = Event.objects.get(pk=evento_id)
-        except Event.DoesNotExist:
-            return Response({'error': 'Evento no encontrado'}, status=404)
-
         status_valor = 'confirmada' if valor == 'si' else 'cancelada'
 
         with transaction.atomic():
+            # Bloqueamos la fila del propio Event (que siempre existe) en vez
+            # de las filas de Attendance (que pueden no existir todavía).
+            # Así, si dos requests llegan casi al mismo tiempo para el mismo
+            # evento, el segundo espera a que el primero termine su
+            # transacción antes de contar el cupo — eliminando la ventana de
+            # carrera donde ambos ven el mismo conteo y ambos pasan la
+            # validación, dejando pasar más asistentes de los permitidos.
+            try:
+                event = Event.objects.select_for_update().get(pk=evento_id)
+            except Event.DoesNotExist:
+                return Response({'error': 'Evento no encontrado'}, status=404)
+
+            # ✅ Un evento que ya pasó no acepta nuevas confirmaciones. Esto
+            # antes solo se ocultaba en el frontend (el botón desaparecía),
+            # pero cualquiera podía seguir pegándole directo al endpoint.
+            # Sí dejamos cancelar ('no') incluso si el evento ya pasó, por si
+            # alguien quiere corregir un registro viejo.
+            if status_valor == 'confirmada' and _evento_ya_paso(event):
+                return Response(
+                    {'error': 'Este evento ya finalizó y no acepta nuevas confirmaciones'},
+                    status=400
+                )
+
             # ✅ Verificar cupo ANTES de crear/actualizar el registro
             if status_valor == 'confirmada' and event.limite_asistentes is not None:
                 ya_confirmada = Attendance.objects.filter(
@@ -54,7 +94,7 @@ class ConfirmarAsistenciaView(APIView):
                 ).exists()
 
                 if not ya_confirmada:
-                    confirmadas = Attendance.objects.select_for_update().filter(
+                    confirmadas = Attendance.objects.filter(
                         event=event,
                         status='confirmada'
                     ).count()
@@ -133,13 +173,30 @@ class AdminAsistentesView(generics.ListAPIView):
         ).select_related('user')
 
     def patch(self, request, evento_id):
+        asistencia_id = request.data.get('asistencia_id')
+        status_nuevo = request.data.get('status')
+
+        if not asistencia_id or not status_nuevo:
+            return Response(
+                {'error': 'Se requieren "asistencia_id" y "status"'},
+                status=400
+            )
+
+        valores_validos = dict(Attendance.STATUS)
+        if status_nuevo not in valores_validos:
+            return Response(
+                {'error': f'"status" debe ser uno de: {", ".join(valores_validos)}'},
+                status=400
+            )
+
         try:
             asistencia = Attendance.objects.get(
-                pk=request.data['asistencia_id'],
+                pk=asistencia_id,
                 event_id=evento_id
             )
         except Attendance.DoesNotExist:
             return Response({'error': 'Asistencia no encontrada'}, status=404)
-        asistencia.status = request.data['status']
+
+        asistencia.status = status_nuevo
         asistencia.save()
         return Response({'status': asistencia.status})

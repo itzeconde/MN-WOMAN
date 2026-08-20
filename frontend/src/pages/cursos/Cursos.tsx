@@ -1,11 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Clock, GraduationCap, SlidersHorizontal } from 'lucide-react'
+import { Search, Clock, GraduationCap, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getCursos, type Curso } from '../../api/cursos'
+import {
+  paginacionBotonStyle, badgePillStyle,
+  COLOR_MARCA, COLOR_MARCA_CLARO, COLOR_BORDE,
+  CARD_SHADOW_REST, CARD_SHADOW_HOVER,
+} from '../../styles/tokens'
 
 const CATEGORIAS = [
-  { value: '', label: 'Todas las categorías' },
-  { value: 'sensibilizacion', label: 'Formación en Sensibilización' },
+  { value: '', label: 'Todas' },
+  { value: 'sensibilizacion', label: 'Sensibilización' },
   { value: 'academico', label: 'Programa Académico' },
   { value: 'liderazgo', label: 'Liderazgo y Negocios' },
   { value: 'tecnologia', label: 'Tecnología' },
@@ -15,7 +20,7 @@ const CATEGORIAS = [
 ]
 
 const NIVELES = [
-  { value: '', label: 'Todos los niveles' },
+  { value: '', label: 'Todos' },
   { value: 'basico', label: 'Básico' },
   { value: 'intermedio', label: 'Intermedio' },
   { value: 'avanzado', label: 'Avanzado' },
@@ -28,6 +33,8 @@ const NIVEL_COLOR: Record<string, { bg: string; text: string }> = {
   avanzado: { bg: '#fdecee', text: '#c23f52' },
 }
 
+const CURSOS_POR_PAGINA = 9
+
 const Cursos = () => {
   const navigate = useNavigate()
   const [cursos, setCursos] = useState<Curso[]>([])
@@ -35,8 +42,14 @@ const Cursos = () => {
   const [error, setError] = useState(false)
   const [categoria, setCategoria] = useState('')
   const [nivel, setNivel] = useState('')
+  const [busqueda, setBusqueda] = useState('')
+  const [pagina, setPagina] = useState(1)
 
   useEffect(() => {
+    // Flag de cancelación: evita que una respuesta "vieja" (de un filtro anterior)
+    // sobreescriba los datos de la petición más reciente si llega fuera de orden.
+    let cancelado = false
+
     const filtros: Record<string, string> = {}
     if (categoria) filtros.categoria = categoria
     if (nivel) filtros.nivel = nivel
@@ -44,202 +57,322 @@ const Cursos = () => {
     setLoading(true)
     setError(false)
     getCursos(Object.keys(filtros).length ? filtros : undefined)
-      .then(setCursos)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false))
+      .then(data => {
+        if (cancelado) return
+        setCursos(data)
+        setPagina(1) // al cambiar filtros, siempre regresamos a la página 1
+      })
+      .catch(err => {
+        if (cancelado) return
+        console.error('Error al cargar cursos:', err)
+        setError(true)
+      })
+      .finally(() => {
+        if (!cancelado) setLoading(false)
+      })
+
+    return () => {
+      cancelado = true
+    }
   }, [categoria, nivel])
 
+  useEffect(() => {
+    setPagina(1)
+  }, [busqueda])
+
+  const cursosFiltrados = cursos.filter(c =>
+    busqueda === '' ||
+    c.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
+    (c.instructor ?? '').toLowerCase().includes(busqueda.toLowerCase())
+  )
+
+  const totalPaginas = Math.max(1, Math.ceil(cursosFiltrados.length / CURSOS_POR_PAGINA))
+  const paginaSegura = Math.min(pagina, totalPaginas)
+  const cursosPagina = cursosFiltrados.slice(
+    (paginaSegura - 1) * CURSOS_POR_PAGINA,
+    paginaSegura * CURSOS_POR_PAGINA
+  )
+
+  // Números de página con "..." cuando hay muchas páginas (mismo patrón que Oportunidades.tsx)
+  const numerosPagina = useMemo(() => {
+    if (totalPaginas <= 7) return Array.from({ length: totalPaginas }, (_, i) => i + 1)
+    const nums = new Set([1, 2, totalPaginas - 1, totalPaginas, paginaSegura - 1, paginaSegura, paginaSegura + 1])
+    return Array.from(nums).filter(n => n >= 1 && n <= totalPaginas).sort((a, b) => a - b)
+  }, [totalPaginas, paginaSegura])
+
+  const irAPagina = (p: number) => {
+    setPagina(Math.min(Math.max(p, 1), totalPaginas))
+    document.getElementById('cursos-grid-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
-    <main style={{ fontFamily: "'Inter', 'Helvetica Neue', sans-serif", backgroundColor: '#fff', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
       <style>{`
-        .curso-card {
-          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-        }
-        .curso-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 14px 28px rgba(182, 104, 120, 0.14);
-          border-color: #edd8de;
-        }
         .curso-card:hover .curso-img {
           transform: scale(1.05);
         }
         .curso-img {
           transition: transform 0.4s ease;
         }
-        .curso-filtro-select {
-          appearance: none;
-          -webkit-appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23B66878' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-          background-repeat: no-repeat;
-          background-position: right 12px center;
-          padding-right: 34px;
-        }
-        .curso-filtro-select:focus {
-          outline: none;
-          border-color: #B66878;
-          box-shadow: 0 0 0 3px rgba(182, 104, 120, 0.12);
-        }
-        @media (max-width: 700px) {
-          .curso-hero-pad { padding: 56px 24px 36px !important; }
-          .curso-body-pad { padding: 32px 24px 56px !important; }
+        .curso-chip {
+          transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
         }
       `}</style>
 
-      {/* ── HERO ── */}
-      <section
-        className="curso-hero-pad"
-        style={{
-          padding: '80px 64px 48px',
-          background: 'linear-gradient(150deg, #fdf2f4 0%, #fce8f0 60%, #fdf6f8 100%)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <div style={{
-          position: 'absolute', right: '-90px', top: '-60px',
-          width: '380px', height: '380px', borderRadius: '50%',
-          background: 'rgba(182, 104, 120, 0.06)', pointerEvents: 'none',
-        }} />
-        <div style={{ maxWidth: '1120px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#B66878' }}>
+      {/* HERO — mismo patrón de franja que Oportunidades.tsx */}
+      <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 20px 32px' }}>
+          <span style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: COLOR_MARCA }}>
             Centro de Formación MN WOMAN
           </span>
-          <h1 style={{ fontSize: '42px', fontWeight: '800', color: '#0f0a0b', margin: '12px 0 16px', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: '32px', fontWeight: '800', color: '#111827', margin: '10px 0 12px', lineHeight: '1.25' }}>
             Cursos y Programas
           </h1>
-          <p style={{ fontSize: '16px', color: '#7a6870', margin: 0, lineHeight: '1.7', maxWidth: '520px' }}>
+          <p style={{ color: '#6b7280', fontSize: '15px', margin: 0, maxWidth: '520px' }}>
             Programas especializados diseñados por y para mujeres líderes.
           </p>
           {!loading && !error && (
-            <p style={{ fontSize: '13px', color: '#B66878', fontWeight: '700', margin: '20px 0 0' }}>
-              {cursos.length} {cursos.length === 1 ? 'programa disponible' : 'programas disponibles'}
+            <p style={{ fontSize: '13px', color: COLOR_MARCA, fontWeight: '700', margin: '16px 0 0' }}>
+              {cursosFiltrados.length} {cursosFiltrados.length === 1 ? 'programa disponible' : 'programas disponibles'}
             </p>
           )}
         </div>
-      </section>
+      </div>
 
-      <section className="curso-body-pad" style={{ padding: '48px 64px 64px', maxWidth: '1120px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 20px 40px' }}>
 
-        {/* Filtros */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap',
-          background: '#fdf8f9', border: '1px solid #f0e6e9', borderRadius: '14px',
-          padding: '14px 18px', marginBottom: '32px',
-        }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '700', color: '#B66878', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            <SlidersHorizontal size={13} color="#B66878" /> Filtrar
-          </span>
-          <select
-            value={categoria}
-            onChange={e => setCategoria(e.target.value)}
-            className="curso-filtro-select"
-            style={{ padding: '9px 34px 9px 14px', borderRadius: '9px', border: '1px solid #e5d3d8', fontSize: '13px', color: '#0f0a0b', background: '#fff', cursor: 'pointer' }}
-          >
-            {CATEGORIAS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-          </select>
-          <select
-            value={nivel}
-            onChange={e => setNivel(e.target.value)}
-            className="curso-filtro-select"
-            style={{ padding: '9px 34px 9px 14px', borderRadius: '9px', border: '1px solid #e5d3d8', fontSize: '13px', color: '#0f0a0b', background: '#fff', cursor: 'pointer' }}
-          >
-            {NIVELES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
-          </select>
-          {(categoria || nivel) && (
-            <button
-              onClick={() => { setCategoria(''); setNivel('') }}
-              style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: '600', color: '#B66878', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-            >
-              Limpiar filtros
-            </button>
-          )}
+        {/* BUSCADOR */}
+        <div style={{ position: 'relative', marginBottom: '20px' }}>
+          <Search size={16} color="#9ca3af" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+          <input
+            type="text"
+            aria-label="Buscar cursos"
+            placeholder="Buscar por título o instructor..."
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            style={{
+              width: '100%', padding: '13px 14px 13px 40px', borderRadius: '12px',
+              border: `1px solid ${COLOR_BORDE}`, fontSize: '14px',
+              boxSizing: 'border-box' as const, outline: 'none', background: 'white',
+            }}
+          />
         </div>
 
+        {/* CHIPS DE CATEGORÍA */}
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', marginBottom: '16px', scrollbarWidth: 'none' }}>
+          {CATEGORIAS.map(c => (
+            <button
+              key={c.value}
+              className="curso-chip"
+              onClick={() => setCategoria(c.value)}
+              aria-pressed={categoria === c.value}
+              style={{
+                padding: '9px 18px', borderRadius: '20px', border: 'none', whiteSpace: 'nowrap',
+                background: categoria === c.value ? COLOR_MARCA : 'white',
+                color: categoria === c.value ? 'white' : '#374151',
+                fontWeight: '700', fontSize: '13px', cursor: 'pointer',
+                boxShadow: categoria === c.value ? 'none' : `inset 0 0 0 1px ${COLOR_BORDE}`,
+              }}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ height: '1px', background: COLOR_BORDE, marginBottom: '16px' }} />
+
+        {/* CHIPS DE NIVEL */}
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', marginBottom: '32px', scrollbarWidth: 'none' }}>
+          {NIVELES.map(n => (
+            <button
+              key={n.value}
+              className="curso-chip"
+              onClick={() => setNivel(n.value)}
+              aria-pressed={nivel === n.value}
+              style={{
+                padding: '7px 16px', borderRadius: '20px', border: 'none', whiteSpace: 'nowrap',
+                background: nivel === n.value ? '#374151' : 'white',
+                color: nivel === n.value ? 'white' : '#6b7280',
+                fontWeight: '600', fontSize: '12px', cursor: 'pointer',
+                boxShadow: nivel === n.value ? 'none' : `inset 0 0 0 1px ${COLOR_BORDE}`,
+              }}
+            >
+              {n.label}
+            </button>
+          ))}
+        </div>
+
+        <div id="cursos-grid-top" />
+
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
             {[0, 1, 2].map(i => (
-              <div key={i} style={{ borderRadius: '16px', border: '1px solid #f0e6e9', overflow: 'hidden' }}>
-                <div style={{ height: '150px', background: '#fdf2f4' }} />
+              <div key={i} style={{ borderRadius: '16px', border: `1px solid ${COLOR_BORDE}`, overflow: 'hidden' }}>
+                <div style={{ height: '170px', background: '#FDF0F2' }} />
                 <div style={{ padding: '20px' }}>
-                  <div style={{ width: '60%', height: '10px', background: '#fdf2f4', borderRadius: '4px', marginBottom: '12px' }} />
+                  <div style={{ width: '60%', height: '10px', background: '#FDF0F2', borderRadius: '4px', marginBottom: '12px' }} />
                   <div style={{ width: '85%', height: '14px', background: '#faf0f2', borderRadius: '4px' }} />
                 </div>
               </div>
             ))}
           </div>
         ) : error ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fdf8f9', borderRadius: '16px', border: '1px solid #f0e6e9' }}>
-            <GraduationCap size={32} color="#d99aa6" style={{ marginBottom: '12px' }} />
-            <p style={{ color: '#B66878', fontWeight: '700', margin: '0 0 4px' }}>No pudimos cargar los cursos</p>
-            <p style={{ color: '#9a7880', fontSize: '13px', margin: 0 }}>Intenta recargar la página en unos momentos.</p>
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <GraduationCap size={32} color={COLOR_MARCA_CLARO} style={{ marginBottom: '12px' }} />
+            <p style={{ color: COLOR_MARCA, fontWeight: '700', margin: '0 0 4px' }}>No pudimos cargar los cursos</p>
+            <p style={{ color: '#6b7280', fontSize: '13px', margin: 0 }}>Intenta recargar la página en unos momentos.</p>
           </div>
         ) : cursos.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fdf8f9', borderRadius: '16px', border: '1px solid #f0e6e9' }}>
-            <GraduationCap size={32} color="#d99aa6" style={{ marginBottom: '12px' }} />
-            <p style={{ color: '#0f0a0b', fontWeight: '700', margin: '0 0 4px' }}>Sin resultados</p>
-            <p style={{ color: '#9a7880', fontSize: '13px', margin: 0 }}>No hay cursos que coincidan con estos filtros.</p>
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <GraduationCap size={32} color={COLOR_MARCA_CLARO} style={{ marginBottom: '12px' }} />
+            <p style={{ color: '#111827', fontWeight: '700', margin: '0 0 4px' }}>Sin resultados</p>
+            <p style={{ color: '#6b7280', fontSize: '13px', margin: 0 }}>No hay cursos que coincidan con estos filtros.</p>
+          </div>
+        ) : cursosFiltrados.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <GraduationCap size={32} color={COLOR_MARCA_CLARO} style={{ marginBottom: '12px' }} />
+            <p style={{ color: '#111827', fontWeight: '700', margin: '0 0 4px' }}>Sin resultados</p>
+            <p style={{ color: '#6b7280', fontSize: '13px', margin: 0 }}>No hay resultados para tu búsqueda o filtros actuales.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '24px' }}>
-            {cursos.map(curso => {
-              const nivelColor = NIVEL_COLOR[curso.nivel] ?? { bg: '#faf0f2', text: '#7a6870' }
-              return (
-                <div
-                  key={curso.id}
-                  className="curso-card"
-                  style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', border: '1px solid #f0e6e9', cursor: 'pointer', position: 'relative' }}
-                  onClick={() => navigate(`/cursos/${curso.id}`)}
-                >
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, #B66878, #d4889a)', zIndex: 2 }} />
-
-                  <div style={{ height: '150px', background: '#FDF0F2', overflow: 'hidden', position: 'relative' }}>
-                    {curso.imagen
-                      ? <img src={curso.imagen} alt={curso.titulo} className="curso-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px' }}>🎓</div>
-                    }
-                    <span style={{
-                      position: 'absolute', top: '10px', right: '10px',
-                      display: 'flex', alignItems: 'center', gap: '4px',
-                      background: 'rgba(15,10,11,0.55)', color: '#fff',
-                      padding: '4px 9px', borderRadius: '100px', fontSize: '11px', fontWeight: '600',
-                      backdropFilter: 'blur(2px)',
-                    }}>
-                      <Clock size={11} color="#fff" /> {curso.duracion_horas}h
-                    </span>
-                  </div>
-
-                  <div style={{ padding: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                      <span style={{ backgroundColor: '#FDF0F2', color: '#B66878', padding: '3px 10px', borderRadius: '100px', fontSize: '11px', fontWeight: '700' }}>
-                        {curso.categoria_display}
-                      </span>
-                      <span style={{ backgroundColor: nivelColor.bg, color: nivelColor.text, padding: '3px 10px', borderRadius: '100px', fontSize: '11px', fontWeight: '700' }}>
-                        {curso.nivel_display}
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
+              {cursosPagina.map(curso => {
+                const nivelColor = NIVEL_COLOR[curso.nivel] ?? { bg: '#faf0f2', text: '#6b7280' }
+                return (
+                  <div
+                    key={curso.id}
+                    className="curso-card"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/cursos/${curso.id}`)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        navigate(`/cursos/${curso.id}`)
+                      }
+                    }}
+                    style={{
+                      background: 'white', borderRadius: '16px', overflow: 'hidden',
+                      border: `1px solid ${COLOR_BORDE}`, boxShadow: CARD_SHADOW_REST,
+                      cursor: 'pointer', transition: 'box-shadow 0.2s, border-color 0.2s, transform 0.2s',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.boxShadow = CARD_SHADOW_HOVER
+                      e.currentTarget.style.borderColor = COLOR_MARCA_CLARO
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.boxShadow = CARD_SHADOW_REST
+                      e.currentTarget.style.borderColor = COLOR_BORDE
+                      e.currentTarget.style.transform = 'translateY(0)'
+                    }}
+                  >
+                    <div style={{ height: '170px', background: '#FDF0F2', overflow: 'hidden', position: 'relative' }}>
+                      {curso.imagen
+                        ? (
+                          <img
+                            src={curso.imagen}
+                            alt={curso.titulo}
+                            className="curso-img"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={e => {
+                              // Si la URL de la imagen falla (404, storage borrado, etc.),
+                              // caemos al placeholder del emoji en vez de mostrar el ícono roto.
+                              e.currentTarget.style.display = 'none'
+                              const fallback = e.currentTarget.nextElementSibling as HTMLElement | null
+                              if (fallback) fallback.style.display = 'flex'
+                            }}
+                          />
+                        )
+                        : null}
+                      <div
+                        style={{
+                          display: curso.imagen ? 'none' : 'flex',
+                          width: '100%', height: '100%',
+                          alignItems: 'center', justifyContent: 'center', fontSize: '36px',
+                        }}
+                      >
+                        🎓
+                      </div>
+                      <span style={{
+                        position: 'absolute', top: '10px', right: '10px',
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        background: 'rgba(17,24,39,0.55)', color: '#fff',
+                        padding: '4px 9px', borderRadius: '100px', fontSize: '11px', fontWeight: '600',
+                        backdropFilter: 'blur(2px)',
+                      }}>
+                        <Clock size={11} color="#fff" /> {curso.duracion_horas != null ? `${curso.duracion_horas}h` : 'Duración N/D'}
                       </span>
                     </div>
 
-                    <p style={{ fontSize: '15px', fontWeight: '700', color: '#0f0a0b', margin: '14px 0 4px', lineHeight: '1.4', letterSpacing: '-0.01em' }}>
-                      {curso.titulo}
-                    </p>
-                    {curso.instructor && (
-                      <p style={{ fontSize: '12px', color: '#b0a0a6', margin: '0 0 12px' }}>
-                        Por {curso.instructor}
+                    <div style={{ padding: '20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span style={badgePillStyle('#FDF0F2', COLOR_MARCA)}>
+                          {curso.categoria_display}
+                        </span>
+                        <span style={badgePillStyle(nivelColor.bg, nivelColor.text)}>
+                          {curso.nivel_display}
+                        </span>
+                      </div>
+
+                      <p style={{ fontSize: '15px', fontWeight: '700', color: '#111827', margin: '14px 0 4px', lineHeight: '1.4' }}>
+                        {curso.titulo}
                       </p>
-                    )}
+                      {curso.instructor && (
+                        <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 12px' }}>
+                          Por {curso.instructor}
+                        </p>
+                      )}
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #f0e6e9', marginTop: '4px' }}>
-                      <span style={{ fontSize: '12px', color: '#B66878', fontWeight: '700' }}>
-                        Ver curso →
-                      </span>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', paddingTop: '12px', borderTop: `1px solid ${COLOR_BORDE}`, marginTop: '4px' }}>
+                        <span style={{ fontSize: '12px', color: COLOR_MARCA, fontWeight: '700' }}>
+                          Ver curso →
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+
+            {/* PAGINACIÓN — mismo componente/estilo que Oportunidades.tsx */}
+            {totalPaginas > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '32px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => irAPagina(paginaSegura - 1)}
+                  disabled={paginaSegura === 1}
+                  style={paginacionBotonStyle(false, paginaSegura === 1)}
+                >
+                  <ChevronLeft size={14} />
+                </button>
+
+                {numerosPagina.map((n, i) => {
+                  const anterior = numerosPagina[i - 1]
+                  const hayHueco = anterior !== undefined && n - anterior > 1
+                  return (
+                    <div key={n} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {hayHueco && <span style={{ color: '#9ca3af', fontSize: '13px' }}>...</span>}
+                      <button onClick={() => irAPagina(n)} style={paginacionBotonStyle(n === paginaSegura, false)}>
+                        {n}
+                      </button>
+                    </div>
+                  )
+                })}
+
+                <button
+                  onClick={() => irAPagina(paginaSegura + 1)}
+                  disabled={paginaSegura === totalPaginas}
+                  style={paginacionBotonStyle(false, paginaSegura === totalPaginas)}
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+          </>
         )}
-      </section>
-    </main>
+      </div>
+    </div>
   )
 }
 

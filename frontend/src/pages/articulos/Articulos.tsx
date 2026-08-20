@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-
-
-const API_BASE = "http://127.0.0.1:8000/api";
+import api from "../../api/axios";
 
 // Paleta MN WOMAN - Pink Rose
 const COLORS = {
@@ -49,18 +47,12 @@ export default function Articulos() {
     setLoading(true);
     try {
       const token = getToken();
-      const params = activeCategory !== "todos" ? `?category=${activeCategory}` : "";
+      const params = activeCategory !== "todos" ? { category: activeCategory } : {};
 
       // FIX 1: usar endpoint público cuando no hay token
-      const url = token
-        ? `${API_BASE}/articles/${params}`
-        : `${API_BASE}/articles/public/${params}`;
+      const url = token ? "/articles/" : "/articles/public/";
 
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(url, { headers });
-      const data = await res.json();
+      const { data } = await api.get(url, { params });
 
       // FIX 2: manejar respuesta paginada {count, results:[]} o array directo
       const lista: Article[] = Array.isArray(data) ? data : (data.results ?? []);

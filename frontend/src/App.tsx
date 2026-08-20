@@ -13,10 +13,12 @@ import DetalleCurso from './pages/cursos/DetalleCurso'
 import Eventos from './pages/eventos/Eventos'
 import DetalleEvento from './pages/eventos/DetalleEvento'
 import Oportunidades from './pages/oportunidades/Oportunidades'
+import MisOportunidades from './pages/oportunidades/MisOportunidades'
 import NuevaOportunidad from './pages/oportunidades/NuevaOportunidad'
 import DetalleOportunidad from './pages/oportunidades/DetalleOportunidad'
 import PostulacionesRecibidas from './pages/oportunidades/PostulacionesRecibidas'
 import Servicios from './pages/servicios/Servicios'
+import MisServicios from './pages/servicios/MisServicios'
 import NuevoServicio from './pages/servicios/NuevoServicio'
 import Linea911 from './pages/linea911/Linea911'
 import Perfil from './pages/perfil/Perfil'
@@ -99,7 +101,7 @@ function AppRoutes() {
       <Route path="/articulos" element={
         <><Navbar /><RutaSemiPublica><Articulos /></RutaSemiPublica><Footer /></>
       } />
-      
+
       <Route path="/sobre-nosotros" element={
         <><Navbar /><RutaSemiPublica><Sobrenosotros /></RutaSemiPublica><Footer /></>
       } />
@@ -119,10 +121,12 @@ function AppRoutes() {
             <Route path="/cursos/:id" element={<RutaPrivada><DetalleCurso /></RutaPrivada>} />
             <Route path="/eventos" element={<RutaPrivada><Eventos /></RutaPrivada>} />
             <Route path="/oportunidades" element={<RutaPrivada><Oportunidades /></RutaPrivada>} />
+            <Route path="/mis-oportunidades" element={<RutaPrivada><MisOportunidades /></RutaPrivada>} />
             <Route path="/oportunidades/nueva" element={<RutaPrivada><NuevaOportunidad /></RutaPrivada>} />
             <Route path="/oportunidades/:id/postulaciones" element={<RutaPrivada><PostulacionesRecibidas /></RutaPrivada>} />
             <Route path="/oportunidades/:id" element={<RutaPrivada><DetalleOportunidad /></RutaPrivada>} />
             <Route path="/servicios" element={<RutaPrivada><Servicios /></RutaPrivada>} />
+            <Route path="/mis-servicios" element={<RutaPrivada><MisServicios /></RutaPrivada>} />
             <Route path="/servicios/nuevo" element={<RutaPrivada><NuevoServicio /></RutaPrivada>} />
             <Route path="/perfil" element={<RutaPrivada><Perfil /></RutaPrivada>} />
 

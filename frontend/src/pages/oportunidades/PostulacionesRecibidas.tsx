@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getPostulacionesRecibidas, getOportunidad } from '../../api/oportunidades'
+import { getPostulacionesRecibidas, getOportunidad, responderPostulacion } from '../../api/oportunidades'
+import { Check, X } from 'lucide-react'
 
 interface Postulacion {
   id: number
@@ -24,6 +25,8 @@ export default function PostulacionesRecibidas() {
   const [tituloOportunidad, setTituloOportunidad] = useState('')
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
+  const [respondiendoId, setRespondiendoId] = useState<number | null>(null)
+  const [erroresPorPostulacion, setErroresPorPostulacion] = useState<Record<number, string>>({})
 
   useEffect(() => {
     const cargar = async () => {
@@ -42,6 +45,33 @@ export default function PostulacionesRecibidas() {
     }
     cargar()
   }, [id])
+
+  const manejarResponder = async (postulacionId: number, nuevoStatus: 'aceptada' | 'rechazada') => {
+    setRespondiendoId(postulacionId)
+    setErroresPorPostulacion((prev) => {
+      const copia = { ...prev }
+      delete copia[postulacionId]
+      return copia
+    })
+    try {
+      await responderPostulacion(postulacionId, nuevoStatus)
+      setPostulaciones((prev) =>
+        prev.map((p) => (p.id === postulacionId ? { ...p, status: nuevoStatus } : p))
+      )
+    } catch (err: any) {
+      // Mismo patrón que NuevoServicio/NuevaOportunidad: campo específico →
+      // detail → string plano → genérico. Aquí "status" es el campo que
+      // valida el backend (ej. si ya fue respondida antes).
+      const detalle =
+        err?.response?.data?.status?.[0] ||
+        err?.response?.data?.detail ||
+        (typeof err?.response?.data === 'string' ? err.response.data : null) ||
+        'No se pudo registrar tu respuesta. Intenta de nuevo.'
+      setErroresPorPostulacion((prev) => ({ ...prev, [postulacionId]: detalle }))
+    } finally {
+      setRespondiendoId(null)
+    }
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '40px 20px' }}>
@@ -78,6 +108,7 @@ export default function PostulacionesRecibidas() {
               const st = STATUS_STYLE[p.status]
               const iniciales = p.postulante_nombre
                 .split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+              const errorPostulacion = erroresPorPostulacion[p.id]
 
               return (
                 <div key={p.id} style={{
@@ -118,9 +149,49 @@ export default function PostulacionesRecibidas() {
                     </p>
                   )}
 
-                  <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>
+                  <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 12px' }}>
                     Postulada el {new Date(p.postulada_el).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
+
+                  {p.status === 'pendiente' && (
+                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
+                      <button
+                        onClick={() => manejarResponder(p.id, 'aceptada')}
+                        disabled={respondiendoId === p.id}
+                        style={{
+                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                          background: '#f0fdf4', color: '#16a34a', padding: '9px 14px',
+                          borderRadius: '8px', border: '1px solid #bbf7d0', cursor: 'pointer',
+                          fontWeight: '700', fontSize: '13px',
+                          opacity: respondiendoId === p.id ? 0.6 : 1,
+                        }}
+                      >
+                        <Check size={14} /> Aceptar
+                      </button>
+                      <button
+                        onClick={() => manejarResponder(p.id, 'rechazada')}
+                        disabled={respondiendoId === p.id}
+                        style={{
+                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                          background: '#fef2f2', color: '#dc2626', padding: '9px 14px',
+                          borderRadius: '8px', border: '1px solid #fecaca', cursor: 'pointer',
+                          fontWeight: '700', fontSize: '13px',
+                          opacity: respondiendoId === p.id ? 0.6 : 1,
+                        }}
+                      >
+                        <X size={14} /> Rechazar
+                      </button>
+                    </div>
+                  )}
+
+                  {errorPostulacion && (
+                    <p style={{
+                      color: '#dc2626', fontSize: '12px', marginTop: '10px', marginBottom: 0,
+                      background: '#fef2f2', padding: '8px 10px', borderRadius: '8px',
+                    }}>
+                      {errorPostulacion}
+                    </p>
+                  )}
                 </div>
               )
             })}

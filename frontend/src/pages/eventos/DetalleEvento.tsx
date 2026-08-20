@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getEvento, confirmarAsistencia, getMiAsistencia } from '../../api/eventos'
+import { useCargaConError } from '../../hooks/useCargaConError'
+import EstadoSinConexion from '../../components/ui/EstadoSinConexion'
+import heroReunionesImg from '../../assets/hero-reuniones.png'
+import { Sparkles } from 'lucide-react'
+
 
 interface AgendaItem {
   id: number
@@ -25,9 +30,51 @@ interface Evento {
   cover_image: string | null
   total_asistentes: number
   referral_goal: number
+  cupo_lleno: boolean
   costo: number | null
   agenda: AgendaItem[]
 }
+
+// Ícono con fondo circular rosa, para reemplazar los emojis por un acabado
+// consistente en cualquier navegador/sistema operativo.
+function IconoCampo({ path, size = 20 }: { path: ReactNode; size?: number }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', color: '#B66878', flexShrink: 0 }}>
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {path}
+      </svg>
+    </span>
+  )
+}
+
+const IconoCalendario = <IconoCampo path={<>
+  <rect x="3" y="4" width="18" height="18" rx="2" />
+  <line x1="16" y1="2" x2="16" y2="6" />
+  <line x1="8" y1="2" x2="8" y2="6" />
+  <line x1="3" y1="10" x2="21" y2="10" />
+</>} />
+
+const IconoReloj = <IconoCampo path={<>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</>} />
+
+const IconoPin = <IconoCampo path={<>
+  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+  <circle cx="12" cy="10" r="3" />
+</>} />
+
+const IconoEtiqueta = <IconoCampo path={<>
+  <path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.2L3.2 9.59A2 2 0 0 0 3.83 11l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83Z" />
+  <circle cx="8.5" cy="8.5" r="1.5" />
+</>} />
+
+const IconoGrupo = <IconoCampo path={<>
+  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+  <circle cx="9" cy="7" r="4" />
+  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+</>} />
 
 // Mismos colores que la lista de Eventos, para consistencia
 const statusConfig = {
@@ -40,36 +87,39 @@ export default function DetalleEvento() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const [evento, setEvento]         = useState<Evento | null>(null)
+  const [evento, setEvento] = useState<Evento | null>(null)
   const [miAsistencia, setMiAsistencia] = useState<string | null>(null)
-  const [cargando, setCargando]     = useState(true)
   const [confirmando, setConfirmando] = useState(false)
-  const [errorCupo, setErrorCupo]   = useState(false)
+  const [errorCupo, setErrorCupo] = useState(false)
 
   const { estaAutenticado: autenticado } = useAuth()
+  const { cargando, errorRed, ejecutar } = useCargaConError()
 
-  useEffect(() => {
-    const cargar = async () => {
+  const cargarEvento = () => ejecutar(async () => {
+    // getEvento y getMiAsistencia se resuelven por separado: si falla
+    // getMiAsistencia (p. ej. el usuario nunca interactuó con este evento
+    // y el backend responde 404), eso no debe tumbar el detalle del evento,
+    // que sí cargó bien. Antes ambas iban en un solo Promise.all y un
+    // fallo en cualquiera de las dos hacía ver "Evento no encontrado".
+    const ev = await getEvento(Number(id))
+    setEvento(ev)
+
+    if (autenticado) {
       try {
-        if (autenticado) {
-          const [ev, asistencia] = await Promise.all([
-            getEvento(Number(id)),
-            getMiAsistencia(Number(id)),
-          ])
-          setEvento(ev)
-          setMiAsistencia(asistencia.status)
-        } else {
-          const ev = await getEvento(Number(id))
-          setEvento(ev)
+        const asistencia = await getMiAsistencia(Number(id))
+        setMiAsistencia(asistencia.status)
+      } catch (err: any) {
+        // 404 = no hay registro de asistencia previo. Es el caso normal
+        // para cualquier usuario que no ha confirmado nada todavía, no
+        // un error real, así que no lo mandamos a consola.
+        if (err?.response?.status !== 404) {
+          console.error(err)
         }
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setCargando(false)
       }
     }
-    cargar()
-  }, [id])
+  })
+
+  useEffect(() => { cargarEvento() }, [id])
 
   const handleConfirmar = async () => {
     setConfirmando(true)
@@ -121,6 +171,15 @@ export default function DetalleEvento() {
     </div>
   )
 
+  if (errorRed) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
+      <EstadoSinConexion
+        onReintentar={cargarEvento}
+        mensaje="No se pudo cargar este evento. Revisa tu internet e intenta de nuevo."
+      />
+    </div>
+  )
+
   if (!evento) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ color: '#6b7280' }}>Evento no encontrado.</p>
@@ -128,56 +187,88 @@ export default function DetalleEvento() {
   )
 
   const cfg = statusConfig[evento.status]
-  const porcentajeMeta = Math.min((evento.total_asistentes / evento.referral_goal) * 100, 100)
+  const tieneMeta = !!evento.referral_goal && evento.referral_goal > 0
+  const porcentajeMeta = tieneMeta
+    ? Math.min((evento.total_asistentes / evento.referral_goal) * 100, 100)
+    : 0
+
+  // El botón de confirmar solo se deshabilita por cupo lleno cuando el
+  // usuario todavía no tiene una asistencia confirmada. Si ya confirmó,
+  // no aplica (puede seguir viendo su confirmación / cancelarla).
+  const sinCupo = evento.cupo_lleno && miAsistencia !== 'confirmada'
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
       <style>{`
-        .detalle-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+        .detalle-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+        .detalle-hero-grid { display: grid; grid-template-columns: 1fr 400px; gap: 28px; align-items: center; }
         @media (max-width: 760px) {
           .detalle-grid { grid-template-columns: 1fr; }
-          .detalle-cover { height: 200px !important; }
-          .detalle-info-row { gap: 14px !important; }
+          .detalle-hero-grid { grid-template-columns: 1fr; }
+          .detalle-hero-img { height: 240px !important; order: -1; }
+          .detalle-info-row { grid-template-columns: 1fr !important; row-gap: 16px !important; }
+          .detalle-hero-title { font-size: 30px !important; }
         }
       `}</style>
 
-      {/* Cover */}
-      <div className="detalle-cover" style={{
-        height: '260px', position: 'relative', overflow: 'hidden',
-        background: evento.cover_image ? 'none' : 'linear-gradient(135deg, #EFC3CA 0%, #B66878 100%)',
+      {/* Hero — mismo tratamiento que el hero de la lista de Eventos, con
+          estrellitas dispersas (a juego con las de la ilustración) y una
+          entrada de título más suave: kicker arriba + subtítulo con
+          fecha/lugar debajo, en vez de saltar directo del badge a un
+          título grande y negro. */}
+      <div style={{
+        position: 'relative', overflow: 'hidden',
+        background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)',
+        borderBottom: '1px solid #f3f4f6'
       }}>
-        {evento.cover_image && (
-          <img src={evento.cover_image} alt={evento.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        )}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)',
-        }} />
-        <div style={{ position: 'absolute', bottom: '24px', left: '24px', right: '24px' }}>
-          <span style={{
-            background: cfg.bg, color: cfg.color,
-            fontSize: '12px', fontWeight: '700', padding: '4px 12px',
-            borderRadius: '20px', marginBottom: '10px', display: 'inline-block'
-          }}>{cfg.label}</span>
-          <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'white', margin: 0 }}>
-            {evento.title}
-          </h1>
+        <Sparkles size={16} color="#B66878" style={{ position: 'absolute', top: '22px', left: '32%', opacity: 0.4 }} />
+        <Sparkles size={12} color="#B66878" style={{ position: 'absolute', top: '60%', left: '46%', opacity: 0.3 }} />
+        <Sparkles size={20} color="#EFC3CA" style={{ position: 'absolute', bottom: '18px', left: '6%', opacity: 0.5 }} />
+
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '34px 20px 28px', position: 'relative' }}>
+          <div className="detalle-hero-grid">
+            <div>
+              <span style={{
+                background: cfg.bg, color: cfg.color,
+                fontSize: '12px', fontWeight: '700', padding: '5px 14px',
+                borderRadius: '20px', marginBottom: '16px', display: 'inline-block',
+              }}>
+                {cfg.label}
+              </span>
+
+              <h1 className="detalle-hero-title" style={{
+                fontSize: '34px', fontWeight: '700', color: '#1f2937',
+                margin: 0, lineHeight: '1.2', letterSpacing: '-0.3px',
+              }}>
+                {evento.title}
+              </h1>
+            </div>
+
+            {/* Ilustración decorativa del hero (estática, no la portada del evento) */}
+            <div className="detalle-hero-img" style={{
+              position: 'relative', height: '320px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                background: 'radial-gradient(circle, #EFC3CA55, transparent 70%)',
+              }} />
+              <Sparkles size={20} color="#B66878" style={{ position: 'absolute', top: '10px', left: '4px', opacity: 0.6 }} />
+              <Sparkles size={16} color="#B66878" style={{ position: 'absolute', bottom: '18px', right: '0px', opacity: 0.5 }} />
+              <img
+                src={heroReunionesImg}
+                alt="Mujeres conversando en una reunión"
+                style={{
+                  position: 'relative', width: '320px', height: '320px',
+                  objectFit: 'contain', filter: 'drop-shadow(0 12px 28px rgba(182,104,120,0.25))',
+                }}
+              />
+            </div>
+          </div>
         </div>
-        <button
-          onClick={() => navigate(autenticado ? '/eventos' : '/')}
-          style={{
-            position: 'absolute', top: '20px', left: '24px',
-            background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white',
-            padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px',
-            backdropFilter: 'blur(4px)'
-          }}
-        >
-          ← Volver
-        </button>
       </div>
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '28px 20px 60px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '28px 20px 60px' }}>
         <div className="detalle-grid">
 
           {/* Columna izquierda */}
@@ -187,38 +278,98 @@ export default function DetalleEvento() {
               border: '1px solid #f3f4f6', marginBottom: '18px',
               boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
             }}>
-              <div className="detalle-info-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '18px', marginBottom: '14px' }}>
-                <div>
-                  <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>FECHA</p>
-                  <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', textTransform: 'capitalize' }}>
-                    📅 {formatFecha(evento.date)}
-                  </p>
+              <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', marginBottom: '22px' }}>
+                Información del evento
+              </h2>
+              <div className="detalle-info-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '40px', rowGap: '22px', marginBottom: '18px', alignItems: 'start' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {IconoCalendario}
+                  <div>
+                    <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>FECHA</p>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', textTransform: 'capitalize' }}>
+                      {formatFecha(evento.date)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>HORARIO</p>
-                  <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
-                    🕐 {formatHora(evento.start_time)} - {formatHora(evento.end_time)}
-                  </p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {IconoReloj}
+                  <div>
+                    <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>HORARIO</p>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
+                      {formatHora(evento.start_time)} - {formatHora(evento.end_time)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>LUGAR</p>
-                  <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
-                    📍 {evento.hotel || evento.location}
-                  </p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {IconoPin}
+                  <div>
+                    <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>LUGAR</p>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '2px' }}>
+                      {evento.hotel || evento.location}
+                    </p>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evento.hotel || evento.location)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: '12px', color: '#B66878', fontWeight: '600', textDecoration: 'none' }}
+                    >
+                      Ver en mapa
+                    </a>
+                  </div>
                 </div>
-                <div>
-                  <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>COSTO</p>
-                  <p style={{ fontSize: '14px', fontWeight: '600', color: (evento.costo == null || evento.costo === 0) ? '#16a34a' : '#111827' }}>
-                    🎟️ {formatCosto(evento.costo)}
-                  </p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {IconoEtiqueta}
+                  <div>
+                    <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px', fontWeight: '600' }}>COSTO</p>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: (evento.costo == null || evento.costo === 0) ? '#16a34a' : '#111827', marginBottom: '2px' }}>
+                      {formatCosto(evento.costo)}
+                    </p>
+                    {(evento.costo == null || evento.costo === 0) && (
+                      <span style={{
+                        fontSize: '11px', fontWeight: '600', color: '#16a34a',
+                        background: '#dcfce7', padding: '2px 8px', borderRadius: '10px', display: 'inline-block'
+                      }}>
+                        Evento abierto al público
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-              {evento.description && (
-                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: '1.7', borderTop: '1px solid #f3f4f6', paddingTop: '14px', margin: 0 }}>
+              {/* El conteo de confirmados/meta vive únicamente en la tarjeta
+                  de Asistencia (columna derecha), para no duplicar el dato. */}
+            </div>
+
+            {/* Mapa — le da peso a la columna izquierda y complementa el dato de LUGAR */}
+            <div style={{
+              background: 'white', borderRadius: '16px', overflow: 'hidden',
+              border: '1px solid #f3f4f6', marginBottom: '18px',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+            }}>
+              <iframe
+                title="Ubicación del evento"
+                src={`https://www.google.com/maps?q=${encodeURIComponent(evento.hotel || evento.location)}&output=embed`}
+                width="100%"
+                height="220"
+                style={{ border: 0, display: 'block' }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+
+            {/* Descripción */}
+            {evento.description && (
+              <div style={{
+                background: 'white', borderRadius: '16px', padding: '22px',
+                border: '1px solid #f3f4f6', marginBottom: '18px',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+              }}>
+                <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', marginBottom: '10px' }}>
+                  Descripción
+                </h2>
+                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: '1.7', margin: 0, whiteSpace: 'pre-line' }}>
                   {evento.description}
                 </p>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Agenda */}
             {evento.agenda.length > 0 && (
@@ -275,38 +426,56 @@ export default function DetalleEvento() {
             )}
           </div>
 
-          {/* Columna derecha — solo la card de asistencia, sin duplicar info */}
+          {/* Columna derecha */}
           <div>
+            {/* Portada grande estilo póster, como en el diseño de referencia.
+                Solo se muestra si hay imagen y es distinta de la del hero,
+                o simplemente reutiliza la misma portada en formato vertical. */}
+            {evento.cover_image && (
+              <div style={{
+                borderRadius: '20px', overflow: 'hidden', marginBottom: '18px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
+              }}>
+                <img src={evento.cover_image} alt={evento.title}
+                  style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
+              </div>
+            )}
+
+            {/* Asistencia — única dueña del conteo/barra de meta */}
             <div style={{
               background: 'white', borderRadius: '16px', padding: '20px',
               border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
               position: 'sticky', top: '20px'
             }}>
-              <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>
-                👥 Asistencia
+              <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {IconoGrupo} Asistencia
               </h3>
 
-              {/* Barra de meta */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '13px', color: '#6b7280' }}>Confirmadas</span>
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#111827' }}>
-                    {evento.total_asistentes} / {evento.referral_goal}
-                  </span>
+              {tieneMeta ? (
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '13px', color: '#6b7280' }}>Confirmados</span>
+                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#111827' }}>
+                      {evento.total_asistentes} / {evento.referral_goal}
+                    </span>
+                  </div>
+                  <div style={{ background: '#f3f4f6', borderRadius: '99px', height: '8px', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%', borderRadius: '99px',
+                      background: 'linear-gradient(90deg, #EFC3CA, #B66878)',
+                      width: `${porcentajeMeta}%`, transition: 'width 0.5s ease'
+                    }} />
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+                    {porcentajeMeta.toFixed(0)}% de la meta alcanzada
+                  </p>
                 </div>
-                <div style={{ background: '#f3f4f6', borderRadius: '99px', height: '8px', overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%', borderRadius: '99px',
-                    background: 'linear-gradient(90deg, #EFC3CA, #B66878)',
-                    width: `${porcentajeMeta}%`, transition: 'width 0.5s ease'
-                  }} />
-                </div>
-                <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
-                  {porcentajeMeta.toFixed(0)}% de la meta alcanzada
+              ) : (
+                <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+                  {evento.total_asistentes} {evento.total_asistentes === 1 ? 'confirmada' : 'confirmadas'}
                 </p>
-              </div>
+              )}
 
-              {/* Sin sesión: invitar a registrarse */}
               {!autenticado ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <p style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', margin: '0 0 4px' }}>
@@ -335,7 +504,7 @@ export default function DetalleEvento() {
                       padding: '10px 14px', marginBottom: '12px',
                       fontSize: '13px', color: '#ef4444', fontWeight: '600'
                     }}>
-                      😔 Este evento ya no tiene cupo disponible.
+                      Este evento ya no tiene cupo disponible.
                     </div>
                   )}
                   {miAsistencia === 'confirmada' ? (
@@ -355,13 +524,27 @@ export default function DetalleEvento() {
                       </button>
                     </div>
                   ) : (
-                    <button onClick={handleConfirmar} disabled={confirmando} style={{
-                      width: '100%', padding: '12px', borderRadius: '10px',
-                      background: '#B66878', color: 'white', border: 'none',
-                      cursor: 'pointer', fontWeight: '700', fontSize: '14px'
-                    }}>
-                      {confirmando ? 'Confirmando...' : '✓ Confirmar Asistencia'}
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <button
+                        onClick={handleConfirmar}
+                        disabled={confirmando || sinCupo}
+                        style={{
+                          width: '100%', padding: '12px', borderRadius: '10px',
+                          background: sinCupo ? '#e5e7eb' : '#B66878',
+                          color: sinCupo ? '#9ca3af' : 'white',
+                          border: 'none',
+                          cursor: sinCupo ? 'not-allowed' : 'pointer',
+                          fontWeight: '700', fontSize: '14px'
+                        }}
+                      >
+                        {sinCupo ? 'Cupo lleno' : confirmando ? 'Confirmando...' : '✓ Confirmar asistencia'}
+                      </button>
+                      {sinCupo && !errorCupo && (
+                        <p style={{ fontSize: '12px', color: '#9ca3af', textAlign: 'center', margin: 0 }}>
+                          Este evento alcanzó su límite de asistentes.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </>
               )}

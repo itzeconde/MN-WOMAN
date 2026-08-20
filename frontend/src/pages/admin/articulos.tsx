@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import React from "react";
-
-const API_BASE = "http://127.0.0.1:8000/api";
+import api from "../../api/axios";
 
 const CATEGORIES = [
   { value: "recetas", label: "Recetas" },
@@ -10,10 +9,6 @@ const CATEGORIES = [
   { value: "vida_familia", label: "Vida y Familia" },
   { value: "tendencias", label: "Tendencias" },
 ];
-
-function getToken(): string | null {
-  return localStorage.getItem("access_token");
-}
 
 interface Article {
   id: number;
@@ -89,10 +84,7 @@ export default function AdminArticulos() {
   async function fetchArticles() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/admin/articles/`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      const data: Article[] = await res.json();
+      const { data } = await api.get("/admin/articles/");
       setArticles(data);
     } catch {
       setError("No se pudieron cargar los artículos.");
@@ -168,21 +160,10 @@ export default function AdminArticulos() {
     if (form.cover_image) fd.append("cover_image", form.cover_image);
 
     try {
-      const url = editingId
-        ? `${API_BASE}/admin/articles/${editingId}/`
-        : `${API_BASE}/admin/articles/`;
-      const method = editingId ? "PATCH" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { Authorization: `Bearer ${getToken()}` },
-        body: fd,
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        setError(JSON.stringify(err));
-        return;
+      if (editingId) {
+        await api.patch(`/admin/articles/${editingId}/`, fd);
+      } else {
+        await api.post("/admin/articles/", fd);
       }
 
       setSuccess(editingId ? "Artículo actualizado." : "Artículo creado.");
@@ -191,8 +172,9 @@ export default function AdminArticulos() {
       setForm(emptyForm);
       setPreviewUrl(null);
       fetchArticles();
-    } catch {
-      setError("Error al guardar. Intenta de nuevo.");
+    } catch (err: any) {
+      const data = err?.response?.data;
+      setError(data ? JSON.stringify(data) : "Error al guardar. Intenta de nuevo.");
     } finally {
       setSaving(false);
     }
@@ -202,10 +184,7 @@ export default function AdminArticulos() {
     if (!window.confirm("¿Eliminar este artículo? Esta acción no se puede deshacer.")) return;
     setDeleting(id);
     try {
-      await fetch(`${API_BASE}/admin/articles/${id}/`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      await api.delete(`/admin/articles/${id}/`);
       setArticles((prev) => prev.filter((a) => a.id !== id));
       setSuccess("Artículo eliminado.");
     } catch {
@@ -219,16 +198,10 @@ export default function AdminArticulos() {
     try {
       const fd = new FormData();
       fd.append("is_active", String(!article.is_active));
-      const res = await fetch(`${API_BASE}/admin/articles/${article.id}/`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${getToken()}` },
-        body: fd,
-      });
-      if (res.ok) {
-        setArticles((prev) =>
-          prev.map((a) => (a.id === article.id ? { ...a, is_active: !a.is_active } : a))
-        );
-      }
+      await api.patch(`/admin/articles/${article.id}/`, fd);
+      setArticles((prev) =>
+        prev.map((a) => (a.id === article.id ? { ...a, is_active: !a.is_active } : a))
+      );
     } catch {
       setError("No se pudo actualizar.");
     }
@@ -475,8 +448,8 @@ export default function AdminArticulos() {
 
                       <td style={{ padding: "14px 16px" }}>
                         <div style={{ display: "flex", gap: "8px" }}>
-                          <a
-                            href={article.external_url}
+                          
+                            <a href={article.external_url}
                             target="_blank"
                             rel="noreferrer"
                             style={{ fontSize: "13px", color: "#B66878", fontWeight: "600", textDecoration: "none", padding: "5px 10px", borderRadius: "6px", border: "1px solid #FDF0F2" }}

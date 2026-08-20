@@ -1,6 +1,7 @@
 from django.utils import timezone
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework.response import Response
 from .models import Oportunidad, Postulacion
 from .serializers import (
     OportunidadSerializer,
@@ -90,7 +91,9 @@ class MisOportunidadesView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Oportunidad.objects.filter(publicada_por=self.request.user)
+        return Oportunidad.objects.filter(
+            publicada_por=self.request.user
+        ).order_by('-creada_el')
 
 
 class MisPostulacionesView(generics.ListAPIView):
@@ -112,3 +115,35 @@ class PostulacionesRecibidasView(generics.ListAPIView):
             raise PermissionDenied('No tienes permiso para ver estas postulaciones.')
 
         return Postulacion.objects.filter(oportunidad=oportunidad).order_by('-postulada_el')
+
+
+class ResponderPostulacionView(generics.UpdateAPIView):
+    """
+    Permite a la dueña de la oportunidad aceptar o rechazar una postulación
+    recibida. Solo se puede responder una vez (mientras esté 'pendiente'),
+    para evitar que se reviertan decisiones ya comunicadas a la postulante.
+    """
+    serializer_class = PostulacionRecibidaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Postulacion.objects.all()
+
+    ESTADOS_VALIDOS = ('aceptada', 'rechazada')
+
+    def patch(self, request, *args, **kwargs):
+        postulacion = self.get_object()
+
+        if postulacion.oportunidad.publicada_por_id != request.user.id:
+            raise PermissionDenied('No tienes permiso para responder esta postulación.')
+
+        nuevo_status = request.data.get('status')
+        if nuevo_status not in self.ESTADOS_VALIDOS:
+            raise ValidationError({'status': 'Debes indicar "aceptada" o "rechazada".'})
+
+        if postulacion.status != 'pendiente':
+            raise ValidationError('Esta postulación ya fue respondida.')
+
+        postulacion.status = nuevo_status
+        postulacion.save(update_fields=['status'])
+
+        serializer = self.get_serializer(postulacion)
+        return Response(serializer.data)

@@ -19,8 +19,9 @@ export const postularse = async (id: number, mensaje: string) => {
   const { data } = await api.post(`/oportunidades/${id}/postularse/`, { mensaje })
   return data
 }
+
 export const getMisOportunidades = async () => {
-  const { data } = await api.get("/oportunidades/mis-oportunidades/")
+  const { data } = await api.get('/oportunidades/mis-oportunidades/')
   return data
 }
 
@@ -31,5 +32,10 @@ export const getPostulacionesRecibidas = async (id: number) => {
 
 export const cerrarOportunidad = async (id: number) => {
   const { data } = await api.patch(`/oportunidades/${id}/cerrar/`, {})
+  return data
+}
+
+export const responderPostulacion = async (id: number, status: 'aceptada' | 'rechazada') => {
+  const { data } = await api.patch(`/oportunidades/postulaciones/${id}/responder/`, { status })
   return data
 }

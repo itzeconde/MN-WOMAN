@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getOportunidad, postularse, cerrarOportunidad } from '../../api/oportunidades'
+import { COLOR_MARCA, COLOR_MARCA_CLARO, COLOR_BORDE } from '../../styles/tokens'
+import {
+  ArrowRight, Briefcase, FileText, DollarSign,
+  Users, Calendar, MessageSquare,
+} from 'lucide-react'
+import ModalConfirmacion from '../../components/ui/ModalConfirmacion'
 
 interface Oportunidad {
   id: number
@@ -29,6 +35,12 @@ const CATEGORIA_LABELS: Record<string, string> = {
   educacion: 'Educación',
 }
 
+const URGENCIA_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  alta: { bg: '#fef2f2', color: '#dc2626', label: 'Urgente' },
+  media: { bg: '#fffbeb', color: '#d97706', label: 'Media' },
+  baja: { bg: '#f0fdf4', color: '#16a34a', label: 'Baja' },
+}
+
 export default function DetalleOportunidad() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -40,6 +52,7 @@ export default function DetalleOportunidad() {
   const [postulada, setPostulada] = useState(false)
   const [error, setError] = useState('')
   const [cerrando, setCerrando] = useState(false)
+  const [modalCerrarAbierto, setModalCerrarAbierto] = useState(false)
 
   useEffect(() => {
     getOportunidad(Number(id))
@@ -66,16 +79,37 @@ export default function DetalleOportunidad() {
   }
 
   const handleCerrar = async () => {
-    if (!confirm('¿Seguro que quieres cerrar esta oportunidad? Ya no aparecerá disponible para postulaciones.')) return
     setCerrando(true)
     try {
       const actualizada = await cerrarOportunidad(Number(id))
       setOportunidad(actualizada)
+      setModalCerrarAbierto(false)
     } catch {
       setError('No se pudo cerrar la oportunidad. Intenta de nuevo.')
     } finally {
       setCerrando(false)
     }
+  }
+
+  const cardStyle: React.CSSProperties = {
+    background: 'white',
+    borderRadius: '16px',
+    padding: '24px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    border: `1px solid ${COLOR_BORDE}`,
+    marginBottom: '20px',
+  }
+
+  const tituloSeccion: React.CSSProperties = {
+    fontSize: '15px',
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: '16px',
+    paddingBottom: '12px',
+    borderBottom: `1px solid ${COLOR_BORDE}`,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
   }
 
   if (cargando) return (
@@ -87,31 +121,40 @@ export default function DetalleOportunidad() {
   if (notFound || !oportunidad) return (
     <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
       <p style={{ color: '#6b7280', fontSize: '16px' }}>Oportunidad no encontrada.</p>
-      <button onClick={() => navigate('/oportunidades')} style={{ fontSize: '14px', color: '#B66878', background: 'none', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontWeight: '600' }}>
-        ← Volver a oportunidades
+      <button
+        onClick={() => navigate('/oportunidades')}
+        style={{
+          fontSize: '14px', color: COLOR_MARCA, background: 'white',
+          border: `1px solid ${COLOR_BORDE}`, borderRadius: '8px',
+          padding: '8px 16px', cursor: 'pointer', fontWeight: '600',
+        }}
+      >
+        Ver todas las oportunidades
       </button>
     </div>
   )
 
-  return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '40px 20px' }}>
-      <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-        <button onClick={() => navigate('/oportunidades')} style={{
-          fontSize: '13px', color: '#B66878', fontWeight: '600',
-          background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: '24px',
-        }}>
-          ← Volver a oportunidades
-        </button>
+  const urgencia = URGENCIA_STYLE[oportunidad.urgencia]
 
-        <div style={{ background: 'white', borderRadius: '16px', padding: '32px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+  return (
+    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+
+      {/* HERO — mismo patrón que NuevaOportunidad.tsx */}
+      <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto', padding: '40px 20px 32px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
             <span style={{
               display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
-              fontSize: '12px', fontWeight: '600', background: '#fdf2f4', color: '#B66878',
+              fontSize: '12px', fontWeight: '600', background: '#fdf2f4', color: COLOR_MARCA,
             }}>
               {CATEGORIA_LABELS[oportunidad.categoria] || oportunidad.categoria}
             </span>
-
+            <span style={{
+              display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
+              fontSize: '12px', fontWeight: '700', background: urgencia.bg, color: urgencia.color,
+            }}>
+              {urgencia.label}
+            </span>
             {oportunidad.status === 'cerrada' && (
               <span style={{
                 display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
@@ -130,87 +173,104 @@ export default function DetalleOportunidad() {
             )}
           </div>
 
-          <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#111827', margin: '14px 0 8px' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#111827', margin: '0 0 10px', lineHeight: '1.3' }}>
             {oportunidad.titulo}
           </h1>
 
-          <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>
-            Publicado por <strong style={{ color: '#111827' }}>{oportunidad.publicada_por_nombre}</strong> · Vence el{' '}
-            {new Date(oportunidad.vence_el).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '13px', color: '#6b7280' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              Publicado por <strong style={{ color: '#111827' }}>{oportunidad.publicada_por_nombre}</strong>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Calendar size={13} /> Vence el {new Date(oportunidad.vence_el).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          </div>
+        </div>
+      </div>
 
-          <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', margin: '0 0 8px' }}>
-            Descripción
-          </h2>
-          <p style={{ fontSize: '15px', color: '#374151', lineHeight: '1.7', marginBottom: '24px', whiteSpace: 'pre-line' }}>
+      <div style={{ maxWidth: '700px', margin: '0 auto', padding: '32px 20px 40px' }}>
+
+        <div style={cardStyle}>
+          <h2 style={tituloSeccion}><FileText size={15} color={COLOR_MARCA} /> Descripción</h2>
+          <p style={{ fontSize: '15px', color: '#374151', lineHeight: '1.7', margin: 0, whiteSpace: 'pre-line' }}>
             {oportunidad.descripcion}
           </p>
+        </div>
 
-          <div style={{ fontWeight: '700', fontSize: '16px', color: '#B66878', marginBottom: '24px' }}>
+        <div style={cardStyle}>
+          <h2 style={tituloSeccion}><DollarSign size={15} color={COLOR_MARCA} /> Presupuesto</h2>
+          <p style={{ fontWeight: '700', fontSize: '18px', color: COLOR_MARCA, margin: 0 }}>
             {oportunidad.presupuesto_min && oportunidad.presupuesto_max
               ? `$${Number(oportunidad.presupuesto_min).toLocaleString('es-MX')} - $${Number(oportunidad.presupuesto_max).toLocaleString('es-MX')} MXN`
-              : 'Presupuesto a convenir'}
-          </div>
+              : 'A convenir'}
+          </p>
+        </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid #f3f4f6', marginBottom: '24px' }} />
+        <div style={cardStyle}>
+          <h2 style={tituloSeccion}><Briefcase size={15} color={COLOR_MARCA} /> {oportunidad.es_propia ? 'Gestionar oportunidad' : 'Postularme'}</h2>
 
           {oportunidad.es_propia ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div
+              <button
                 onClick={() => navigate(`/oportunidades/${id}/postulaciones`)}
                 style={{
-                  background: '#f9fafb', borderRadius: '10px', padding: '16px',
-                  textAlign: 'center', cursor: 'pointer', border: '1px solid #f3f4f6',
-                }}>
-                <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
-                  Esta es tu publicación · <strong style={{ color: '#B66878' }}>{oportunidad.total_postulaciones}</strong> postulación{oportunidad.total_postulaciones !== 1 ? 'es' : ''} recibida{oportunidad.total_postulaciones !== 1 ? 's' : ''}
-                </p>
-                <p style={{ fontSize: '12px', color: '#B66878', fontWeight: '600', margin: '6px 0 0' }}>
-                  Ver postulaciones →
-                </p>
-              </div>
+                  background: '#fdf2f4', color: COLOR_MARCA, borderRadius: '10px', padding: '14px 16px',
+                  border: 'none', cursor: 'pointer', textAlign: 'center',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                }}
+              >
+                <span style={{ fontSize: '14px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Users size={13} /> <strong style={{ color: COLOR_MARCA }}>{oportunidad.total_postulaciones}</strong> postulación{oportunidad.total_postulaciones !== 1 ? 'es' : ''} recibida{oportunidad.total_postulaciones !== 1 ? 's' : ''}
+                </span>
+                <span style={{ fontSize: '13px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  Ver postulaciones <ArrowRight size={13} />
+                </span>
+              </button>
 
               {oportunidad.status === 'activa' && (
                 <button
-                  onClick={handleCerrar}
+                  onClick={() => setModalCerrarAbierto(true)}
                   disabled={cerrando}
                   style={{
                     width: '100%', padding: '12px', backgroundColor: 'white', color: '#dc2626',
                     border: '1px solid #fecaca', borderRadius: '10px', fontSize: '13px', fontWeight: '700',
                     cursor: cerrando ? 'default' : 'pointer', opacity: cerrando ? 0.6 : 1,
                   }}>
-                  {cerrando ? 'Cerrando...' : 'Cerrar oportunidad'}
+                  Cerrar oportunidad
                 </button>
               )}
 
-              {error && <p style={{ color: '#dc2626', fontSize: '13px', textAlign: 'center' }}>{error}</p>}
+              {error && <p style={{ color: '#dc2626', fontSize: '13px', textAlign: 'center', margin: 0 }}>{error}</p>}
             </div>
           ) : oportunidad.status === 'cerrada' ? (
-            <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center', padding: '16px' }}>
+            <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center', margin: 0 }}>
               Esta oportunidad ya fue cerrada por quien la publicó.
             </p>
           ) : oportunidad.esta_vencida ? (
-            <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center', padding: '16px' }}>
+            <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center', margin: 0 }}>
               Esta oportunidad ya venció y ya no acepta postulaciones.
             </p>
           ) : postulada ? (
-            <p style={{ color: '#16a34a', fontWeight: '600', fontSize: '14px' }}>
+            <p style={{ color: '#16a34a', fontWeight: '600', fontSize: '14px', margin: 0 }}>
               ✓ Ya te postulaste a esta oportunidad. La publicante podrá revisar tu mensaje y contactarte.
             </p>
           ) : (
             <>
-              <label style={{ fontSize: '13px', fontWeight: '700', color: '#111827', display: 'block', marginBottom: '8px' }}>
-                Postularme a esta oportunidad
+              <label style={{
+                fontSize: '13px', fontWeight: '700', color: '#374151', display: 'flex',
+                alignItems: 'center', gap: '6px', marginBottom: '8px',
+              }}>
+                <MessageSquare size={13} color={COLOR_MARCA} /> Cuéntale por qué eres una buena opción
               </label>
               <textarea
                 value={mensaje}
                 onChange={(e) => setMensaje(e.target.value)}
                 rows={4}
-                placeholder="Cuéntale por qué eres una buena opción para este proyecto..."
+                placeholder="Describe tu experiencia relevante y por qué te interesa este proyecto..."
                 style={{
                   width: '100%', padding: '12px 16px', borderRadius: '10px',
-                  border: '1px solid #e5e7eb', fontSize: '14px', resize: 'vertical',
-                  boxSizing: 'border-box', outline: 'none', marginBottom: '12px',
+                  border: `1px solid ${COLOR_BORDE}`, fontSize: '14px', resize: 'vertical',
+                  boxSizing: 'border-box', outline: 'none', marginBottom: '12px', fontFamily: 'inherit',
                 }}
               />
               {error && <p style={{ color: '#dc2626', fontSize: '13px', marginBottom: '12px' }}>{error}</p>}
@@ -218,9 +278,10 @@ export default function DetalleOportunidad() {
                 onClick={handlePostular}
                 disabled={enviando}
                 style={{
-                  width: '100%', padding: '14px', backgroundColor: '#B66878', color: '#fff',
+                  width: '100%', padding: '14px', backgroundColor: COLOR_MARCA, color: '#fff',
                   border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '700',
                   cursor: enviando ? 'default' : 'pointer', opacity: enviando ? 0.7 : 1,
+                  boxShadow: `0 4px 14px ${COLOR_MARCA_CLARO}80`,
                 }}
               >
                 {enviando ? 'Enviando...' : 'Enviar postulación'}
@@ -229,6 +290,17 @@ export default function DetalleOportunidad() {
           )}
         </div>
       </div>
+
+      <ModalConfirmacion
+        abierto={modalCerrarAbierto}
+        titulo="¿Cerrar esta oportunidad?"
+        mensaje="Ya no aceptará nuevas postulaciones. Podrás seguir respondiendo a las que ya recibiste."
+        textoConfirmar="Sí, cerrar"
+        variante="peligro"
+        cargando={cerrando}
+        onConfirmar={handleCerrar}
+        onCancelar={() => setModalCerrarAbierto(false)}
+      />
     </div>
   )
 }
