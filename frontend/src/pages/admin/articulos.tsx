@@ -48,7 +48,6 @@ const emptyForm: FormState = {
   cover_image: null,
 };
 
-const COLOR_TEXTO_SUAVE = "#9ca3af";
 
 const ARTICULOS_POR_PAGINA = 6;
 

@@ -13,7 +13,7 @@ import {
 } from '../../styles/tokens'
 import {
   Calendar, Clock, MapPin, Briefcase, Sparkles, Bell,
-  CheckCircle2, XCircle, ArrowRight, PlusCircle,
+  CheckCircle2, XCircle, PlusCircle,
 } from 'lucide-react'
 
 type RespuestaAsistencia = 'si' | 'no' | null
@@ -34,7 +34,7 @@ interface Servicio {
   id: number
   titulo: string
   categoria: string
-  precio: number
+  precio: number | null
   precio_personalizado: boolean
 }
 
@@ -377,7 +377,9 @@ export default function Dashboard() {
                   <CardInteractiva key={s.id} style={{ padding: '12px', borderLeft: `3px solid ${COLOR_MARCA_CLARO}`, boxShadow: 'none' }}>
                     <p style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px', color: '#1f2937' }}>{s.titulo}</p>
                     <p style={{ color: '#6b7280', fontSize: '13px' }}>
-                      {s.precio_personalizado ? 'Precio personalizado' : `$${s.precio.toLocaleString('es-MX')} MXN`}
+                      {s.precio_personalizado || s.precio === null
+                        ? 'Precio personalizado'
+                        : `$${s.precio.toLocaleString('es-MX')} MXN`}
                     </p>
                   </CardInteractiva>
                 ))}

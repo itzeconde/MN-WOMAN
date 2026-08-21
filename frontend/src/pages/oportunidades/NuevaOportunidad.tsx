@@ -5,7 +5,7 @@ import type { Categoria } from '../../api/oportunidades'
 import { COLOR_MARCA, COLOR_MARCA_CLARO, COLOR_BORDE } from '../../styles/tokens'
 import {
   MessageSquareText, Tag, Clock, Bookmark,
-  Calendar, DollarSign, Lock, Send, Plus, X, ChevronDown, Lightbulb,
+  Calendar, DollarSign, Lock, Send, Plus, X, Lightbulb,
   Briefcase, Megaphone, Code2, GraduationCap, HeartPulse, Sparkles, Check,
 } from 'lucide-react'
 import heroCrearImg from '../../assets/hero-directorio.png'
