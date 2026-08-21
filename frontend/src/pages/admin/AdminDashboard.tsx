@@ -12,8 +12,6 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     cargarPendientes()
-
-    // Opcional: refresca el contador cada 2 minutos sin que la admin recargue la página
     const intervalo = setInterval(cargarPendientes, 2 * 60 * 1000)
     return () => clearInterval(intervalo)
   }, [])
@@ -27,7 +25,6 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error('No se pudo cargar el conteo de solicitudes pendientes', err)
       setErrorPendientes(true)
-      // no rompemos el resto del dashboard, solo no mostramos el badge
     } finally {
       setCargandoBadge(false)
     }
@@ -37,11 +34,24 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <style>{`
+        .admin-dash-header-pad { padding: 40px 20px 28px; }
+        .admin-dash-body-pad { padding: 28px 20px 40px; }
+        .admin-dash-titulo { font-size: 28px; }
+
+        @media (max-width: 640px) {
+          .admin-dash-header-pad { padding: 28px 16px 20px; }
+          .admin-dash-body-pad { padding: 20px 16px 32px; }
+          .admin-dash-titulo { font-size: 22px; }
+          .admin-dash-card { padding: 18px !important; gap: 12px !important; }
+          .admin-dash-icono { width: 40px !important; height: 40px !important; }
+        }
+      `}</style>
 
       {/* ENCABEZADO */}
       <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px 28px' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#111827', margin: 0, lineHeight: '1.25' }}>
+        <div className="admin-dash-header-pad" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <h1 className="admin-dash-titulo" style={{ fontWeight: '800', color: '#111827', margin: 0, lineHeight: '1.25' }}>
             Bienvenida, <span style={{ color: COLOR_MARCA }}>Administradora</span>
           </h1>
           <p style={{ color: '#6b7280', fontSize: '15px', margin: '8px 0 0' }}>
@@ -50,12 +60,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '28px 20px 40px' }}>
-
-        {/* SOLICITUDES PENDIENTES — la única métrica real que tenemos hoy.
-            Cuando existan endpoints de conteo para eventos, cursos o artículos
-            (ej. getEventosProximos, getCursosActivos), se puede agregar cada
-            uno como una card más dentro de este mismo grid. */}
+      <div className="admin-dash-body-pad" style={{ maxWidth: '1000px', margin: '0 auto' }}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
@@ -64,7 +69,7 @@ export default function AdminDashboard() {
           <div
             role="button"
             tabIndex={0}
-            className="foco-visible"
+            className="foco-visible admin-dash-card"
             onClick={() => irA('/admin/solicitudes')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -88,7 +93,7 @@ export default function AdminDashboard() {
               e.currentTarget.style.transform = 'translateY(0)'
             }}
           >
-            <div style={{
+            <div className="admin-dash-icono" style={{
               width: '48px', height: '48px', borderRadius: '12px', flexShrink: 0,
               background: pendientes > 0 ? '#fef3c7' : '#f0fdf4',
               display: 'flex', alignItems: 'center', justifyContent: 'center',

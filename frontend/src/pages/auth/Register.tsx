@@ -19,6 +19,9 @@ export default function Register() {
     years_leading: '',
   })
 
+  // Aceptación de la Política de Privacidad (obligatoria para poder registrarse)
+  const [aceptaPrivacidad, setAceptaPrivacidad] = useState(false)
+
   // ── Preview del username (solo visual) ──────────────────────────────────
   // El backend genera el username real a partir de first_name/last_name;
   // esto es únicamente para que la usuaria vea cómo va a quedar antes de
@@ -88,6 +91,12 @@ export default function Register() {
   // ── Submit con manejo de errores del backend por campo ────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!aceptaPrivacidad) {
+      setErrors(prev => ({ ...prev, privacidad: 'Debes aceptar la Política de Privacidad para continuar' }))
+      return
+    }
+
     setCargando(true)
     setErrors({})
     try {
@@ -402,13 +411,40 @@ export default function Register() {
               ))}
             </div>
 
+            {/* Aceptación de la Política de Privacidad */}
+            <div style={{ marginTop: '20px' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '13px', color: '#374151' }}>
+                <input
+                  type="checkbox"
+                  checked={aceptaPrivacidad}
+                  onChange={(e) => {
+                    setAceptaPrivacidad(e.target.checked)
+                    if (errors.privacidad) setErrors(prev => { const c = { ...prev }; delete c.privacidad; return c })
+                  }}
+                  style={{ marginTop: '2px', width: '16px', height: '16px', accentColor: '#B66878', cursor: 'pointer', flexShrink: 0 }}
+                />
+                <span>
+                  He leído y acepto la{' '}
+                  <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: '#B66878', fontWeight: '600' }}>
+                    Política de Privacidad
+                  </Link>{' '}
+                  de MN WOMEN y autorizo el tratamiento de mis datos personales conforme a lo ahí descrito. *
+                </span>
+              </label>
+              {errorText('privacidad')}
+            </div>
+
             <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '16px', textAlign: 'center' }}>
               Tu solicitud será revisada por el equipo de MN WOMEN antes de ser aprobada.
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
               <button type="button" onClick={anteriorPaso} style={btnSecondary}>← Anterior</button>
-              <button type="submit" disabled={cargando} style={{ ...btnPrimary, opacity: cargando ? 0.7 : 1 }}>
+              <button
+                type="submit"
+                disabled={cargando || !aceptaPrivacidad}
+                style={{ ...btnPrimary, opacity: (cargando || !aceptaPrivacidad) ? 0.5 : 1, cursor: (cargando || !aceptaPrivacidad) ? 'not-allowed' : 'pointer' }}
+              >
                 {cargando ? '⏳ Enviando...' : '✓ Confirmar y unirme'}
               </button>
             </div>

@@ -5,6 +5,7 @@ import Footer from './components/layout/Footer'
 import LandingPage from './pages/LandingPage'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import Privacidad from './pages/Privacidad'
 import Dashboard from './pages/dashboard/Dashboard'
 import Directorio from './pages/directorio/Directorio'
 import PerfilPublico from './pages/directorio/PerfilPublico'
@@ -81,6 +82,7 @@ function AppRoutes() {
 
       <Route path="/login" element={<RutaPublica><Navbar /><Login /></RutaPublica>} />
       <Route path="/register" element={<RutaPublica><Navbar /><Register /></RutaPublica>} />
+      <Route path="/privacidad" element={<Privacidad />} />
 
       <Route path="/admin" element={<RutaAdmin><AdminLayout /></RutaAdmin>}>
         <Route index element={<AdminDashboard />} />

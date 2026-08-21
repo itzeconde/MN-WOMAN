@@ -1,4 +1,5 @@
 import os
+import dj_database_url
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -18,7 +19,7 @@ if not SECRET_KEY:
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # En producción: tu(s) dominio(s) real(es), separados por coma en la env var.
-# Ej: ALLOWED_HOSTS=api.mnwoman.com,mnwoman.com
+# Ej: ALLOWED_HOSTS=tuapp.up.railway.app,api.mnwoman.com
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 INSTALLED_APPS = [
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # sirve estáticos en producción (admin, DRF browsable API)
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -77,16 +79,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'mnwoman_db'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+# --- BASE DE DATOS ---
+# Si existe DATABASE_URL (Supabase te la da como "connection string" en
+# Project Settings > Database > Connection string > URI), se usa esa.
+# Si no, cae de vuelta a las variables sueltas (útil para desarrollo local).
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'mnwoman_db'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -100,7 +113,14 @@ TIME_ZONE = "America/Mexico_City"
 USE_I18N = True
 USE_TZ = True
 
+# --- ARCHIVOS ESTÁTICOS ---
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # a donde collectstatic copia todo
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# --- ARCHIVOS DE MEDIA (imágenes subidas por usuarios) ---
+# OJO: el disco de Railway es efímero. Esto sirve para desarrollo local;
+# en producción real conviene mover esto a Supabase Storage o Railway Volumes.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -140,6 +160,16 @@ CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS',
     'http://localhost:5173,http://localhost:5174'
 ).split(',')
+
+# CSRF — necesario para que el admin de Django (/admin) funcione sobre HTTPS
+# en dominios distintos a localhost. Usa los mismos dominios que ALLOWED_HOSTS
+# pero con el esquema https:// al frente.
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    'CSRF_TRUSTED_ORIGINS',
+    ''
+).split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else [
+    f'https://{host}' for host in ALLOWED_HOSTS if host not in ('localhost', '127.0.0.1')
+]
 
 # Seguridad para producción — se activan solo cuando DEBUG=False
 if not DEBUG:

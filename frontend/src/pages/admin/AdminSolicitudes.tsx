@@ -143,6 +143,30 @@ export default function AdminSolicitudes() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <style>{`
+        /* Grid principal: lista + panel de detalle.
+           El número de columnas viene de --cols (dinámico, según si hay
+           una solicitud seleccionada). En móvil el panel se apila debajo
+           de la lista en vez de exprimirse en una columna de 380px fija. */
+        .solicitudes-grid {
+          display: grid;
+          grid-template-columns: var(--cols, 1fr);
+          gap: 20px;
+        }
+        .panel-detalle {
+          position: sticky;
+          top: 20px;
+        }
+
+        @media (max-width: 860px) {
+          .solicitudes-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .panel-detalle {
+            position: static;
+          }
+        }
+      `}</style>
 
       {/* ENCABEZADO */}
       <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
@@ -161,7 +185,7 @@ export default function AdminSolicitudes() {
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '28px 20px 40px' }}>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
           {tabs.map(tab => (
             <button key={tab.key} onClick={() => setTabActiva(tab.key)} style={{
               padding: '8px 20px', borderRadius: '10px',
@@ -182,7 +206,10 @@ export default function AdminSolicitudes() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: seleccionada ? '1fr 380px' : '1fr', gap: '20px' }}>
+        <div
+          className="solicitudes-grid"
+          style={{ '--cols': seleccionada ? '1fr 380px' : '1fr' } as React.CSSProperties}
+        >
 
           {/* Lista */}
           <div>
@@ -311,10 +338,10 @@ export default function AdminSolicitudes() {
 
           {/* Panel detalle */}
           {seleccionada && (
-            <div style={{
+            <div className="panel-detalle" style={{
               background: 'white', borderRadius: '16px', padding: '24px',
               border: `1px solid ${COLOR_BORDE}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-              height: 'fit-content', position: 'sticky', top: '20px'
+              height: 'fit-content',
             }}>
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <div style={{

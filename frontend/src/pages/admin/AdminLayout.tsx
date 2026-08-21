@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import logo from '../../assets/logoMN.jpeg'
@@ -5,11 +6,14 @@ import logo from '../../assets/logoMN.jpeg'
 export default function AdminLayout() {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
+  const [menuAbierto, setMenuAbierto] = useState(false)
 
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
+
+  const cerrarMenu = () => setMenuAbierto(false)
 
   const menuItems = [
     { label: 'Dashboard', ruta: '/admin', icon: '📊', exact: true },
@@ -17,17 +21,75 @@ export default function AdminLayout() {
     { label: 'Cursos', ruta: '/admin/cursos', icon: '🎓' },
     { label: 'Artículos', ruta: '/admin/articulos', icon: '📝' },
     { label: 'Solicitudes', ruta: '/admin/solicitudes', icon: '👥' },
-   
+
   ]
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
+      <style>{`
+        .admin-mobile-topbar { display: none; }
+        .admin-overlay { display: none; }
+
+        /* El ancho/posición base del sidebar viven AQUÍ, en la clase,
+           no en el style inline del <aside>. Así el media query de abajo
+           puede pisarlos sin pelear contra un inline style (que siempre
+           gana por especificidad, sin importar el @media). */
+        .admin-sidebar {
+          width: 240px;
+          flex-shrink: 0;
+          position: sticky;
+          top: 0;
+          height: 100vh;
+        }
+
+        @media (max-width: 768px) {
+          .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 240px;
+            max-width: 80vw;
+            z-index: 50;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+          }
+          .admin-sidebar.abierto {
+            transform: translateX(0);
+          }
+          .admin-overlay.abierto {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 40;
+          }
+          .admin-mobile-topbar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: white;
+            border-bottom: 1px solid #f3f4f6;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+          }
+        }
+      `}</style>
+
+      {/* Overlay para cerrar el menú al tocar fuera (solo móvil) */}
+      <div
+        className={`admin-overlay ${menuAbierto ? 'abierto' : ''}`}
+        onClick={cerrarMenu}
+      />
 
       {/* Sidebar */}
-      <aside style={{
-        width: '240px', flexShrink: 0, background: 'white',
+      <aside className={`admin-sidebar ${menuAbierto ? 'abierto' : ''}`} style={{
+        background: 'white',
         borderRight: '1px solid #f3f4f6', display: 'flex',
-        flexDirection: 'column', position: 'sticky', top: 0, height: '100vh',
+        flexDirection: 'column',
         boxShadow: '2px 0 8px rgba(0,0,0,0.04)'
       }}>
 
@@ -44,6 +106,7 @@ export default function AdminLayout() {
           {menuItems.map(item => (
             <NavLink key={item.ruta} to={item.ruta}
               end={item.exact}
+              onClick={cerrarMenu}
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '10px 12px', borderRadius: '10px', marginBottom: '4px',
@@ -85,10 +148,29 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Contenido */}
-      <main style={{ flex: 1, overflow: 'auto' }}>
-        <Outlet />
-      </main>
+      {/* Columna de contenido (topbar móvil + contenido) */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+
+        {/* Topbar solo visible en móvil */}
+        <div className="admin-mobile-topbar">
+          <button
+            onClick={() => setMenuAbierto(true)}
+            aria-label="Abrir menú"
+            style={{
+              background: 'none', border: 'none', fontSize: '22px',
+              cursor: 'pointer', lineHeight: 1, padding: '4px',
+            }}
+          >
+            ☰
+          </button>
+          <img src={logo} alt="MN WOMAN" style={{ height: '32px' }} />
+        </div>
+
+        {/* Contenido */}
+        <main style={{ flex: 1, overflow: 'auto' }}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }

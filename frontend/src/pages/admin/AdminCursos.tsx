@@ -230,6 +230,20 @@ export default function AdminCursos() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f9fafb" }}>
+      <style>{`
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-overlay { padding: 20px; }
+        .modal-card { padding: 32px; border-radius: 20px; }
+
+        @media (max-width: 480px) {
+          .form-grid-2 { grid-template-columns: 1fr; }
+          .modal-overlay { padding: 0; align-items: flex-end !important; }
+          .modal-card {
+            padding: 20px; border-radius: 16px 16px 0 0;
+            max-height: 92vh !important; max-width: 100% !important;
+          }
+        }
+      `}</style>
 
       {/* ENCABEZADO */}
       <div style={{ background: "linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)", borderBottom: `1px solid ${COLOR_BORDE}` }}>
@@ -428,13 +442,13 @@ export default function AdminCursos() {
 
       {/* Modal */}
       {modalAbierto && (
-        <div style={{
+        <div className="modal-overlay" style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: '20px'
+          zIndex: 1000,
         }}>
-          <div style={{
-            background: 'white', borderRadius: '20px', padding: '32px',
+          <div className="modal-card" style={{
+            background: 'white',
             width: '100%', maxWidth: '620px', maxHeight: '90vh', overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -490,7 +504,7 @@ export default function AdminCursos() {
                 {erroresForm.descripcion && <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>{erroresForm.descripcion}</p>}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-grid-2">
                 <div>
                   <label style={labelStyle}>Categoría</label>
                   <select name="categoria" value={form.categoria} onChange={handleChange} style={inputStyle}>
@@ -507,7 +521,7 @@ export default function AdminCursos() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-grid-2">
                 <div>
                   <label style={labelStyle}>Duración (horas)</label>
                   <input type="number" name="duracion_horas" min="1" value={form.duracion_horas} onChange={handleChange}

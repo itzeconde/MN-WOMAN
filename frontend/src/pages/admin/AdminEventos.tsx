@@ -237,6 +237,21 @@ export default function AdminEventos() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <style>{`
+        .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-overlay { padding: 20px; }
+        .modal-card { padding: 32px; border-radius: 20px; }
+
+        @media (max-width: 480px) {
+          .form-grid-3, .form-grid-2 { grid-template-columns: 1fr; }
+          .modal-overlay { padding: 0; align-items: flex-end !important; }
+          .modal-card {
+            padding: 20px; border-radius: 16px 16px 0 0;
+            max-height: 92vh !important; max-width: 100% !important;
+          }
+        }
+      `}</style>
 
       {/* ENCABEZADO */}
       <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
@@ -417,13 +432,13 @@ export default function AdminEventos() {
 
       {/* ── Modal Asistentes ── */}
       {modalAsistentes && eventoSeleccionado && (
-        <div style={{
+        <div className="modal-overlay" style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: '20px'
+          zIndex: 1000,
         }}>
-          <div style={{
-            background: 'white', borderRadius: '20px', padding: '32px',
+          <div className="modal-card" style={{
+            background: 'white',
             width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
@@ -446,7 +461,7 @@ export default function AdminEventos() {
               <p style={{ color: '#6b7280', textAlign: 'center', padding: '40px 0' }}>Cargando asistentes...</p>
             ) : (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+                <div className="form-grid-3" style={{ marginBottom: '20px' }}>
                   {(['confirmed', 'declined', 'pending'] as const).map(s => {
                     const cfg = asistenciaConfig[s]
                     const count = contarPor(s)
@@ -547,13 +562,13 @@ export default function AdminEventos() {
 
       {/* ── Modal Crear/Editar ── */}
       {modalAbierto && (
-        <div style={{
+        <div className="modal-overlay" style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: '20px'
+          zIndex: 1000,
         }}>
-          <div style={{
-            background: 'white', borderRadius: '20px', padding: '32px',
+          <div className="modal-card" style={{
+            background: 'white',
             width: '100%', maxWidth: '620px', maxHeight: '90vh', overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -608,7 +623,7 @@ export default function AdminEventos() {
                   style={{ ...inputStyle, resize: 'vertical' as const }} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div className="form-grid-3">
                 <div>
                   <label style={labelStyle}>Fecha</label>
                   <input type="date" name="date" value={form.date} onChange={handleChange} style={inputStyle} />
@@ -623,7 +638,7 @@ export default function AdminEventos() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-grid-2">
                 <div>
                   <label style={labelStyle}>Ubicación</label>
                   <input name="location" value={form.location} onChange={handleChange}
@@ -636,7 +651,7 @@ export default function AdminEventos() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div className="form-grid-3">
                 <div>
                   <label style={labelStyle}>Estado</label>
                   <select name="status" value={form.status} onChange={handleChange} style={inputStyle}>
