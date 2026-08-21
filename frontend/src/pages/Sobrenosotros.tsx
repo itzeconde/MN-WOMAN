@@ -1,13 +1,18 @@
 import { useNavigate } from 'react-router-dom'
 
-// Reemplaza por la foto real cuando la tengas (idealmente algo del diagnóstico
-// original con las 70 mujeres, o una foto de comunidad/evento de Revista Momento).
-const FOTO_ORIGEN = 'https://scontent.fpbc4-1.fna.fbcdn.net/v/t39.30808-6/482020279_122181190634263222_4259941826604380873_n.jpg?stp=dst-jpg_tt6&cstp=mx1200x788&ctp=s1200x788&_nc_cat=103&ccb=1-7&_nc_sid=127cfc&_nc_ohc=rIL9yAGku0EQ7kNvwGVdqPh&_nc_oc=Adr7Lir_2B1xrbqEGlugzUFkyIog4kR6pnGcZ3Gjf22ZVSuSlnhGvdKiIiSV4ssn6OBdm3lggpDikFCapj3fNTAh&_nc_zt=23&_nc_ht=scontent.fpbc4-1.fna&_nc_gid=mddJjqzXoQYN6FwcFZSquA&_nc_ss=7d289&oh=00_AQDolvnyBJ8VsWJlp1EYEtCkiYQITQdCVMO7qnigO-gmLw&oe=6A5CC6F5'
+// ── IMÁGENES LOCALES ────────────────────────────────────────────────────
+// Por ahora todas usan la misma imagen de prueba (foto-origen.jpg) que está
+// directo en src/assets/. Cuando tengas las fotos reales de cada fundadora,
+// agrégalas a src/assets/ y crea un import nuevo para cada una, por ejemplo:
+//   import fotoMarisol from '../assets/marisol.jpg'
+import fotoOrigen from '../assets/foto-origen.jpg'
+
+const FOTO_ORIGEN = fotoOrigen
 
 // ── FUNDADORAS ──────────────────────────────────────────────────────────
 // Agrega, quita o edita libremente las personas de este arreglo.
 // La cuadrícula se acomoda sola sin importar cuántas sean (1, 2, 3, 5, etc).
-// - foto: pega aquí la URL de la imagen de cada persona.
+// - foto: usa el import de arriba (agrega más imports cuando tengas más fotos).
 // - nombre: nombre completo.
 // - rol: cargo o forma en que quieres que se le identifique.
 // - frase (opcional): quítala si no quieres cita, déjala como '' o bórrala del objeto.
@@ -15,22 +20,21 @@ const FUNDADORAS = [
   {
     nombre: 'Nombre Apellido',
     rol: 'Fundadora de MN WOMAN',
-    foto: 'https://PEGA-AQUI-LA-URL-DE-LA-FOTO-1.jpg',
+    foto: fotoOrigen,
     frase: '',
   },
   {
     nombre: 'Marisol Fernandez Muñoz',
     rol: 'Directora, Revista Momento',
-    foto: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAQ4_xJAb2-GQK-VdtsguS3igBfWcl1u9yTnJ8c14qvVQzL0sNb3lBEQE&s=10',
+    foto: fotoOrigen,
     frase: '',
   },
   {
     nombre: 'Nombre Apellido',
     rol: 'Co-fundadora',
-    foto: 'https://PEGA-AQUI-LA-URL-DE-LA-FOTO-3.jpg',
+    foto: fotoOrigen,
     frase: '',
   },
-  
 ]
 
 const SobreNosotros = () => {
@@ -383,7 +387,7 @@ const SobreNosotros = () => {
                 <img src={FOTO_ORIGEN} alt="Diagnóstico con mujeres de Tlaxcala" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
 
-             
+
             </div>
           </div>
         </div>

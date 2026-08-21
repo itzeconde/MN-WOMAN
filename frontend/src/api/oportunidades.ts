@@ -1,7 +1,17 @@
 import api from './axios'
 
+export interface Categoria {
+  value: string
+  label: string
+}
+
 export const getOportunidades = async (filtros?: Record<string, string>) => {
   const { data } = await api.get('/oportunidades/', { params: filtros })
+  return data
+}
+
+export const getCategoriasOportunidades = async (): Promise<{ categorias: Categoria[]; sugerencias_otro: string[] }> => {
+  const { data } = await api.get('/oportunidades/categorias/')
   return data
 }
 

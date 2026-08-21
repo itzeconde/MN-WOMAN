@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   adminCrearEvento, adminEditarEvento, adminEliminarEvento, getEventos,
   adminGetAsistentes, adminActualizarAsistencia
 } from '../../api/eventos'
+import { paginacionBotonStyle, COLOR_MARCA, COLOR_MARCA_CLARO, COLOR_BORDE } from '../../styles/tokens'
+import {
+  Search, Plus, Calendar, MapPin, Users, Pencil, Trash2, X,
+  Check, CheckCircle2, XCircle, Clock3, ChevronLeft, ChevronRight, ImagePlus,
+} from 'lucide-react'
 
 interface Evento {
   id: number
@@ -36,9 +41,9 @@ const statusConfig = {
 }
 
 const asistenciaConfig = {
-  confirmed: { label: 'Sí asiste',  color: '#16a34a', bg: '#dcfce7', emoji: '✅' },
-  declined:  { label: 'No asiste',  color: '#ef4444', bg: '#fee2e2', emoji: '❌' },
-  pending:   { label: 'Pendiente',  color: '#d97706', bg: '#fef3c7', emoji: '⏳' },
+  confirmed: { label: 'Sí asiste',  color: '#16a34a', bg: '#dcfce7', Icono: CheckCircle2 },
+  declined:  { label: 'No asiste',  color: '#ef4444', bg: '#fee2e2', Icono: XCircle },
+  pending:   { label: 'Pendiente',  color: '#d97706', bg: '#fef3c7', Icono: Clock3 },
 }
 
 const formInicial = {
@@ -46,9 +51,13 @@ const formInicial = {
   location: '', hotel: '', status: 'proximo', referral_goal: '100', costo: '',
 }
 
+const EVENTOS_POR_PAGINA = 6
+
 export default function AdminEventos() {
   const [eventos, setEventos] = useState<Evento[]>([])
   const [cargando, setCargando] = useState(true)
+  const [busqueda, setBusqueda] = useState('')
+  const [pagina, setPagina] = useState(1)
 
   // Modal crear/editar
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -68,6 +77,7 @@ export default function AdminEventos() {
   const [actualizando, setActualizando] = useState<number | null>(null)
 
   useEffect(() => { cargarEventos() }, [])
+  useEffect(() => { setPagina(1) }, [busqueda])
 
   const cargarEventos = async () => {
     try {
@@ -77,6 +87,27 @@ export default function AdminEventos() {
       setCargando(false)
     }
   }
+
+  // ── Búsqueda y paginación ──
+  const eventosFiltrados = eventos.filter((e) =>
+    busqueda === '' ||
+    e.title.toLowerCase().includes(busqueda.toLowerCase()) ||
+    e.location.toLowerCase().includes(busqueda.toLowerCase()) ||
+    e.hotel.toLowerCase().includes(busqueda.toLowerCase())
+  )
+
+  const totalPaginas = Math.max(1, Math.ceil(eventosFiltrados.length / EVENTOS_POR_PAGINA))
+  const paginaSegura = Math.min(pagina, totalPaginas)
+  const eventosPagina = eventosFiltrados.slice(
+    (paginaSegura - 1) * EVENTOS_POR_PAGINA,
+    paginaSegura * EVENTOS_POR_PAGINA
+  )
+
+  const numerosPagina = useMemo(() => {
+    if (totalPaginas <= 7) return Array.from({ length: totalPaginas }, (_, i) => i + 1)
+    const nums = new Set([1, 2, totalPaginas - 1, totalPaginas, paginaSegura - 1, paginaSegura, paginaSegura + 1])
+    return Array.from(nums).filter((n) => n >= 1 && n <= totalPaginas).sort((a, b) => a - b)
+  }, [totalPaginas, paginaSegura])
 
   // ── Asistentes ──
   const abrirAsistentes = async (evento: Evento) => {
@@ -206,85 +237,181 @@ export default function AdminEventos() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
-      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+      {/* ENCABEZADO */}
+      <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
+        <div style={{
+          maxWidth: '1000px', margin: '0 auto', padding: '40px 20px 28px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap',
+        }}>
           <div>
-            <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#111827', marginBottom: '4px' }}>Panel de Eventos</h1>
-            <p style={{ color: '#6b7280', fontSize: '14px' }}>Crea y gestiona los encuentros de la red.</p>
+            <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#111827', margin: 0, lineHeight: '1.25' }}>
+              Panel de <span style={{ color: COLOR_MARCA }}>Eventos</span>
+            </h1>
+            <p style={{ color: '#6b7280', fontSize: '15px', margin: '8px 0 0' }}>
+              Crea y gestiona los encuentros de la red.
+            </p>
           </div>
           <button onClick={abrirCrear} style={{
-            background: '#B66878', color: 'white', padding: '10px 24px',
-            borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '14px'
-          }}>+ Nuevo Evento</button>
+            background: COLOR_MARCA, color: 'white', padding: '12px 22px',
+            borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '14px',
+            display: 'inline-flex', alignItems: 'center', gap: '8px', flexShrink: 0,
+          }}>
+            <Plus size={16} /> Nuevo evento
+          </button>
         </div>
+      </div>
+
+      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '28px 20px 40px' }}>
+
+        {/* BUSCADOR */}
+        {!cargando && eventos.length > 0 && (
+          <div style={{ position: 'relative', marginBottom: '20px' }}>
+            <Search size={16} color="#9ca3af" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              type="text"
+              aria-label="Buscar eventos"
+              placeholder="Buscar por título, ubicación o lugar..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              style={{
+                width: '100%', padding: '13px 14px 13px 40px', borderRadius: '12px',
+                border: `1px solid ${COLOR_BORDE}`, fontSize: '14px',
+                boxSizing: 'border-box' as const, outline: 'none', background: 'white',
+              }}
+            />
+          </div>
+        )}
 
         {/* Lista eventos */}
         {cargando ? (
           <p style={{ color: '#6b7280' }}>Cargando...</p>
         ) : eventos.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px', background: 'white', borderRadius: '16px', border: '1px solid #f3f4f6' }}>
-            <p style={{ fontSize: '40px', marginBottom: '12px' }}>📅</p>
-            <p style={{ color: '#6b7280' }}>No hay eventos. ¡Crea el primero!</p>
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
+            textAlign: 'center', padding: '80px 24px', background: 'white',
+            borderRadius: '16px', border: `1px solid ${COLOR_BORDE}`,
+          }}>
+            <div style={{
+              width: '52px', height: '52px', borderRadius: '50%',
+              background: '#fdf2f4', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Calendar size={22} color={COLOR_MARCA} />
+            </div>
+            <p style={{ color: '#6b7280', margin: 0 }}>No hay eventos. ¡Crea el primero!</p>
+          </div>
+        ) : eventosFiltrados.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px' }}>
+            <p style={{ color: '#6b7280', fontSize: '15px' }}>No hay eventos que coincidan con tu búsqueda.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {eventos.map(evento => {
-              const cfg = statusConfig[evento.status]
-              return (
-                <div key={evento.id} style={{
-                  background: 'white', borderRadius: '14px', padding: '20px 24px',
-                  border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-                  display: 'flex', alignItems: 'center', gap: '16px'
-                }}>
-                  <div style={{
-                    width: '60px', height: '60px', borderRadius: '10px', flexShrink: 0,
-                    background: evento.cover_image ? 'none' : 'linear-gradient(135deg, #EFC3CA, #B66878)',
-                    overflow: 'hidden'
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {eventosPagina.map(evento => {
+                const cfg = statusConfig[evento.status]
+                return (
+                  <div key={evento.id} style={{
+                    background: 'white', borderRadius: '14px', padding: '20px 24px',
+                    border: `1px solid ${COLOR_BORDE}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                    display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap',
                   }}>
-                    {evento.cover_image
-                      ? <img src={evento.cover_image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>🌸</div>
-                    }
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <span style={{ background: cfg.bg, color: cfg.color, fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px' }}>
-                        {cfg.label}
-                      </span>
-                      {/* Badge de costo */}
-                      <span style={{
-                        background: (evento.costo == null || evento.costo === 0) ? '#f0fdf4' : '#fef9ec',
-                        color: (evento.costo == null || evento.costo === 0) ? '#16a34a' : '#92400e',
-                        fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px',
-                      }}>
-                        {formatCosto(evento.costo)}
-                      </span>
+                    <div style={{
+                      width: '60px', height: '60px', borderRadius: '10px', flexShrink: 0,
+                      background: evento.cover_image ? 'none' : `linear-gradient(135deg, ${COLOR_MARCA_CLARO}, ${COLOR_MARCA})`,
+                      overflow: 'hidden'
+                    }}>
+                      {evento.cover_image
+                        ? <img src={evento.cover_image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Calendar size={22} color="white" />
+                          </div>
+                      }
                     </div>
-                    <p style={{ fontWeight: '700', color: '#111827', fontSize: '15px', margin: '0 0 2px 0' }}>{evento.title}</p>
-                    <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
-                      📅 {formatFecha(evento.date)} · 📍 {evento.hotel || evento.location} · 👥 {evento.total_asistentes} confirmadas
-                    </p>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                        <span style={{ background: cfg.bg, color: cfg.color, fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px' }}>
+                          {cfg.label}
+                        </span>
+                        <span style={{
+                          background: (evento.costo == null || evento.costo === 0) ? '#f0fdf4' : '#fef9ec',
+                          color: (evento.costo == null || evento.costo === 0) ? '#16a34a' : '#92400e',
+                          fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px',
+                        }}>
+                          {formatCosto(evento.costo)}
+                        </span>
+                      </div>
+                      <p style={{ fontWeight: '700', color: '#111827', fontSize: '15px', margin: '0 0 4px 0' }}>{evento.title}</p>
+                      <p style={{
+                        display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap',
+                        fontSize: '13px', color: '#6b7280', margin: 0,
+                      }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Calendar size={12} /> {formatFecha(evento.date)}
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <MapPin size={12} /> {evento.hotel || evento.location}
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Users size={12} /> {evento.total_asistentes} confirmadas
+                        </span>
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const, justifyContent: 'flex-end' }}>
+                      <button onClick={() => abrirAsistentes(evento)} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        padding: '8px 16px', borderRadius: '8px', border: '1px solid #dcfce7',
+                        background: '#f0fdf4', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#16a34a'
+                      }}><Users size={13} /> Asistentes</button>
+                      <button onClick={() => abrirEditar(evento)} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        padding: '8px 16px', borderRadius: '8px', border: '1px solid #e5e7eb',
+                        background: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#374151'
+                      }}><Pencil size={13} /> Editar</button>
+                      <button onClick={() => handleEliminar(evento.id)} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        padding: '8px 16px', borderRadius: '8px', border: '1px solid #fee2e2',
+                        background: '#fff5f5', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#ef4444'
+                      }}><Trash2 size={13} /> Eliminar</button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const, justifyContent: 'flex-end' }}>
-                    <button onClick={() => abrirAsistentes(evento)} style={{
-                      padding: '8px 16px', borderRadius: '8px', border: '1px solid #dcfce7',
-                      background: '#f0fdf4', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#16a34a'
-                    }}>👥 Asistentes</button>
-                    <button onClick={() => abrirEditar(evento)} style={{
-                      padding: '8px 16px', borderRadius: '8px', border: '1px solid #e5e7eb',
-                      background: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#374151'
-                    }}>✏️ Editar</button>
-                    <button onClick={() => handleEliminar(evento.id)} style={{
-                      padding: '8px 16px', borderRadius: '8px', border: '1px solid #fee2e2',
-                      background: '#fff5f5', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#ef4444'
-                    }}>🗑️ Eliminar</button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+
+            {/* PAGINACION */}
+            {totalPaginas > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '28px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                  disabled={paginaSegura === 1}
+                  style={paginacionBotonStyle(false, paginaSegura === 1)}
+                >
+                  <ChevronLeft size={14} />
+                </button>
+
+                {numerosPagina.map((n, i) => {
+                  const anterior = numerosPagina[i - 1]
+                  const hayHueco = anterior !== undefined && n - anterior > 1
+                  return (
+                    <div key={n} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {hayHueco && <span style={{ color: '#9ca3af', fontSize: '13px' }}>...</span>}
+                      <button onClick={() => setPagina(n)} style={paginacionBotonStyle(n === paginaSegura, false)}>
+                        {n}
+                      </button>
+                    </div>
+                  )
+                })}
+
+                <button
+                  onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                  disabled={paginaSegura === totalPaginas}
+                  style={paginacionBotonStyle(false, paginaSegura === totalPaginas)}
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -301,11 +428,18 @@ export default function AdminEventos() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div>
-                <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#111827', margin: '0 0 4px 0' }}>👥 Asistentes</h2>
+                <h2 style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  fontSize: '18px', fontWeight: '800', color: '#111827', margin: '0 0 4px 0',
+                }}>
+                  <Users size={18} color={COLOR_MARCA} /> Asistentes
+                </h2>
                 <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>{eventoSeleccionado.title}</p>
               </div>
               <button onClick={() => setModalAsistentes(false)}
-                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280' }}>✕</button>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', display: 'flex' }}>
+                <X size={20} />
+              </button>
             </div>
 
             {cargandoAsistentes ? (
@@ -317,6 +451,7 @@ export default function AdminEventos() {
                     const cfg = asistenciaConfig[s]
                     const count = contarPor(s)
                     const activo = filtro === s
+                    const IconoEstado = cfg.Icono
                     return (
                       <button key={s} onClick={() => setFiltro(activo ? 'todos' : s)} style={{
                         background: activo ? cfg.bg : 'white',
@@ -324,7 +459,7 @@ export default function AdminEventos() {
                         borderRadius: '12px', padding: '14px 12px',
                         cursor: 'pointer', textAlign: 'center' as const, transition: 'all 0.15s'
                       }}>
-                        <p style={{ fontSize: '22px', margin: '0 0 4px 0' }}>{cfg.emoji}</p>
+                        <IconoEstado size={20} color={cfg.color} style={{ marginBottom: '4px' }} />
                         <p style={{ fontSize: '24px', fontWeight: '800', color: cfg.color, margin: '0 0 2px 0' }}>{count}</p>
                         <p style={{ fontSize: '11px', color: '#6b7280', margin: 0, fontWeight: '600' }}>{cfg.label}</p>
                       </button>
@@ -340,7 +475,7 @@ export default function AdminEventos() {
                   </p>
                   {filtro !== 'todos' && (
                     <button onClick={() => setFiltro('todos')} style={{
-                      fontSize: '12px', color: '#B66878', background: 'none',
+                      fontSize: '12px', color: COLOR_MARCA, background: 'none',
                       border: 'none', cursor: 'pointer', fontWeight: '600'
                     }}>Ver todos</button>
                   )}
@@ -364,7 +499,7 @@ export default function AdminEventos() {
                         }}>
                           <div style={{
                             width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-                            background: 'linear-gradient(135deg, #EFC3CA, #B66878)',
+                            background: `linear-gradient(135deg, ${COLOR_MARCA_CLARO}, ${COLOR_MARCA})`,
                             overflow: 'hidden',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '14px', fontWeight: '700', color: 'white'
@@ -395,9 +530,9 @@ export default function AdminEventos() {
                               flexShrink: 0
                             }}
                           >
-                            <option value="confirmed">✅ Sí asiste</option>
-                            <option value="declined">❌ No asiste</option>
-                            <option value="pending">⏳ Pendiente</option>
+                            <option value="confirmed">Sí asiste</option>
+                            <option value="declined">No asiste</option>
+                            <option value="pending">Pendiente</option>
                           </select>
                         </div>
                       )
@@ -422,11 +557,13 @@ export default function AdminEventos() {
             width: '100%', maxWidth: '620px', maxHeight: '90vh', overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#111827' }}>
-                {eventoEditando ? 'Editar Evento' : 'Nuevo Evento'}
+              <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#111827', margin: 0 }}>
+                {eventoEditando ? 'Editar evento' : 'Nuevo evento'}
               </h2>
               <button onClick={() => setModalAbierto(false)}
-                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280' }}>✕</button>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', display: 'flex' }}>
+                <X size={20} />
+              </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -441,7 +578,9 @@ export default function AdminEventos() {
                 }}>
                   {previsualizacion
                     ? <img src={previsualizacion} alt="preview" style={{ maxHeight: '160px', borderRadius: '8px', objectFit: 'cover', width: '100%' }} />
-                    : <p style={{ color: '#9ca3af', fontSize: '14px' }}>📷 Haz clic para subir imagen</p>
+                    : <p style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#9ca3af', fontSize: '14px', margin: 0 }}>
+                        <ImagePlus size={16} /> Haz clic para subir imagen
+                      </p>
                   }
                   <input type="file" accept="image/*" onChange={handleImagen}
                     style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
@@ -539,10 +678,12 @@ export default function AdminEventos() {
                   background: 'white', cursor: 'pointer', fontWeight: '600', fontSize: '14px', color: '#374151'
                 }}>Cancelar</button>
                 <button onClick={handleGuardar} disabled={guardando} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
                   padding: '10px 24px', borderRadius: '10px', border: 'none',
-                  background: '#B66878', color: 'white', cursor: 'pointer',
-                  fontWeight: '700', fontSize: '14px'
+                  background: COLOR_MARCA, color: 'white', cursor: 'pointer',
+                  fontWeight: '700', fontSize: '14px', opacity: guardando ? 0.7 : 1,
                 }}>
+                  {!guardando && <Check size={14} />}
                   {guardando ? 'Guardando...' : eventoEditando ? 'Guardar cambios' : 'Crear evento'}
                 </button>
               </div>

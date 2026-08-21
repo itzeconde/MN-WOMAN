@@ -60,7 +60,7 @@ const USUARIAS_POR_PAGINA = 9
 // placeholder hecho con formas + iconos para no depender de una imagen externa.
 function HeroIlustracion() {
   return (
-    <div style={{
+    <div className="directorio-hero-ilustracion" style={{
       position: 'relative', width: '260px', height: '190px', flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
@@ -225,10 +225,34 @@ export default function Directorio() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <style>{`
+        .directorio-hero-pad { padding: 48px 20px 32px; }
+        .directorio-body-pad { padding: 32px 20px 40px; }
+
+        .directorio-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: 20px;
+        }
+
+        .directorio-mas-filtros-btn { padding: 13px 18px; }
+
+        @media (max-width: 768px) {
+          .directorio-hero-pad { padding: 32px 16px 24px; }
+          .directorio-body-pad { padding: 24px 16px 32px; }
+          .directorio-hero-ilustracion { display: none; }
+        }
+
+        @media (max-width: 480px) {
+          .directorio-cards-grid { grid-template-columns: 1fr; gap: 14px; }
+          .directorio-mas-filtros-btn { flex: 1; justify-content: center; padding: 13px 12px; }
+        }
+      `}</style>
+
       {/* HERO */}
       <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
-        <div style={{
-          maxWidth: '1200px', margin: '0 auto', padding: '48px 20px 32px',
+        <div className="directorio-hero-pad" style={{
+          maxWidth: '1200px', margin: '0 auto',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap',
         }}>
           <div style={{ flex: 1, minWidth: '280px' }}>
@@ -247,7 +271,7 @@ export default function Directorio() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 20px 40px' }}>
+      <div className="directorio-body-pad" style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
         {/* BUSCADOR + BOTON MAS FILTROS */}
         <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
@@ -265,9 +289,10 @@ export default function Directorio() {
             />
           </div>
           <button
+            className="directorio-mas-filtros-btn"
             onClick={() => setMostrarMasFiltros(v => !v)}
             style={{
-              display: 'flex', alignItems: 'center', gap: '8px', padding: '13px 18px',
+              display: 'flex', alignItems: 'center', gap: '8px',
               borderRadius: '12px', border: `1px solid ${mostrarMasFiltros ? COLOR_MARCA : COLOR_BORDE}`,
               background: mostrarMasFiltros ? '#fdf2f4' : 'white', color: COLOR_MARCA,
               fontWeight: '700', fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap',
@@ -335,7 +360,7 @@ export default function Directorio() {
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+            <div className="directorio-cards-grid">
               {usuariasPagina.map((u) => (
                 <div
                   key={u.id}

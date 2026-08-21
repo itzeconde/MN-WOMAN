@@ -1,5 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { getSolicitudes, accionSolicitud } from '../../api/usuarios'
+import { paginacionBotonStyle, COLOR_MARCA, COLOR_MARCA_CLARO, COLOR_BORDE } from '../../styles/tokens'
+import {
+  Mail, Phone, Briefcase, MapPin, Clock, Calendar,
+  Check, X, Inbox, Search, ChevronLeft, ChevronRight,
+} from 'lucide-react'
 
 interface Solicitud {
   id: number
@@ -49,10 +54,15 @@ const tabs = [
   { key: 'rechazada', label: 'Rechazadas', color: '#ef4444', bg: '#fee2e2' },
 ]
 
+const COLOR_TEXTO_SUAVE = '#9ca3af'
+const SOLICITUDES_POR_PAGINA = 8
+
 export default function AdminSolicitudes() {
   const [tabActiva, setTabActiva] = useState('pendiente')
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([])
   const [cargando, setCargando] = useState(true)
+  const [busqueda, setBusqueda] = useState('')
+  const [pagina, setPagina] = useState(1)
   const [seleccionada, setSeleccionada] = useState<Solicitud | null>(null)
   const [procesando, setProcesando] = useState(false)
   const [modalRechazo, setModalRechazo] = useState(false)
@@ -60,6 +70,7 @@ export default function AdminSolicitudes() {
   const [solicitudArechazar, setSolicitudArechazar] = useState<number | null>(null)
 
   useEffect(() => { cargar() }, [tabActiva])
+  useEffect(() => { setPagina(1) }, [busqueda, tabActiva])
 
   const cargar = async () => {
     setCargando(true)
@@ -109,18 +120,45 @@ export default function AdminSolicitudes() {
   const iniciales = (nombre: string) =>
     nombre.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
 
+  // ── Búsqueda y paginación ──
+  const solicitudesFiltradas = solicitudes.filter((s) =>
+    busqueda === '' ||
+    s.nombre_completo.toLowerCase().includes(busqueda.toLowerCase()) ||
+    s.company.toLowerCase().includes(busqueda.toLowerCase()) ||
+    s.email.toLowerCase().includes(busqueda.toLowerCase())
+  )
+
+  const totalPaginas = Math.max(1, Math.ceil(solicitudesFiltradas.length / SOLICITUDES_POR_PAGINA))
+  const paginaSegura = Math.min(pagina, totalPaginas)
+  const solicitudesPagina = solicitudesFiltradas.slice(
+    (paginaSegura - 1) * SOLICITUDES_POR_PAGINA,
+    paginaSegura * SOLICITUDES_POR_PAGINA
+  )
+
+  const numerosPagina = useMemo(() => {
+    if (totalPaginas <= 7) return Array.from({ length: totalPaginas }, (_, i) => i + 1)
+    const nums = new Set([1, 2, totalPaginas - 1, totalPaginas, paginaSegura - 1, paginaSegura, paginaSegura + 1])
+    return Array.from(nums).filter((n) => n >= 1 && n <= totalPaginas).sort((a, b) => a - b)
+  }, [totalPaginas, paginaSegura])
+
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 20px' }}>
 
-        <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#111827', marginBottom: '4px' }}>
-            Solicitudes de Ingreso
+      {/* ENCABEZADO */}
+      <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
+        <div style={{
+          maxWidth: '1100px', margin: '0 auto', padding: '40px 20px 28px',
+        }}>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#111827', margin: 0, lineHeight: 1.25 }}>
+            Solicitudes de <span style={{ color: COLOR_MARCA }}>Ingreso</span>
           </h1>
-          <p style={{ color: '#6b7280', fontSize: '14px' }}>
+          <p style={{ fontSize: '15px', color: '#6b7280', margin: '8px 0 0' }}>
             Revisa y gestiona las solicitudes de nuevas miembras.
           </p>
         </div>
+      </div>
+
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '28px 20px 40px' }}>
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
@@ -130,7 +168,7 @@ export default function AdminSolicitudes() {
               cursor: 'pointer', fontSize: '14px', fontWeight: '600',
               background: tabActiva === tab.key ? tab.bg : 'white',
               color: tabActiva === tab.key ? tab.color : '#6b7280',
-              border: tabActiva === tab.key ? `1px solid ${tab.color}30` : '1px solid #e5e7eb',
+              border: tabActiva === tab.key ? `1px solid ${tab.color}30` : `1px solid ${COLOR_BORDE}`,
               transition: 'all 0.15s',
             }}>
               {tab.label}
@@ -148,26 +186,57 @@ export default function AdminSolicitudes() {
 
           {/* Lista */}
           <div>
+            {!cargando && solicitudes.length > 0 && (
+              <div style={{ position: 'relative', marginBottom: '16px' }}>
+                <Search size={16} color="#9ca3af" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  aria-label="Buscar solicitudes"
+                  placeholder="Buscar por nombre, empresa o email..."
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  style={{
+                    width: '100%', padding: '13px 14px 13px 40px', borderRadius: '12px',
+                    border: `1px solid ${COLOR_BORDE}`, fontSize: '14px',
+                    boxSizing: 'border-box', outline: 'none', background: 'white',
+                  }}
+                />
+              </div>
+            )}
+
             {cargando ? (
-              <p style={{ color: '#6b7280', padding: '40px', textAlign: 'center' }}>Cargando...</p>
+              <p style={{ color: COLOR_TEXTO_SUAVE, padding: '40px', textAlign: 'center', fontSize: '13px' }}>Cargando...</p>
             ) : solicitudes.length === 0 ? (
-              <div style={{ background: 'white', borderRadius: '16px', padding: '60px', textAlign: 'center', border: '1px solid #f3f4f6' }}>
-                <p style={{ fontSize: '36px', marginBottom: '8px' }}>📭</p>
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>No hay solicitudes {tabActiva}s</p>
+              <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
+                textAlign: 'center', padding: '80px 24px', background: 'white',
+                borderRadius: '16px', border: `1px solid ${COLOR_BORDE}`,
+              }}>
+                <div style={{
+                  width: '52px', height: '52px', borderRadius: '50%',
+                  background: '#fdf2f4', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Inbox size={22} color={COLOR_MARCA} />
+                </div>
+                <p style={{ color: COLOR_TEXTO_SUAVE, fontSize: '14px', margin: 0 }}>No hay solicitudes {tabActiva}s.</p>
+              </div>
+            ) : solicitudesFiltradas.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px' }}>
+                <p style={{ color: COLOR_TEXTO_SUAVE, fontSize: '14px' }}>No hay solicitudes que coincidan con tu búsqueda.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {solicitudes.map(s => (
+                {solicitudesPagina.map(s => (
                   <div key={s.id} onClick={() => setSeleccionada(s)} style={{
                     background: 'white', borderRadius: '14px', padding: '16px 20px',
-                    border: seleccionada?.id === s.id ? '1.5px solid #B66878' : '1px solid #f3f4f6',
+                    border: seleccionada?.id === s.id ? `1.5px solid ${COLOR_MARCA}` : `1px solid ${COLOR_BORDE}`,
                     boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-                    display: 'flex', alignItems: 'center', gap: '14px',
+                    display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap',
                     cursor: 'pointer', transition: 'all 0.15s',
                   }}>
                     <div style={{
                       width: '48px', height: '48px', borderRadius: '50%', flexShrink: 0,
-                      background: s.profile_picture ? 'none' : 'linear-gradient(135deg, #EFC3CA, #B66878)',
+                      background: s.profile_picture ? 'none' : `linear-gradient(135deg, ${COLOR_MARCA_CLARO}, ${COLOR_MARCA})`,
                       overflow: 'hidden', display: 'flex', alignItems: 'center',
                       justifyContent: 'center', fontSize: '16px', fontWeight: '700', color: 'white'
                     }}>
@@ -176,7 +245,7 @@ export default function AdminSolicitudes() {
                         : iniciales(s.nombre_completo)
                       }
                     </div>
-                    <div style={{ flex: 1 }}>
+                    <div style={{ flex: 1, minWidth: '160px' }}>
                       <p style={{ fontWeight: '700', color: '#111827', fontSize: '14px', margin: '0 0 2px 0' }}>
                         {s.nombre_completo}
                       </p>
@@ -184,25 +253,58 @@ export default function AdminSolicitudes() {
                         {s.company} · {SECTORES[s.business_sector] || s.business_sector}
                       </p>
                     </div>
-                    <p style={{ fontSize: '12px', color: '#9ca3af', flexShrink: 0 }}>
+                    <p style={{ fontSize: '12px', color: COLOR_TEXTO_SUAVE, flexShrink: 0 }}>
                       {formatFecha(s.member_since)}
                     </p>
                     {tabActiva === 'pendiente' && (
-                      <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', gap: '8px' }} onClick={e => e.stopPropagation()}>
                         <button onClick={() => handleAprobar(s.id)} disabled={procesando} style={{
-                          padding: '6px 14px', borderRadius: '8px', border: 'none',
-                          background: '#dcfce7', color: '#16a34a', cursor: 'pointer',
-                          fontSize: '12px', fontWeight: '700'
-                        }}>✓ Aprobar</button>
+                          display: 'inline-flex', alignItems: 'center', gap: '6px',
+                          padding: '8px 16px', borderRadius: '8px', border: '1px solid #dcfce7',
+                          background: '#f0fdf4', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#16a34a'
+                        }}><Check size={13} /> Aprobar</button>
                         <button onClick={() => abrirModalRechazo(s.id)} disabled={procesando} style={{
-                          padding: '6px 14px', borderRadius: '8px', border: 'none',
-                          background: '#fee2e2', color: '#ef4444', cursor: 'pointer',
-                          fontSize: '12px', fontWeight: '700'
-                        }}>✕ Rechazar</button>
+                          display: 'inline-flex', alignItems: 'center', gap: '6px',
+                          padding: '8px 16px', borderRadius: '8px', border: '1px solid #fee2e2',
+                          background: '#fff5f5', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#ef4444'
+                        }}><X size={13} /> Rechazar</button>
                       </div>
                     )}
                   </div>
                 ))}
+
+                {totalPaginas > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '18px', flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                      disabled={paginaSegura === 1}
+                      style={paginacionBotonStyle(false, paginaSegura === 1)}
+                    >
+                      <ChevronLeft size={14} />
+                    </button>
+
+                    {numerosPagina.map((n, i) => {
+                      const anterior = numerosPagina[i - 1]
+                      const hayHueco = anterior !== undefined && n - anterior > 1
+                      return (
+                        <div key={n} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {hayHueco && <span style={{ color: '#9ca3af', fontSize: '13px' }}>...</span>}
+                          <button onClick={() => setPagina(n)} style={paginacionBotonStyle(n === paginaSegura, false)}>
+                            {n}
+                          </button>
+                        </div>
+                      )
+                    })}
+
+                    <button
+                      onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                      disabled={paginaSegura === totalPaginas}
+                      style={paginacionBotonStyle(false, paginaSegura === totalPaginas)}
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -211,13 +313,13 @@ export default function AdminSolicitudes() {
           {seleccionada && (
             <div style={{
               background: 'white', borderRadius: '16px', padding: '24px',
-              border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+              border: `1px solid ${COLOR_BORDE}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
               height: 'fit-content', position: 'sticky', top: '20px'
             }}>
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <div style={{
                   width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 12px',
-                  background: seleccionada.profile_picture ? 'none' : 'linear-gradient(135deg, #EFC3CA, #B66878)',
+                  background: seleccionada.profile_picture ? 'none' : `linear-gradient(135deg, ${COLOR_MARCA_CLARO}, ${COLOR_MARCA})`,
                   overflow: 'hidden', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', fontSize: '24px', fontWeight: '700', color: 'white'
                 }}>
@@ -229,27 +331,27 @@ export default function AdminSolicitudes() {
                 <p style={{ fontWeight: '800', color: '#111827', fontSize: '16px', margin: '0 0 4px 0' }}>
                   {seleccionada.nombre_completo}
                 </p>
-                <p style={{ fontSize: '13px', color: '#B66878', fontWeight: '600', margin: 0 }}>
+                <p style={{ fontSize: '13px', color: COLOR_MARCA, fontWeight: '600', margin: 0 }}>
                   {seleccionada.company}
                 </p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
                 {[
-                  { icon: '📧', label: 'Email', value: seleccionada.email },
-                  { icon: '📱', label: 'Teléfono', value: seleccionada.phone || 'No proporcionado' },
-                  { icon: '📂', label: 'Sector', value: SECTORES[seleccionada.business_sector] || seleccionada.business_sector },
-                  { icon: '📍', label: 'Municipio', value: MUNICIPIOS[seleccionada.municipality] || seleccionada.municipality },
-                  { icon: '⏱️', label: 'Años liderando', value: YEARS[seleccionada.years_leading] || seleccionada.years_leading },
-                  { icon: '📅', label: 'Registro', value: formatFecha(seleccionada.member_since) },
+                  { Icono: Mail, label: 'Email', value: seleccionada.email },
+                  { Icono: Phone, label: 'Teléfono', value: seleccionada.phone || 'No proporcionado' },
+                  { Icono: Briefcase, label: 'Sector', value: SECTORES[seleccionada.business_sector] || seleccionada.business_sector },
+                  { Icono: MapPin, label: 'Municipio', value: MUNICIPIOS[seleccionada.municipality] || seleccionada.municipality },
+                  { Icono: Clock, label: 'Años liderando', value: YEARS[seleccionada.years_leading] || seleccionada.years_leading },
+                  { Icono: Calendar, label: 'Registro', value: formatFecha(seleccionada.member_since) },
                 ].map(item => (
                   <div key={item.label} style={{
                     display: 'flex', gap: '10px', padding: '8px 12px',
-                    background: '#f9fafb', borderRadius: '8px'
+                    background: '#f9fafb', borderRadius: '8px', alignItems: 'flex-start'
                   }}>
-                    <span style={{ fontSize: '14px' }}>{item.icon}</span>
+                    <item.Icono size={14} color={COLOR_TEXTO_SUAVE} style={{ marginTop: '2px', flexShrink: 0 }} />
                     <div>
-                      <p style={{ fontSize: '11px', color: '#9ca3af', margin: '0 0 1px 0', fontWeight: '600' }}>{item.label}</p>
+                      <p style={{ fontSize: '11px', color: COLOR_TEXTO_SUAVE, margin: '0 0 1px 0', fontWeight: '600' }}>{item.label}</p>
                       <p style={{ fontSize: '13px', color: '#111827', margin: 0, fontWeight: '500' }}>{item.value}</p>
                     </div>
                   </div>
@@ -259,15 +361,17 @@ export default function AdminSolicitudes() {
               {tabActiva === 'pendiente' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <button onClick={() => handleAprobar(seleccionada.id)} disabled={procesando} style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                     padding: '12px', borderRadius: '10px', border: 'none',
                     background: '#16a34a', color: 'white', cursor: 'pointer',
                     fontWeight: '700', fontSize: '14px'
-                  }}>✓ Aprobar solicitud</button>
+                  }}><Check size={14} /> Aprobar solicitud</button>
                   <button onClick={() => abrirModalRechazo(seleccionada.id)} disabled={procesando} style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                     padding: '12px', borderRadius: '10px', border: '1px solid #fee2e2',
                     background: '#fff5f5', color: '#ef4444', cursor: 'pointer',
                     fontWeight: '700', fontSize: '14px'
-                  }}>✕ Rechazar solicitud</button>
+                  }}><X size={14} /> Rechazar solicitud</button>
                 </div>
               )}
             </div>
@@ -299,19 +403,21 @@ export default function AdminSolicitudes() {
               rows={4}
               style={{
                 width: '100%', padding: '12px', borderRadius: '10px',
-                border: '1px solid #e5e7eb', fontSize: '14px',
-                resize: 'vertical', boxSizing: 'border-box', outline: 'none'
+                border: `1px solid ${COLOR_BORDE}`, fontSize: '14px',
+                resize: 'vertical', boxSizing: 'border-box', outline: 'none',
+                fontFamily: 'inherit',
               }}
             />
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <button onClick={() => setModalRechazo(false)} style={{
-                padding: '10px 20px', borderRadius: '10px', border: '1px solid #e5e7eb',
-                background: 'white', cursor: 'pointer', fontWeight: '600', fontSize: '14px', color: '#374151'
+              <button onClick={() => setModalRechazo(false)} disabled={procesando} style={{
+                padding: '10px 20px', borderRadius: '10px', border: `1px solid ${COLOR_BORDE}`,
+                background: 'white', cursor: 'pointer', fontWeight: '600', fontSize: '14px', color: '#374151',
+                opacity: procesando ? 0.6 : 1,
               }}>Cancelar</button>
               <button onClick={handleRechazar} disabled={procesando} style={{
                 padding: '10px 20px', borderRadius: '10px', border: 'none',
                 background: '#ef4444', color: 'white', cursor: 'pointer',
-                fontWeight: '700', fontSize: '14px'
+                fontWeight: '700', fontSize: '14px', opacity: procesando ? 0.7 : 1,
               }}>
                 {procesando ? 'Rechazando...' : 'Confirmar rechazo'}
               </button>

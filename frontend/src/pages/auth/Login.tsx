@@ -38,7 +38,7 @@ export default function Login() {
       if (statusData.status === 'rechazada') {
         const motivo = statusData.rechazo_motivo
           ? `Tu solicitud no fue aprobada. Motivo: ${statusData.rechazo_motivo}`
-          : 'Tu solicitud no fue aprobada. Contacta a MN WOMAN para más información.'
+          : 'Tu solicitud no fue aprobada. Contacta a MN WOMEN para más información.'
         setError(motivo)
         return
       }
@@ -64,7 +64,7 @@ export default function Login() {
 
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px' }}>Bienvenida de vuelta</h1>
-          <p style={{ color: '#6b7280', fontSize: '14px' }}>Inicia sesión en tu cuenta de MN WOMAN</p>
+          <p style={{ color: '#6b7280', fontSize: '14px' }}>Inicia sesión en tu cuenta de MN WOMEN</p>
         </div>
 
         <form onSubmit={handleSubmit}>

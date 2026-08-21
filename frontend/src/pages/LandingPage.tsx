@@ -91,6 +91,10 @@ const LandingPage = () => {
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
 
+  // Temas de Interés: el primero se vuelve la tarjeta grande, el resto va en la lista chica
+  const articuloDestacado = articles[0]
+  const articulosLista = articles.slice(1, 6)
+
   return (
     <main style={{ fontFamily: "'Inter', 'Helvetica Neue', sans-serif", backgroundColor: '#FBF8F4' }}>
       <style>{`
@@ -140,6 +144,34 @@ const LandingPage = () => {
         .pilar-card:hover .pilar-icon-wrap { background-color: #B66878; }
         .pilar-card:hover .pilar-icon-wrap svg { stroke: #fff !important; }
 
+        /* Temas de interés: tarjeta grande + lista chica */
+        .articulos-notorio {
+          display: flex;
+          align-items: stretch;
+          gap: 28px;
+        }
+        .articulo-destacado-grande {
+          flex: 1.15 1 380px;
+          min-height: 460px;
+        }
+        .articulos-lista-chica {
+          flex: 1 1 340px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+        .articulo-chico-thumb {
+          width: 76px;
+          height: 76px;
+          flex-shrink: 0;
+        }
+        .articulo-chico-titulo {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
         /* ── Tablet (≤ 900px) ── */
         @media (max-width: 900px) {
           .hero-section { padding: 72px 32px; min-height: unset; }
@@ -154,6 +186,8 @@ const LandingPage = () => {
           .cta-section { padding: 72px 32px; }
           .cta-title { font-size: 32px; }
           .colabs { gap: 28px; }
+          .articulos-notorio { flex-direction: column; }
+          .articulo-destacado-grande { min-height: 320px; }
         }
 
         /* ── Mobile (≤ 600px) ── */
@@ -174,6 +208,8 @@ const LandingPage = () => {
           .cta-title { font-size: 27px; }
           .colabs { gap: 20px; }
           .colabs-section { padding: 40px 20px; }
+          .articulo-destacado-grande { min-height: 280px; }
+          .articulo-chico-thumb { width: 64px; height: 64px; }
         }
       `}</style>
 
@@ -493,7 +529,7 @@ const LandingPage = () => {
       )}
 
       {/* ── TEMAS DE INTERÉS ── */}
-      {articles.length > 0 && (
+      {articuloDestacado && (
         <section className="section-pad" style={{ backgroundColor: '#fdf6f8' }}>
           <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
             <div className="section-header">
@@ -513,36 +549,75 @@ const LandingPage = () => {
               </a>
             </div>
 
-            <div className="grid-3">
-              {articles.map(articulo => (
-                <a key={articulo.id} href={articulo.external_url} target="_blank" rel="noreferrer" className="card-hover" style={{
+            <div className="articulos-notorio">
+              {/* Tarjeta grande: el artículo más reciente */}
+              <a
+                href={articuloDestacado.external_url}
+                target="_blank"
+                rel="noreferrer"
+                className="card-hover articulo-destacado-grande"
+                style={{
                   textDecoration: 'none', backgroundColor: '#fff', border: '1px solid #f0e6e9',
-                  borderRadius: '18px', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                }}>
-                  <div style={{ height: '190px', background: '#FDF0F2', overflow: 'hidden', position: 'relative' }}>
-                    {articulo.cover_image_url
-                      ? <img src={articulo.cover_image_url} alt={articulo.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '44px' }}>🌸</div>
-                    }
-                    <span style={{
-                      position: 'absolute', top: '14px', left: '14px',
-                      backgroundColor: '#fff', color: '#B66878', padding: '5px 14px',
-                      borderRadius: '100px', fontSize: '13px', fontWeight: '700',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    }}>
-                      {articulo.category_display}
-                    </span>
+                  borderRadius: '20px', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                }}
+              >
+                <div style={{ flex: 1, background: '#FDF0F2', overflow: 'hidden', position: 'relative', minHeight: '220px' }}>
+                  {articuloDestacado.cover_image_url
+                    ? <img src={articuloDestacado.cover_image_url} alt={articuloDestacado.title} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
+                    : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '52px' }}>🌸</div>
+                  }
+                  <span style={{
+                    position: 'absolute', top: '16px', left: '16px',
+                    backgroundColor: '#fff', color: '#B66878', padding: '5px 14px',
+                    borderRadius: '100px', fontSize: '13px', fontWeight: '700',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  }}>
+                    {articuloDestacado.category_display}
+                  </span>
+                </div>
+                <div style={{ padding: '26px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <p style={{ fontSize: '22px', fontWeight: '800', color: '#0f0a0b', lineHeight: '1.35', margin: 0, letterSpacing: '-0.01em' }}>
+                    {articuloDestacado.title}
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '10px', borderTop: '1px solid #f0e6e9' }}>
+                    <span style={{ fontSize: '14px', color: '#B66878', fontWeight: '700' }}>Leer artículo →</span>
                   </div>
-                  <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
-                    <p style={{ fontSize: '17px', fontWeight: '700', color: '#0f0a0b', lineHeight: '1.4', flex: 1, margin: 0, letterSpacing: '-0.01em' }}>
-                      {articulo.title}
-                    </p>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '12px', borderTop: '1px solid #f0e6e9' }}>
-                      <span style={{ fontSize: '14px', color: '#B66878', fontWeight: '700' }}>Leer artículo →</span>
-                    </div>
-                  </div>
-                </a>
-              ))}
+                </div>
+              </a>
+
+              {/* Lista chica: el resto */}
+              {articulosLista.length > 0 && (
+                <div className="articulos-lista-chica">
+                  {articulosLista.map(articulo => (
+                    <a
+                      key={articulo.id}
+                      href={articulo.external_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="card-hover"
+                      style={{
+                        textDecoration: 'none', backgroundColor: '#fff', border: '1px solid #f0e6e9',
+                        borderRadius: '14px', padding: '12px', display: 'flex', alignItems: 'center', gap: '14px',
+                      }}
+                    >
+                      <div className="articulo-chico-thumb" style={{ borderRadius: '10px', overflow: 'hidden', background: '#FDF0F2' }}>
+                        {articulo.cover_image_url
+                          ? <img src={articulo.cover_image_url} alt={articulo.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🌸</div>
+                        }
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#B66878', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          {articulo.category_display}
+                        </span>
+                        <p className="articulo-chico-titulo" style={{ fontSize: '14.5px', fontWeight: '700', color: '#0f0a0b', margin: '4px 0 0', lineHeight: '1.4' }}>
+                          {articulo.title}
+                        </p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>

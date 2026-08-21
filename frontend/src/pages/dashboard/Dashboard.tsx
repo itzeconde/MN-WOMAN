@@ -4,6 +4,17 @@ import { useAuth } from '../../context/AuthContext'
 import { getEventos, confirmarAsistencia, getMiAsistencia } from '../../api/eventos'
 import { getMisOportunidades } from '../../api/oportunidades'
 import { getMisServicios } from '../../api/servicios'
+import { useCargaConError } from '../../hooks/useCargaConError'
+import EstadoSinConexion from '../../components/ui/EstadoSinConexion'
+import {
+  botonPrimario, badgePillStyle,
+  COLOR_MARCA, COLOR_MARCA_CLARO, COLOR_BORDE,
+  CARD_SHADOW_REST, CARD_SHADOW_HOVER,
+} from '../../styles/tokens'
+import {
+  Calendar, Clock, MapPin, Briefcase, Sparkles, Bell,
+  CheckCircle2, XCircle, ArrowRight, PlusCircle,
+} from 'lucide-react'
 
 type RespuestaAsistencia = 'si' | 'no' | null
 
@@ -53,73 +64,40 @@ const esEventoFuturo = (evento: Evento): boolean => {
   return new Date(evento.date) >= hoy
 }
 
-const styles = {
-  card: {
-    background: 'white',
-    borderRadius: '16px',
-    padding: '24px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-    border: '1px solid #f3f4f6',
-  } as React.CSSProperties,
+const urgenciaColores: Record<string, [string, string]> = {
+  alta: ['#fef2f2', '#ef4444'],
+  media: ['#fffbeb', '#f59e0b'],
+  baja: ['#f0fdf4', '#22c55e'],
+}
 
-  btnAsistencia: (activo: boolean, colorActivo: string, deshabilitado?: boolean): React.CSSProperties => ({
-    flex: 1,
-    padding: '10px',
-    borderRadius: '8px',
-    border: '2px solid',
-    borderColor: activo ? colorActivo : '#e5e7eb',
-    background: deshabilitado
-      ? '#f3f4f6'
-      : activo
-      ? (colorActivo === '#B66878' ? '#fdf2f4' : '#fef2f2')
-      : 'white',
-    color: deshabilitado ? '#9ca3af' : activo ? colorActivo : '#374151',
-    cursor: deshabilitado ? 'not-allowed' : 'pointer',
-    fontWeight: '600',
-    fontSize: '14px',
-  }),
-
-  btnPrimario: {
-    background: '#B66878',
-    color: 'white',
-    padding: '8px 20px',
-    borderRadius: '8px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '600',
-  } as React.CSSProperties,
-
-  btnTexto: {
-    background: 'none',
-    border: 'none',
-    color: '#B66878',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '500',
-  } as React.CSSProperties,
-
-  badgeUrgencia: (urgencia: string): React.CSSProperties => ({
-    fontSize: '11px',
-    padding: '2px 8px',
-    borderRadius: '20px',
-    background:
-      urgencia === 'alta' ? '#fef2f2' :
-      urgencia === 'media' ? '#fffbeb' : '#f0fdf4',
-    color:
-      urgencia === 'alta' ? '#ef4444' :
-      urgencia === 'media' ? '#f59e0b' : '#22c55e',
-  }),
-
-  confirmacionBox: (esSi: boolean): React.CSSProperties => ({
-    padding: '12px 14px',
-    borderRadius: '8px',
-    background: esSi ? '#fdf2f4' : '#f9fafb',
-    border: `1px solid ${esSi ? '#EFC3CA' : '#e5e7eb'}`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  }),
+// ---- Card con hover consistente con el resto de la app (Directorio) ----
+function CardInteractiva({
+  onClick, children, style,
+}: { onClick?: () => void; children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: 'white', borderRadius: '16px',
+        border: `1px solid ${COLOR_BORDE}`, boxShadow: CARD_SHADOW_REST,
+        transition: 'box-shadow 0.2s, border-color 0.2s, transform 0.2s',
+        cursor: onClick ? 'pointer' : 'default',
+        ...style,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = CARD_SHADOW_HOVER
+        e.currentTarget.style.borderColor = COLOR_MARCA_CLARO
+        e.currentTarget.style.transform = 'translateY(-2px)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = CARD_SHADOW_REST
+        e.currentTarget.style.borderColor = COLOR_BORDE
+        e.currentTarget.style.transform = 'translateY(0)'
+      }}
+    >
+      {children}
+    </div>
+  )
 }
 
 export default function Dashboard() {
@@ -130,51 +108,40 @@ export default function Dashboard() {
   const [misServicios, setMisServicios] = useState<Servicio[]>([])
   const [misOportunidades, setMisOportunidades] = useState<Oportunidad[]>([])
   const [asistencia, setAsistencia] = useState<RespuestaAsistencia>(null)
-  const [cargando, setCargando] = useState(true)
   const [enviandoAsistencia, setEnviandoAsistencia] = useState(false)
-  const [errorCarga, setErrorCarga] = useState<string | null>(null)
   const [errorAsistencia, setErrorAsistencia] = useState<string | null>(null)
 
-  useEffect(() => {
-    const cargarDatos = async () => {
+  const { cargando, errorRed, ejecutar } = useCargaConError()
+
+  const cargarDatos = () => ejecutar(async () => {
+    const [eventos, servicios, oportunidades] = await Promise.all([
+      getEventos(),
+      getMisServicios(),
+      getMisOportunidades(),
+    ])
+
+    const futuros = eventos
+      .filter(esEventoFuturo)
+      .sort((a: Evento, b: Evento) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+    if (futuros.length > 0) {
+      const evento = futuros[0]
+      setProximoEvento(evento)
+
       try {
-        const [eventos, servicios, oportunidades] = await Promise.all([
-          getEventos(),
-          getMisServicios(),
-          getMisOportunidades(),
-        ])
-
-        const futuros = eventos
-          .filter(esEventoFuturo)
-          .sort(
-            (a: Evento, b: Evento) =>
-              new Date(a.date).getTime() - new Date(b.date).getTime()
-          )
-
-        if (futuros.length > 0) {
-          const evento = futuros[0]
-          setProximoEvento(evento)
-
-          // Recuperar si el usuario ya había respondido antes (persiste al refrescar)
-          try {
-            const miAsistencia = await getMiAsistencia(evento.id)
-            if (miAsistencia.status === 'confirmada') setAsistencia('si')
-            else if (miAsistencia.status === 'cancelada') setAsistencia('no')
-          } catch (err) {
-            console.error('No se pudo cargar la asistencia previa', err)
-            // no bloquea el resto del dashboard, solo se queda en null
-          }
-        }
-
-        setMisServicios(servicios)
-        setMisOportunidades(oportunidades)
+        const miAsistencia = await getMiAsistencia(evento.id)
+        if (miAsistencia.status === 'confirmada') setAsistencia('si')
+        else if (miAsistencia.status === 'cancelada') setAsistencia('no')
       } catch (err) {
-        console.error(err)
-        setErrorCarga('No se pudieron cargar los datos. Por favor, intenta de nuevo.')
-      } finally {
-        setCargando(false)
+        console.error('No se pudo cargar la asistencia previa', err)
       }
     }
+
+    setMisServicios(servicios)
+    setMisOportunidades(oportunidades)
+  })
+
+  useEffect(() => {
     cargarDatos()
   }, [])
 
@@ -184,10 +151,8 @@ export default function Dashboard() {
     setEnviandoAsistencia(true)
     try {
       const res = await confirmarAsistencia(proximoEvento.id, valor)
-
       if (res.cupo_agotado) {
         setErrorAsistencia('El cupo para este evento se acaba de agotar. Intenta con otra respuesta.')
-        // No se marca como confirmado: los botones se quedan visibles
       } else {
         setAsistencia(valor)
       }
@@ -207,96 +172,134 @@ export default function Dashboard() {
     setErrorAsistencia(null)
   }
 
-  if (cargando) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
-      <p style={{ color: '#B66878', fontWeight: '600' }}>Cargando...</p>
-    </div>
-  )
+  if (cargando) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#6b7280' }}>Cargando panel...</p>
+      </div>
+    )
+  }
 
-  if (errorCarga) return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', gap: '12px' }}>
-      <p style={{ color: '#ef4444', fontWeight: '600' }}>{errorCarga}</p>
-      <button onClick={() => window.location.reload()} style={styles.btnPrimario}>
-        Reintentar
-      </button>
-    </div>
-  )
+  if (errorRed) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '60px 20px' }}>
+        <EstadoSinConexion
+          onReintentar={cargarDatos}
+          mensaje="No se pudieron cargar los datos. Revisa tu internet e intenta de nuevo."
+        />
+      </div>
+    )
+  }
 
-  const saludo = usuario?.first_name
-    ? `Hola, ${usuario.first_name}`
-    : 'Bienvenido/a'
-
-  const totalPendientes = misOportunidades.reduce(
-    (acc, o) => acc + o.postulaciones_pendientes, 0
-  )
-
+  const saludo = usuario?.first_name ? `Hola, ${usuario.first_name}` : 'Bienvenido/a'
+  const totalPendientes = misOportunidades.reduce((acc, o) => acc + o.postulaciones_pendientes, 0)
   const cupoLlenoYaNoRespondio = proximoEvento?.cupo_lleno && asistencia === null
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 20px' }}>
+      <style>{`
+        .dashboard-header-pad { padding: 44px 20px 28px; }
+        .dashboard-body-pad { padding: 28px 20px 40px; }
 
-        {/* Saludo */}
-        <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '30px', fontWeight: '800', color: '#111827', marginBottom: '4px' }}>
+        .dashboard-resumen-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+
+        .dashboard-split-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+
+        .dashboard-evento-card { padding: 24px; }
+
+        @media (max-width: 768px) {
+          .dashboard-header-pad { padding: 32px 16px 22px; }
+          .dashboard-body-pad { padding: 20px 16px 32px; }
+          .dashboard-split-grid { grid-template-columns: 1fr; }
+          .dashboard-evento-card { padding: 18px; }
+        }
+
+        @media (max-width: 480px) {
+          .dashboard-resumen-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        }
+      `}</style>
+
+      {/* Franja superior suave, igual que en Directorio */}
+      <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
+        <div className="dashboard-header-pad" style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <h1 style={{ fontSize: '32px', fontWeight: '800', color: '#111827', margin: '0 0 6px' }}>
             {saludo}
           </h1>
-          <p style={{ color: '#6b7280', fontSize: '15px' }}>
-            {usuario?.company ? `${usuario.company} • ` : ''}Bienvenido/a a tu espacio empresarial
+          <p style={{ color: '#6b7280', fontSize: '15px', margin: 0 }}>
+            {usuario?.company ? `${usuario.company} · ` : ''}Bienvenido/a a tu espacio empresarial
           </p>
         </div>
+      </div>
+
+      <div className="dashboard-body-pad" style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
         {/* Resumen */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: totalPendientes > 0 ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
-          gap: '16px', marginBottom: '28px'
-        }}>
-          {[
-            { label: 'Servicios publicados', valor: misServicios.length, icono: '' },
-            { label: 'Oportunidades activas', valor: misOportunidades.length, icono: '' },
-            {
-              label: 'Próximo evento',
-              valor: proximoEvento ? formatearFecha(proximoEvento.date) : 'Sin eventos',
-              icono: '',
-            },
-          ].map((stat) => (
-            <div key={stat.label} style={{ ...styles.card, borderLeft: '4px solid #B66878' }}>
-              <span style={{ fontSize: '24px' }}>{stat.icono}</span>
-              <p style={{ fontSize: '28px', fontWeight: '800', color: '#111827', margin: '8px 0 4px' }}>{stat.valor}</p>
-              <p style={{ fontSize: '13px', color: '#6b7280' }}>{stat.label}</p>
-            </div>
-          ))}
+        <div className="dashboard-resumen-grid">
+          <div style={{ background: 'white', borderRadius: '16px', padding: '20px', border: `1px solid ${COLOR_BORDE}`, boxShadow: CARD_SHADOW_REST, borderLeft: `4px solid ${COLOR_MARCA}` }}>
+            <Briefcase size={18} color={COLOR_MARCA} />
+            <p style={{ fontSize: '28px', fontWeight: '800', color: '#111827', margin: '10px 0 2px' }}>{misServicios.length}</p>
+            <p style={{ fontSize: '13px', color: '#6b7280' }}>Servicios publicados</p>
+          </div>
+
+          <div style={{ background: 'white', borderRadius: '16px', padding: '20px', border: `1px solid ${COLOR_BORDE}`, boxShadow: CARD_SHADOW_REST, borderLeft: `4px solid ${COLOR_MARCA}` }}>
+            <Sparkles size={18} color={COLOR_MARCA} />
+            <p style={{ fontSize: '28px', fontWeight: '800', color: '#111827', margin: '10px 0 2px' }}>{misOportunidades.length}</p>
+            <p style={{ fontSize: '13px', color: '#6b7280' }}>Oportunidades activas</p>
+          </div>
+
+          <div style={{ background: 'white', borderRadius: '16px', padding: '20px', border: `1px solid ${COLOR_BORDE}`, boxShadow: CARD_SHADOW_REST, borderLeft: `4px solid ${COLOR_MARCA}` }}>
+            <Calendar size={18} color={COLOR_MARCA} />
+            <p style={{ fontSize: '19px', fontWeight: '800', color: '#111827', margin: '10px 0 2px' }}>
+              {proximoEvento ? formatearFecha(proximoEvento.date) : 'Sin eventos'}
+            </p>
+            <p style={{ fontSize: '13px', color: '#6b7280' }}>Próximo evento</p>
+          </div>
 
           {totalPendientes > 0 && (
-            <div
-              onClick={() => navigate('/mis-oportunidades')}
-              style={{ ...styles.card, borderLeft: '4px solid #ef4444', cursor: 'pointer' }}
-            >
-              <span style={{ fontSize: '24px' }}></span>
-              <p style={{ fontSize: '28px', fontWeight: '800', color: '#ef4444', margin: '8px 0 4px' }}>{totalPendientes}</p>
+            <CardInteractiva onClick={() => navigate('/mis-oportunidades')} style={{ padding: '20px', borderLeft: '4px solid #ef4444' }}>
+              <Bell size={18} color="#ef4444" />
+              <p style={{ fontSize: '28px', fontWeight: '800', color: '#ef4444', margin: '10px 0 2px' }}>{totalPendientes}</p>
               <p style={{ fontSize: '13px', color: '#6b7280' }}>Postulación{totalPendientes !== 1 ? 'es' : ''} sin revisar</p>
-            </div>
+            </CardInteractiva>
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+        {/* Próximo evento */}
+        <div className="dashboard-evento-card" style={{ background: 'white', borderRadius: '16px', border: `1px solid ${COLOR_BORDE}`, boxShadow: CARD_SHADOW_REST, marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+            <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+              <Calendar size={17} color={COLOR_MARCA} /> Próximo evento
+            </h2>
+            <button onClick={() => navigate('/eventos')} style={{ background: 'none', border: 'none', color: COLOR_MARCA, cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
+              Ver todos →
+            </button>
+          </div>
 
-          {/* Próximo evento */}
-          <div style={styles.card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827' }}> Próximo Evento</h2>
-              <button onClick={() => navigate('/eventos')} style={styles.btnTexto}>
-                Ver todos →
-              </button>
-            </div>
-            {proximoEvento ? (
-              <>
-                <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '10px', color: '#1f2937' }}>{proximoEvento.title}</h3>
-                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}> {formatearFecha(proximoEvento.date)}</p>
-                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}> {proximoEvento.start_time} - {proximoEvento.end_time}</p>
-                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}> {proximoEvento.hotel || proximoEvento.location}</p>
+          {proximoEvento ? (
+            <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+              <div style={{ flex: '1 1 260px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '10px', color: '#111827' }}>{proximoEvento.title}</h3>
+                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '7px' }}>
+                  <Calendar size={13} /> {formatearFecha(proximoEvento.date)}
+                </p>
+                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '7px' }}>
+                  <Clock size={13} /> {proximoEvento.start_time} - {proximoEvento.end_time}
+                </p>
+                <p style={{ color: '#6b7280', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '7px' }}>
+                  <MapPin size={13} /> {proximoEvento.hotel || proximoEvento.location}
+                </p>
+              </div>
 
+              <div style={{ flex: '1 1 260px', minWidth: '240px' }}>
                 {asistencia === null ? (
                   <>
                     <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>¿Vas a asistir?</p>
@@ -304,62 +307,86 @@ export default function Dashboard() {
                       <button
                         onClick={() => handleAsistencia('si')}
                         disabled={enviandoAsistencia || cupoLlenoYaNoRespondio}
-                        style={styles.btnAsistencia(false, '#B66878', cupoLlenoYaNoRespondio)}
+                        style={{
+                          flex: 1, padding: '10px', borderRadius: '8px',
+                          border: `1px solid ${cupoLlenoYaNoRespondio ? '#e5e7eb' : COLOR_MARCA}`,
+                          background: cupoLlenoYaNoRespondio ? '#f3f4f6' : '#fdf2f4',
+                          color: cupoLlenoYaNoRespondio ? '#9ca3af' : COLOR_MARCA,
+                          cursor: cupoLlenoYaNoRespondio ? 'not-allowed' : 'pointer',
+                          fontWeight: '600', fontSize: '14px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                        }}
                       >
-                        {cupoLlenoYaNoRespondio ? 'Cupo lleno' : '✓ Asistiré'}
+                        {cupoLlenoYaNoRespondio ? 'Cupo lleno' : <><CheckCircle2 size={15} /> Asistiré</>}
                       </button>
                       <button
                         onClick={() => handleAsistencia('no')}
                         disabled={enviandoAsistencia}
-                        style={styles.btnAsistencia(false, '#ef4444')}
+                        style={{
+                          flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb',
+                          background: 'white', color: '#374151', cursor: 'pointer',
+                          fontWeight: '600', fontSize: '14px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                        }}
                       >
-                        ✗ No asistiré
+                        <XCircle size={15} /> No asistiré
                       </button>
                     </div>
                   </>
                 ) : (
-                  <div style={styles.confirmacionBox(asistencia === 'si')}>
-                    <span style={{ fontSize: '14px', fontWeight: '600', color: asistencia === 'si' ? '#B66878' : '#374151' }}>
-                      {asistencia === 'si' ? '✓ Confirmaste tu asistencia' : 'Marcaste que no asistirás'}
+                  <div style={{
+                    padding: '12px 14px', borderRadius: '8px',
+                    background: asistencia === 'si' ? '#fdf2f4' : '#f9fafb',
+                    border: `1px solid ${asistencia === 'si' ? COLOR_MARCA_CLARO : '#e5e7eb'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap',
+                  }}>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: asistencia === 'si' ? COLOR_MARCA : '#374151', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {asistencia === 'si' ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
+                      {asistencia === 'si' ? 'Confirmaste tu asistencia' : 'Marcaste que no asistirás'}
                     </span>
-                    <button onClick={handleCambiarRespuesta} style={styles.btnTexto}>
+                    <button onClick={handleCambiarRespuesta} style={{ background: 'none', border: 'none', color: COLOR_MARCA, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
                       Cambiar respuesta
                     </button>
                   </div>
                 )}
-
                 {errorAsistencia && (
                   <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px' }}>{errorAsistencia}</p>
                 )}
-              </>
-            ) : (
-              <p style={{ color: '#6b7280', fontSize: '14px' }}>No hay eventos próximos por ahora.</p>
-            )}
-          </div>
+              </div>
+            </div>
+          ) : (
+            <p style={{ color: '#6b7280', fontSize: '14px' }}>No hay eventos próximos por ahora.</p>
+          )}
+        </div>
+
+        <div className="dashboard-split-grid">
 
           {/* Mis Servicios */}
-          <div style={styles.card}>
+          <div style={{ background: 'white', borderRadius: '16px', padding: '24px', border: `1px solid ${COLOR_BORDE}`, boxShadow: CARD_SHADOW_REST }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827' }}> Mis Servicios</h2>
-              <button onClick={() => navigate('/mis-servicios')} style={styles.btnTexto}>
+              <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Briefcase size={17} color={COLOR_MARCA} /> Mis servicios
+              </h2>
+              <button onClick={() => navigate('/mis-servicios')} style={{ background: 'none', border: 'none', color: COLOR_MARCA, cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
                 Ver todos →
               </button>
             </div>
             {misServicios.length > 0 ? (
               <div style={{ display: 'grid', gap: '10px' }}>
                 {misServicios.slice(0, 3).map((s) => (
-                  <div key={s.id} style={{ padding: '12px', background: '#f9fafb', borderRadius: '10px', borderLeft: '3px solid #EFC3CA' }}>
+                  <CardInteractiva key={s.id} style={{ padding: '12px', borderLeft: `3px solid ${COLOR_MARCA_CLARO}`, boxShadow: 'none' }}>
                     <p style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px', color: '#1f2937' }}>{s.titulo}</p>
                     <p style={{ color: '#6b7280', fontSize: '13px' }}>
                       {s.precio_personalizado ? 'Precio personalizado' : `$${s.precio.toLocaleString('es-MX')} MXN`}
                     </p>
-                  </div>
+                  </CardInteractiva>
                 ))}
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <PlusCircle size={20} color={COLOR_MARCA} style={{ marginBottom: '8px' }} />
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '12px' }}>Aún no tienes servicios publicados.</p>
-                <button onClick={() => navigate('/servicios')} style={styles.btnPrimario}>
+                <button onClick={() => navigate('/servicios')} style={{ ...botonPrimario, margin: '0 auto' }}>
                   Publicar servicio
                 </button>
               </div>
@@ -367,49 +394,48 @@ export default function Dashboard() {
           </div>
 
           {/* Mis Oportunidades */}
-          <div style={{ ...styles.card, gridColumn: '1 / -1' }}>
+          <div style={{ background: 'white', borderRadius: '16px', padding: '24px', border: `1px solid ${COLOR_BORDE}`, boxShadow: CARD_SHADOW_REST }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827' }}> Mis Oportunidades</h2>
-              <button onClick={() => navigate('/mis-oportunidades')} style={styles.btnTexto}>
+              <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Sparkles size={17} color={COLOR_MARCA} /> Mis oportunidades
+              </h2>
+              <button onClick={() => navigate('/mis-oportunidades')} style={{ background: 'none', border: 'none', color: COLOR_MARCA, cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
                 Ver todas →
               </button>
             </div>
             {misOportunidades.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-                {misOportunidades.slice(0, 3).map((o) => (
-                  <div
-                    key={o.id}
-                    onClick={() => navigate(
-                      o.postulaciones_pendientes > 0
-                        ? `/oportunidades/${o.id}/postulaciones`
-                        : `/oportunidades/${o.id}`
-                    )}
-                    style={{
-                      padding: '12px', background: '#f9fafb', borderRadius: '10px',
-                      borderLeft: '3px solid #EFC3CA', cursor: 'pointer', position: 'relative',
-                    }}
-                  >
-                    {o.postulaciones_pendientes > 0 && (
-                      <span style={{
-                        position: 'absolute', top: '10px', right: '10px',
-                        background: '#ef4444', color: 'white', fontSize: '11px',
-                        fontWeight: '700', borderRadius: '20px', padding: '2px 8px',
-                      }}>
-                        {o.postulaciones_pendientes} nueva{o.postulaciones_pendientes !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', paddingRight: o.postulaciones_pendientes > 0 ? '70px' : '0' }}>
-                      <p style={{ fontWeight: '600', fontSize: '14px', color: '#1f2937' }}>{o.titulo}</p>
-                      <span style={styles.badgeUrgencia(o.urgencia)}>{o.urgencia}</span>
-                    </div>
-                    <p style={{ color: '#6b7280', fontSize: '13px' }}>Vence: {formatearFecha(o.vence_el)}</p>
-                  </div>
-                ))}
+              <div style={{ display: 'grid', gap: '10px' }}>
+                {misOportunidades.slice(0, 3).map((o) => {
+                  const [bg, fg] = urgenciaColores[o.urgencia] || urgenciaColores.baja
+                  return (
+                    <CardInteractiva
+                      key={o.id}
+                      onClick={() => navigate(
+                        o.postulaciones_pendientes > 0
+                          ? `/oportunidades/${o.id}/postulaciones`
+                          : `/oportunidades/${o.id}`
+                      )}
+                      style={{ padding: '12px', borderLeft: `3px solid ${COLOR_MARCA_CLARO}`, boxShadow: 'none', position: 'relative' }}
+                    >
+                      {o.postulaciones_pendientes > 0 && (
+                        <span style={{ position: 'absolute', top: '10px', right: '10px', ...badgePillStyle('#fef2f2', '#ef4444'), padding: '2px 8px', fontSize: '11px' }}>
+                          {o.postulaciones_pendientes} nueva{o.postulaciones_pendientes !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', paddingRight: o.postulaciones_pendientes > 0 ? '70px' : '0' }}>
+                        <p style={{ fontWeight: '600', fontSize: '14px', color: '#1f2937' }}>{o.titulo}</p>
+                        {o.postulaciones_pendientes === 0 && <span style={badgePillStyle(bg, fg)}>{o.urgencia}</span>}
+                      </div>
+                      <p style={{ color: '#6b7280', fontSize: '13px' }}>Vence: {formatearFecha(o.vence_el)}</p>
+                    </CardInteractiva>
+                  )
+                })}
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <PlusCircle size={20} color={COLOR_MARCA} style={{ marginBottom: '8px' }} />
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '12px' }}>Aún no tienes oportunidades publicadas.</p>
-                <button onClick={() => navigate('/oportunidades')} style={styles.btnPrimario}>
+                <button onClick={() => navigate('/oportunidades')} style={{ ...botonPrimario, margin: '0 auto' }}>
                   Publicar oportunidad
                 </button>
               </div>

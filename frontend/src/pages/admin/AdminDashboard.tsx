@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getSolicitudes } from '../../api/usuarios'
+import { COLOR_MARCA, COLOR_BORDE } from '../../styles/tokens'
+import { Users, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
@@ -31,106 +33,113 @@ export default function AdminDashboard() {
     }
   }
 
-  const cards = [
-    { icon: '📅', label: 'Eventos',               ruta: '/admin/eventos' },
-    { icon: '🎓', label: 'Cursos',                ruta: '/admin/cursos' },
-    { icon: '👥', label: 'Solicitudes pendientes', ruta: '/admin/solicitudes', badge: pendientes },
-    { icon: '📝', label: 'Artículos',             ruta: '/admin/articulos' },
-    { icon: '📢', label: 'Publicidad / Banners',  ruta: '/admin/banners' },
-  ]
-
   const irA = (ruta: string) => navigate(ruta)
 
   return (
-    <div style={{ padding: '40px' }}>
-      <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#111827', marginBottom: '4px' }}>
-        Bienvenida, Administradora
-      </h1>
-      <p style={{ color: '#6b7280', marginBottom: '32px' }}>
-        Gestiona todos los contenidos de la plataforma MN WOMAN.
-      </p>
+    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
 
-      {!cargandoBadge && pendientes > 0 && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          background: '#fffbeb', border: '1px solid #f59e0b30',
-          borderRadius: '12px', padding: '14px 18px', marginBottom: '24px'
-        }}>
-          <span style={{ fontSize: '18px' }}>🔔</span>
-          <p style={{ fontSize: '14px', color: '#92400e', margin: 0, fontWeight: '600' }}>
-            Tienes {pendientes} {pendientes === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'} por revisar
+      {/* ENCABEZADO */}
+      <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px 28px' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#111827', margin: 0, lineHeight: '1.25' }}>
+            Bienvenida, <span style={{ color: COLOR_MARCA }}>Administradora</span>
+          </h1>
+          <p style={{ color: '#6b7280', fontSize: '15px', margin: '8px 0 0' }}>
+            Esto es lo que necesita tu atención hoy. Usa el menú para gestionar el resto de la plataforma.
           </p>
         </div>
-      )}
+      </div>
 
-      {errorPendientes && (
+      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '28px 20px 40px' }}>
+
+        {/* SOLICITUDES PENDIENTES — la única métrica real que tenemos hoy.
+            Cuando existan endpoints de conteo para eventos, cursos o artículos
+            (ej. getEventosProximos, getCursosActivos), se puede agregar cada
+            uno como una card más dentro de este mismo grid. */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          background: '#f9fafb', border: '1px solid #e5e7eb',
-          borderRadius: '12px', padding: '10px 18px', marginBottom: '24px'
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '16px',
         }}>
-          <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
-            No se pudo actualizar el contador de solicitudes pendientes.
-          </p>
-        </div>
-      )}
-
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '16px'
-      }}>
-        {cards.map(card => (
           <div
-            key={card.ruta}
             role="button"
             tabIndex={0}
-            onClick={() => irA(card.ruta)}
+            className="foco-visible"
+            onClick={() => irA('/admin/solicitudes')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                irA(card.ruta)
+                irA('/admin/solicitudes')
               }
             }}
             style={{
-              position: 'relative',
-              background: 'white', borderRadius: '16px', padding: '24px',
-              border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-              cursor: 'pointer', transition: 'box-shadow 0.2s, transform 0.2s',
-              outline: 'none',
+              display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer',
+              background: 'white', borderRadius: '16px', padding: '22px',
+              border: `1px solid ${cargandoBadge || errorPendientes ? COLOR_BORDE : pendientes > 0 ? '#fde68a' : COLOR_BORDE}`,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+              transition: 'box-shadow 0.2s, transform 0.2s',
             }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(182,104,120,0.18)'
-              ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(182,104,120,0.15)'
+              e.currentTarget.style.transform = 'translateY(-2px)'
             }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'
-              ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'
-            }}
-            onFocus={e => {
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 3px rgba(182,104,120,0.35)'
-            }}
-            onBlur={e => {
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'
+              e.currentTarget.style.transform = 'translateY(0)'
             }}
           >
-            {card.badge > 0 && (
-              <span style={{
-                position: 'absolute', top: '-8px', right: '-8px',
-                background: '#ef4444', color: 'white',
-                borderRadius: '20px', minWidth: '22px', height: '22px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '12px', fontWeight: '800', padding: '0 6px',
-                boxShadow: '0 2px 6px rgba(239,68,68,0.4)'
-              }}>
-                {card.badge}
-              </span>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '12px', flexShrink: 0,
+              background: pendientes > 0 ? '#fef3c7' : '#f0fdf4',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {cargandoBadge ? (
+                <Users size={22} color="#9ca3af" />
+              ) : pendientes > 0 ? (
+                <Users size={22} color="#d97706" />
+              ) : (
+                <CheckCircle2 size={22} color="#16a34a" />
+              )}
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {cargandoBadge ? (
+                <p style={{ fontSize: '14px', color: '#9ca3af', margin: 0, fontWeight: '600' }}>Cargando...</p>
+              ) : errorPendientes ? (
+                <>
+                  <p style={{ fontSize: '14px', color: '#111827', margin: 0, fontWeight: '700' }}>Solicitudes</p>
+                  <p style={{ fontSize: '13px', color: '#9ca3af', margin: '2px 0 0' }}>No se pudo actualizar el contador</p>
+                </>
+              ) : pendientes > 0 ? (
+                <>
+                  <p style={{ fontSize: '24px', color: '#111827', margin: 0, fontWeight: '800', lineHeight: 1 }}>{pendientes}</p>
+                  <p style={{ fontSize: '13px', color: '#92400e', margin: '4px 0 0', fontWeight: '600' }}>
+                    {pendientes === 1 ? 'solicitud pendiente por revisar' : 'solicitudes pendientes por revisar'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p style={{ fontSize: '14px', color: '#111827', margin: 0, fontWeight: '700' }}>Solicitudes al día</p>
+                  <p style={{ fontSize: '13px', color: '#9ca3af', margin: '2px 0 0' }}>No hay nada pendiente por revisar</p>
+                </>
+              )}
+            </div>
+
+            {errorPendientes ? (
+              <AlertCircle size={16} color="#9ca3af" style={{ flexShrink: 0 }} />
+            ) : (
+              <ArrowRight size={16} color="#9ca3af" style={{ flexShrink: 0 }} />
             )}
-            <p style={{ fontSize: '28px', marginBottom: '8px' }}>{card.icon}</p>
-            <p style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500', margin: 0 }}>{card.label}</p>
           </div>
-        ))}
+        </div>
       </div>
+
+      <style>{`
+        .foco-visible:focus-visible {
+          outline: 2px solid ${COLOR_MARCA};
+          outline-offset: 2px;
+        }
+      `}</style>
     </div>
   )
 }

@@ -2,6 +2,7 @@ from django.utils import timezone
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from .models import Oportunidad, Postulacion
 from .serializers import (
     OportunidadSerializer,
@@ -29,6 +30,28 @@ class ListaOportunidadesView(generics.ListAPIView):
             queryset = queryset.filter(urgencia=urgencia)
 
         return queryset
+
+
+class CategoriasOportunidadesView(APIView):
+    """
+    Devuelve las categorías fijas del modelo (para poblar el selector)
+    más las variantes de texto libre que se han escrito en 'Otro'
+    (para autocompletar y detectar categorías nuevas a promover).
+    Mismo patrón que CategoriasServiciosView.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        categorias = [{'value': v, 'label': l} for v, l in Oportunidad.CATEGORIAS]
+        sugerencias_otro = list(
+            Oportunidad.objects
+            .filter(status='activa', categoria='otro')
+            .exclude(categoria_otro='')
+            .values_list('categoria_otro', flat=True)
+            .distinct()
+            .order_by('categoria_otro')
+        )
+        return Response({'categorias': categorias, 'sugerencias_otro': sugerencias_otro})
 
 
 class DetalleOportunidadView(generics.RetrieveAPIView):

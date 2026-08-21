@@ -403,7 +403,7 @@ export default function Register() {
             </div>
 
             <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '16px', textAlign: 'center' }}>
-              Tu solicitud será revisada por el equipo de MN WOMAN antes de ser aprobada.
+              Tu solicitud será revisada por el equipo de MN WOMEN antes de ser aprobada.
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
@@ -423,7 +423,7 @@ export default function Register() {
               ¡Solicitud enviada!
             </h2>
             <p style={{ color: '#6b7280', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px', maxWidth: '340px', margin: '0 auto 24px' }}>
-              Tu solicitud ha sido recibida. El equipo de MN WOMAN la revisará y te notificará cuando sea aprobada.
+              Tu solicitud ha sido recibida. El equipo de MN WOMEN la revisará y te notificará cuando sea aprobada.
             </p>
             <Link to="/login" style={{
               display: 'inline-block', background: '#B66878', color: 'white',

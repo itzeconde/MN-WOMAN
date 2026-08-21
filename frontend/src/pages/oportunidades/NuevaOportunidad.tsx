@@ -1,21 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { publicarOportunidad } from '../../api/oportunidades'
+import { publicarOportunidad, getCategoriasOportunidades } from '../../api/oportunidades'
+import type { Categoria } from '../../api/oportunidades'
 import { COLOR_MARCA, COLOR_MARCA_CLARO, COLOR_BORDE } from '../../styles/tokens'
 import {
   MessageSquareText, Tag, Clock, Bookmark,
   Calendar, DollarSign, Lock, Send, Plus, X, ChevronDown, Lightbulb,
+  Briefcase, Megaphone, Code2, GraduationCap, HeartPulse, Sparkles, Check,
 } from 'lucide-react'
 import heroCrearImg from '../../assets/hero-directorio.png'
 
-const CATEGORIAS = [
-  { value: 'consultoria', label: 'Consultoría B2B' },
-  { value: 'diseno', label: 'Diseño y Branding' },
-  { value: 'tecnologia', label: 'Tecnología' },
-  { value: 'marketing', label: 'Marketing Digital' },
-  { value: 'suministros', label: 'Suministros' },
-  { value: 'educacion', label: 'Educación' },
-]
+// Mismo diccionario que NuevoServicio.tsx — mantiene el mismo lenguaje
+// visual entre categorías de Servicios y de Oportunidades.
+const AYUDA_CATEGORIA: Record<string, string> = {
+  consultoria: 'Estrategia de negocio, asesoría, gestión, finanzas',
+  marketing_branding: 'Publicidad, redes sociales, logotipos, identidad de marca',
+  tecnologia: 'Desarrollo web, apps, soporte técnico, automatización',
+  educacion: 'Clases particulares, tutorías, capacitación, mentoría',
+  salud_bienestar: 'Nutrición, psicología, terapias, fitness',
+  otro: '¿No encaja en las anteriores? Cuéntanos de qué se trata',
+}
+
+const ICONO_CATEGORIA: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+  consultoria: Briefcase,
+  marketing_branding: Megaphone,
+  tecnologia: Code2,
+  educacion: GraduationCap,
+  salud_bienestar: HeartPulse,
+  otro: Sparkles,
+}
 
 const URGENCIAS = [
   { value: 'baja', label: 'Flexible', hint: 'Sin fecha específica', color: '#22c55e' },
@@ -35,7 +48,7 @@ function formatFecha(iso: string) {
 // Ilustración del hero — mismo patrón que HeroIlustracion en Oportunidades.tsx
 function HeroIlustracion() {
   return (
-    <div style={{
+    <div className="nueva-op-hero-ilustracion" style={{
       position: 'relative', width: '190px', height: '160px', flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
@@ -59,10 +72,13 @@ export default function NuevaOportunidad() {
   const navigate = useNavigate()
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [sugerenciasOtro, setSugerenciasOtro] = useState<string[]>([])
 
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [categoria, setCategoria] = useState('')
+  const [categoriaOtro, setCategoriaOtro] = useState('')
   const [urgencia, setUrgencia] = useState('alta')
   const [venceEl, setVenceEl] = useState('')
   const [presupuestoMin, setPresupuestoMin] = useState('')
@@ -71,6 +87,15 @@ export default function NuevaOportunidad() {
   const [etiquetas, setEtiquetas] = useState<string[]>([])
   const [mostrarInputEtiqueta, setMostrarInputEtiqueta] = useState(false)
   const [nuevaEtiqueta, setNuevaEtiqueta] = useState('')
+
+  useEffect(() => {
+    getCategoriasOportunidades()
+      .then((data) => {
+        setCategorias(data.categorias)
+        setSugerenciasOtro(data.sugerencias_otro || [])
+      })
+      .catch(console.error)
+  }, [])
 
   const agregarEtiqueta = () => {
     const valor = nuevaEtiqueta.trim()
@@ -92,6 +117,10 @@ export default function NuevaOportunidad() {
       setError('Por favor completa el servicio que buscas, la categoría y la fecha límite.')
       return
     }
+    if (categoria === 'otro' && !categoriaOtro.trim()) {
+      setError('Cuéntanos de qué trata tu oportunidad en el campo de categoría.')
+      return
+    }
     if (presupuestoMin && presupuestoMax && Number(presupuestoMin) > Number(presupuestoMax)) {
       setError('El presupuesto mínimo no puede ser mayor que el máximo.')
       return
@@ -104,6 +133,7 @@ export default function NuevaOportunidad() {
         titulo: titulo.trim(),
         descripcion: descripcion.trim(),
         categoria,
+        categoria_otro: categoria === 'otro' ? categoriaOtro.trim() : '',
         urgencia,
         presupuesto_min: presupuestoMin ? Number(presupuestoMin) : null,
         presupuesto_max: presupuestoMax ? Number(presupuestoMax) : null,
@@ -113,10 +143,11 @@ export default function NuevaOportunidad() {
       navigate('/oportunidades')
     } catch (err: any) {
       // Mismo patrón que NuevoServicio: intentamos primero un error de campo
-      // específico (ej. serializer.is_valid() fallido en 'vence_el'), luego
-      // {detail} (permisos/ValidationError de vista), y solo al final el
-      // mensaje genérico.
+      // específico (ej. serializer.is_valid() fallido en 'vence_el' o
+      // 'categoria_otro'), luego {detail} (permisos/ValidationError de
+      // vista), y solo al final el mensaje genérico.
       const detalle =
+        err?.response?.data?.categoria_otro?.[0] ||
         err?.response?.data?.vence_el?.[0] ||
         err?.response?.data?.detail ||
         (typeof err?.response?.data === 'string' ? err.response.data : null) ||
@@ -192,11 +223,29 @@ export default function NuevaOportunidad() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <style>{`
+        .nueva-op-hero-pad { padding: 32px 24px 32px; }
+        .nueva-op-body-pad { padding: 28px 24px 40px; }
+        .nueva-op-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        @media (max-width: 768px) {
+          .nueva-op-hero-pad { padding: 24px 16px; }
+          .nueva-op-body-pad { padding: 20px 16px 32px; }
+          .nueva-op-grid-2 { grid-template-columns: 1fr; gap: 16px; }
+          .nueva-op-hero-ilustracion { display: none; }
+        }
+
+        @media (max-width: 480px) {
+          .nueva-op-footer { flex-direction: column; align-items: stretch; }
+          .nueva-op-footer > div:last-child { text-align: center; }
+          .nueva-op-footer button[type="submit"] { width: 100%; justify-content: center; }
+        }
+      `}</style>
 
       {/* HERO */}
       <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
-        <div style={{
-          maxWidth: '1040px', margin: '0 auto', padding: '32px 24px 32px',
+        <div className="nueva-op-hero-pad" style={{
+          maxWidth: '1040px', margin: '0 auto',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap',
         }}>
           <div style={{ flex: 1, minWidth: '280px' }}>
@@ -212,7 +261,7 @@ export default function NuevaOportunidad() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1040px', margin: '0 auto', padding: '28px 24px 40px' }}>
+      <div className="nueva-op-body-pad" style={{ maxWidth: '1040px', margin: '0 auto' }}>
         <form onSubmit={handleSubmit} noValidate style={{ display: 'grid', gap: '20px' }}>
 
           {/* Servicio buscado */}
@@ -256,28 +305,61 @@ export default function NuevaOportunidad() {
           </div>
 
           {/* Categoría + Urgencia */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className="nueva-op-grid-2">
 
             <div style={cardStyle}>
-              {cardHeader(<Bookmark size={18} color={COLOR_MARCA} />, '¿En qué categoría se encuentra tu necesidad? *')}
-              <div style={{ position: 'relative' }}>
-                <select
-                  value={categoria}
-                  onChange={(e) => setCategoria(e.target.value)}
-                  required
-                  style={{ ...inputStyle, appearance: 'none', cursor: 'pointer', paddingRight: '36px' }}
-                >
-                  <option value="">Selecciona una categoría</option>
-                  {CATEGORIAS.map((cat) => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  color="#9ca3af"
-                  style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                />
+              {cardHeader(<Tag size={18} color={COLOR_MARCA} />, '¿En qué categoría se encuentra tu necesidad? *')}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {categorias.map((cat) => {
+                  const activa = categoria === cat.value
+                  const Icono = ICONO_CATEGORIA[cat.value] || Sparkles
+                  return (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => setCategoria(cat.value)}
+                      aria-pressed={activa}
+                      style={{
+                        padding: '9px 16px', borderRadius: '20px', border: 'none', whiteSpace: 'nowrap',
+                        background: activa ? COLOR_MARCA : 'white',
+                        color: activa ? 'white' : '#374151',
+                        fontWeight: '700', fontSize: '13px', cursor: 'pointer',
+                        boxShadow: activa ? 'none' : `inset 0 0 0 1px ${COLOR_BORDE}`,
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                      }}
+                    >
+                      {activa ? <Check size={12} /> : <Icono size={13} color="#9ca3af" />}
+                      {cat.label}
+                    </button>
+                  )
+                })}
               </div>
+              {categoria && AYUDA_CATEGORIA[categoria] && (
+                <p style={{ color: '#9ca3af', fontSize: '12px', margin: '10px 0 0' }}>
+                  {AYUDA_CATEGORIA[categoria]}
+                </p>
+              )}
+
+              {categoria === 'otro' && (
+                <div style={{ marginTop: '14px' }}>
+                  <label htmlFor="categoria_otro" style={labelStyle}>¿De qué trata tu oportunidad? *</label>
+                  <input
+                    id="categoria_otro"
+                    list="sugerencias-otro-oportunidad"
+                    value={categoriaOtro}
+                    onChange={(e) => setCategoriaOtro(e.target.value)}
+                    placeholder="Ej: Repostería, fotografía de producto..."
+                    maxLength={80}
+                    required
+                    style={inputStyle}
+                  />
+                  <datalist id="sugerencias-otro-oportunidad">
+                    {sugerenciasOtro.map((s) => (
+                      <option key={s} value={s} />
+                    ))}
+                  </datalist>
+                </div>
+              )}
             </div>
 
             <div style={cardStyle}>
@@ -319,7 +401,7 @@ export default function NuevaOportunidad() {
           </div>
 
           {/* Etiquetas + Fecha límite */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className="nueva-op-grid-2">
 
             <div style={cardStyle}>
               {cardHeader(<Tag size={18} color={COLOR_MARCA} />, 'Etiquetas', `Agrega palabras clave que describan tu necesidad (máx. ${MAX_ETIQUETAS}).`)}
@@ -477,7 +559,7 @@ export default function NuevaOportunidad() {
           )}
 
           {/* Footer */}
-          <div style={{
+          <div className="nueva-op-footer" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             flexWrap: 'wrap', gap: '16px',
           }}>

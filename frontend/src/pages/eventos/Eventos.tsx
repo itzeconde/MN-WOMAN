@@ -124,6 +124,7 @@ export default function Eventos() {
           e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'
           e.currentTarget.style.borderColor = COLOR_BORDE
         }}
+        className="evento-tarjeta"
         style={{
           background: 'white', borderRadius: '18px', overflow: 'hidden',
           border: `1px solid ${COLOR_BORDE}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
@@ -133,7 +134,7 @@ export default function Eventos() {
         }}
       >
         {/* Bloque de fecha */}
-        <div style={{
+        <div className="evento-fecha-bloque" style={{
           width: '96px', flexShrink: 0, background: '#fdf2f4',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px',
         }}>
@@ -145,8 +146,20 @@ export default function Eventos() {
           </span>
         </div>
 
+        {/* Portada (se mueve arriba del todo en mobile via order) */}
+        <div className="evento-portada" style={{
+          width: '160px', flexShrink: 0, margin: '14px 14px 14px 0', borderRadius: '12px', overflow: 'hidden',
+          background: evento.cover_image ? 'none' : `linear-gradient(135deg, ${COLOR_MARCA_CLARO}, ${COLOR_MARCA})`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {evento.cover_image
+            ? <img src={evento.cover_image} alt={evento.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            : <span style={{ fontSize: '32px' }}>🌸</span>
+          }
+        </div>
+
         {/* Info */}
-        <div style={{ padding: '20px 24px', flex: 1, minWidth: 0 }}>
+        <div className="evento-info" style={{ padding: '20px 24px', flex: 1, minWidth: 0 }}>
           <span style={{
             display: 'inline-block', background: cfg.bg, color: cfg.color,
             fontSize: '11px', fontWeight: '700', padding: '4px 12px', borderRadius: '20px', marginBottom: '10px',
@@ -174,20 +187,8 @@ export default function Eventos() {
           </div>
         </div>
 
-        {/* Portada */}
-        <div style={{
-          width: '160px', flexShrink: 0, margin: '14px 14px 14px 0', borderRadius: '12px', overflow: 'hidden',
-          background: evento.cover_image ? 'none' : `linear-gradient(135deg, ${COLOR_MARCA_CLARO}, ${COLOR_MARCA})`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          {evento.cover_image
-            ? <img src={evento.cover_image} alt={evento.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            : <span style={{ fontSize: '32px' }}>🌸</span>
-          }
-        </div>
-
         {/* Acciones */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '0 20px 0 4px', flexShrink: 0 }}>
+        <div className="evento-acciones" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '0 20px 0 4px', flexShrink: 0 }}>
           <button
             onClick={(e) => { e.stopPropagation(); irADetalle(evento.id) }}
             style={{
@@ -221,11 +222,56 @@ export default function Eventos() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <style>{`
+        .eventos-hero-pad { padding: 48px 20px 32px; }
+        .eventos-body-pad { padding: 32px 20px 48px; }
+
+        @media (max-width: 900px) {
+          .eventos-hero-ilustracion { display: none; }
+        }
+
+        @media (max-width: 768px) {
+          .eventos-hero-pad { padding: 32px 16px 24px; }
+          .eventos-body-pad { padding: 24px 16px 36px; }
+        }
+
+        @media (max-width: 640px) {
+          .evento-tarjeta {
+            flex-direction: column;
+          }
+          .evento-fecha-bloque {
+            width: 100%;
+            flex-direction: row;
+            justify-content: flex-start;
+            gap: 8px;
+            padding: 12px 16px;
+          }
+          .evento-portada {
+            order: -1;
+            width: 100%;
+            height: 170px;
+            margin: 0;
+            border-radius: 0;
+          }
+          .evento-info {
+            padding: 18px 16px;
+          }
+          .evento-acciones {
+            flex-direction: row;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 16px 18px;
+          }
+          .evento-acciones button:first-child {
+            flex: 1;
+          }
+        }
+      `}</style>
 
       {/* HERO */}
       <div style={{ background: 'linear-gradient(180deg, #FDF0F2 0%, #f9fafb 100%)', borderBottom: `1px solid ${COLOR_BORDE}` }}>
-        <div style={{
-          maxWidth: '1200px', margin: '0 auto', padding: '48px 20px 32px',
+        <div className="eventos-hero-pad" style={{
+          maxWidth: '1200px', margin: '0 auto',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap',
         }}>
           <div style={{ flex: 1, minWidth: '280px' }}>
@@ -240,7 +286,7 @@ export default function Eventos() {
             </p>
           </div>
 
-          <div style={{
+          <div className="eventos-hero-ilustracion" style={{
             position: 'relative', width: '320px', height: '240px', flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
@@ -261,7 +307,7 @@ export default function Eventos() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 20px 48px' }}>
+      <div className="eventos-body-pad" style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
         {/* Buscador */}
         <div style={{ position: 'relative', marginBottom: '32px' }}>

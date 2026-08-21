@@ -1,7 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMisOportunidades, cerrarOportunidad } from '../../api/oportunidades'
-import { COLOR_MARCA, COLOR_MARCA_CLARO, COLOR_BORDE } from '../../styles/tokens'
+import {
+  COLOR_MARCA, COLOR_MARCA_CLARO, COLOR_BORDE,
+  CARD_SHADOW_REST, CARD_SHADOW_HOVER,
+  botonPrimario, badgePillStyle,
+} from '../../styles/tokens'
 import { Plus, Clock, Users, ArrowRight } from 'lucide-react'
 import ModalConfirmacion from '../../components/ui/ModalConfirmacion'
 
@@ -126,15 +130,7 @@ export default function MisOportunidades() {
               Da seguimiento a lo que has publicado y a quién se ha postulado.
             </p>
           </div>
-          <button
-            onClick={() => navigate('/oportunidades/nueva')}
-            style={{
-              background: COLOR_MARCA, color: 'white', padding: '11px 20px',
-              borderRadius: '10px', border: 'none', cursor: 'pointer',
-              fontWeight: '700', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '8px',
-              whiteSpace: 'nowrap',
-            }}
-          >
+          <button onClick={() => navigate('/oportunidades/nueva')} style={botonPrimario}>
             <Plus size={16} /> Publicar oportunidad
           </button>
         </div>
@@ -151,14 +147,8 @@ export default function MisOportunidades() {
             <p style={{ color: '#6b7280', fontSize: '16px', marginBottom: '16px' }}>
               Aún no has publicado ninguna oportunidad.
             </p>
-            <button
-              onClick={() => navigate('/oportunidades/nueva')}
-              style={{
-                background: COLOR_MARCA, color: 'white', padding: '10px 24px',
-                borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600',
-              }}
-            >
-              Publicar la primera
+            <button onClick={() => navigate('/oportunidades/nueva')} style={{ ...botonPrimario, margin: '0 auto' }}>
+              <Plus size={16} /> Publicar la primera
             </button>
           </div>
         ) : (
@@ -207,35 +197,27 @@ export default function MisOportunidades() {
                     key={o.id}
                     style={{
                       background: 'white', borderRadius: '16px', padding: '24px',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: `1px solid ${COLOR_BORDE}`,
+                      boxShadow: CARD_SHADOW_REST, border: `1px solid ${COLOR_BORDE}`,
                       display: 'flex', flexDirection: 'column', gap: '12px',
                       transition: 'box-shadow 0.2s, border-color 0.2s, transform 0.2s',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)'
+                      e.currentTarget.style.boxShadow = CARD_SHADOW_HOVER
                       e.currentTarget.style.borderColor = COLOR_MARCA_CLARO
                       e.currentTarget.style.transform = 'translateY(-2px)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)'
+                      e.currentTarget.style.boxShadow = CARD_SHADOW_REST
                       e.currentTarget.style.borderColor = COLOR_BORDE
                       e.currentTarget.style.transform = 'translateY(0)'
                     }}
                   >
                     {/* Urgencia + estado */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                      <span style={{
-                        display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
-                        fontSize: '12px', fontWeight: '600',
-                        background: urgencia.bg, color: urgencia.color,
-                      }}>
+                      <span style={badgePillStyle(urgencia.bg, urgencia.color)}>
                         {urgencia.label}
                       </span>
-                      <span style={{
-                        display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
-                        fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap',
-                        background: estado.bg, color: estado.color,
-                      }}>
+                      <span style={{ ...badgePillStyle(estado.bg, estado.color), fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>
                         {estado.label}
                       </span>
                     </div>

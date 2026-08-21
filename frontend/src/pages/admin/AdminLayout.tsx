@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import logo from '../../assets/logo.jpeg'
+import logo from '../../assets/logoMN.jpeg'
 
 export default function AdminLayout() {
   const { usuario, logout } = useAuth()
@@ -17,8 +17,7 @@ export default function AdminLayout() {
     { label: 'Cursos', ruta: '/admin/cursos', icon: '🎓' },
     { label: 'Artículos', ruta: '/admin/articulos', icon: '📝' },
     { label: 'Solicitudes', ruta: '/admin/solicitudes', icon: '👥' },
-    { label: 'Servicios', ruta: '/admin/servicios', icon: '🛍️' },
-    { label: 'Oportunidades', ruta: '/admin/oportunidades', icon: '💼' },
+   
   ]
 
   return (
