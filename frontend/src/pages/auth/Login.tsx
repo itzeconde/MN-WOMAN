@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import { login } from '../../api/auth'
 import { useAuth } from '../../context/AuthContext'
 import { consultarStatus } from '../../api/usuarios'
@@ -13,6 +14,7 @@ export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' })
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+  const [mostrarPassword, setMostrarPassword] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -94,8 +96,32 @@ export default function Login() {
 
           <div style={{ marginBottom: '16px' }}>
             <label style={{ fontSize: '14px', fontWeight: '500' }}>Contraseña</label>
-            <input name="password" type="password" placeholder="Tu contraseña" onChange={handleChange} value={form.password}
-              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', marginTop: '4px', fontSize: '14px', boxSizing: 'border-box' as const }} />
+            <div style={{ position: 'relative', marginTop: '4px' }}>
+              <input
+                name="password"
+                type={mostrarPassword ? 'text' : 'password'}
+                placeholder="Tu contraseña"
+                onChange={handleChange}
+                value={form.password}
+                style={{
+                  width: '100%', padding: '10px', paddingRight: '40px', borderRadius: '8px',
+                  border: '1px solid #e5e7eb', fontSize: '14px', boxSizing: 'border-box' as const,
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarPassword(!mostrarPassword)}
+                style={{
+                  position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+                  display: 'flex', alignItems: 'center', color: '#9ca3af',
+                }}
+                aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                tabIndex={-1}
+              >
+                {mostrarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {error && (

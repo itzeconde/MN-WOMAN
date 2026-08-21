@@ -21,8 +21,9 @@ def _limpiar_telefono(valor: str) -> str:
  
  
 def generar_username(first_name: str, last_name: str) -> str:
-    """Genera MNW_<nombre><apellido>, resolviendo colisiones con sufijo numérico."""
-    base = f"MNW_{_limpiar_texto(first_name)}{_limpiar_texto(last_name)}"[:30]
+    """Genera MNW_<nombre><primer_apellido>, resolviendo colisiones con sufijo numérico."""
+    primer_apellido = last_name.strip().split()[0] if last_name.strip() else ''
+    base = f"MNW_{_limpiar_texto(first_name)}{_limpiar_texto(primer_apellido)}"[:30]
     if not base or base == 'MNW_':
         base = 'MNW_usuaria'
  
@@ -160,4 +161,3 @@ class SolicitudSerializer(serializers.ModelSerializer):
  
     def get_nombre_completo(self, obj):
         return obj.get_full_name()
- 

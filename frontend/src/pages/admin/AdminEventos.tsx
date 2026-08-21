@@ -63,6 +63,12 @@ export default function AdminEventos() {
   const [modalAbierto, setModalAbierto] = useState(false)
   const [eventoEditando, setEventoEditando] = useState<Evento | null>(null)
   const [form, setForm] = useState(formInicial)
+  // Cierre manual: es la ÚNICA forma en que el admin puede forzar el estado.
+  // El backend recalcula 'proximo'/'en_curso' solo, con la fecha/hora real
+  // del evento (ver EventoSerializer.get_status). El único valor que el
+  // backend respeta tal cual, sin recalcular, es 'finalizado' — por eso el
+  // resto de estados NO se editan a mano, solo se muestran como lectura.
+  const [cierreManual, setCierreManual] = useState(false)
   const [imagen, setImagen] = useState<File | null>(null)
   const [previsualizacion, setPrevisualizacion] = useState<string>('')
   const [guardando, setGuardando] = useState(false)
@@ -143,6 +149,7 @@ export default function AdminEventos() {
   const abrirCrear = () => {
     setEventoEditando(null)
     setForm(formInicial)
+    setCierreManual(false)
     setImagen(null)
     setPrevisualizacion('')
     setError('')
@@ -158,6 +165,7 @@ export default function AdminEventos() {
       referral_goal: String(evento.referral_goal),
       costo: evento.costo != null ? String(evento.costo) : '',
     })
+    setCierreManual(evento.status === 'finalizado')
     setImagen(null)
     setPrevisualizacion(evento.cover_image || '')
     setError('')
@@ -178,9 +186,15 @@ export default function AdminEventos() {
     try {
       const formData = new FormData()
       Object.entries(form).forEach(([k, v]) => {
+        if (k === 'status') return // el status se maneja aparte, vía cierreManual
         // Si costo está vacío, enviarlo como vacío (el backend lo interpretará como null/gratuito)
         formData.append(k, v)
       })
+      // Único valor de status que el backend respeta sin recalcular es
+      // 'finalizado'. Cualquier otro caso mandamos 'proximo' para que el
+      // serializer lo recalcule libremente según fecha/hora real.
+      formData.append('status', cierreManual ? 'finalizado' : 'proximo')
+
       if (imagen) formData.append('cover_image', imagen)
       if (eventoEditando) {
         const actualizado = await adminEditarEvento(eventoEditando.id, formData)
@@ -653,12 +667,27 @@ export default function AdminEventos() {
 
               <div className="form-grid-3">
                 <div>
-                  <label style={labelStyle}>Estado</label>
-                  <select name="status" value={form.status} onChange={handleChange} style={inputStyle}>
-                    <option value="proximo">Próximo</option>
-                    <option value="en_curso">En Curso</option>
-                    <option value="finalizado">Finalizado</option>
-                  </select>
+                  <label style={labelStyle}>
+                    Estado{' '}
+                    <span style={{ color: '#9ca3af', fontWeight: '400' }}>(automático)</span>
+                  </label>
+                  {/* Solo lectura: el backend calcula 'proximo'/'en_curso' según
+                      fecha/hora real del evento (ver EventoSerializer.get_status).
+                      Mostramos aquí lo que ya trae el evento; si es nuevo, mostramos
+                      'Próximo' porque aún no existe fecha guardada para comparar. */}
+                  <div style={{
+                    ...inputStyle,
+                    display: 'flex', alignItems: 'center',
+                    background: '#f9fafb', color: '#6b7280', cursor: 'default',
+                  }}>
+                    <span style={{
+                      background: statusConfig[(eventoEditando?.status ?? 'proximo')].bg,
+                      color: statusConfig[(eventoEditando?.status ?? 'proximo')].color,
+                      fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px',
+                    }}>
+                      {statusConfig[(eventoEditando?.status ?? 'proximo')].label}
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <label style={labelStyle}>Meta de asistentes</label>
@@ -684,6 +713,27 @@ export default function AdminEventos() {
                   />
                 </div>
               </div>
+
+              {/* Único control real sobre el estado: cerrar el evento antes de
+                  tiempo (ej. se canceló). El backend respeta 'finalizado' sin
+                  recalcularlo; cualquier otro valor lo vuelve a calcular solo. */}
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+                padding: '12px 14px', borderRadius: '10px',
+                background: cierreManual ? '#f3f4f6' : '#f9fafb',
+                border: `1px solid ${cierreManual ? '#d1d5db' : '#e5e7eb'}`,
+              }}>
+                <input
+                  type="checkbox"
+                  checked={cierreManual}
+                  onChange={(e) => setCierreManual(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: COLOR_MARCA, cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '13px', color: '#374151' }}>
+                  <strong>Cerrar evento manualmente</strong> — úsalo solo si se canceló o se
+                  terminó antes de tiempo. Si no lo marcas, el estado se calcula solo según la fecha.
+                </span>
+              </label>
 
               {error && <p style={{ color: '#ef4444', fontSize: '13px' }}>{error}</p>}
 

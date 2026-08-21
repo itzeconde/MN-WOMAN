@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import { register } from '../../api/auth'
 
 export default function Register() {
   const [paso, setPaso] = useState(1)
   const [cargando, setCargando] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [mostrarPassword, setMostrarPassword] = useState(false)
 
   const [form, setForm] = useState({
     first_name: '',
@@ -30,10 +32,11 @@ export default function Register() {
 
   useEffect(() => {
     const nombre = form.first_name.trim().replace(/\s+/g, '')
-    const apellido = form.last_name.trim().replace(/\s+/g, '')
-    const sugerido = `MNW_${nombre}${apellido}`
+    const primerApellido = form.last_name.trim().split(/\s+/)[0] || ''
+    const sugerido = `MNW_${nombre}${primerApellido}`
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita tildes
       .replace(/[^a-zA-Z0-9_]/g, '')
+      .slice(0, 30) // mismo límite que aplica el backend
     setUsernamePreview(sugerido || 'MNW_...')
   }, [form.first_name, form.last_name])
 
@@ -279,7 +282,29 @@ export default function Register() {
 
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={labelStyle}>Contraseña *</label>
-                <input name="password" type="password" placeholder="Mínimo 8 caracteres, una mayúscula y un número" onChange={handleChange} value={form.password} style={inputStyle('password')} />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    name="password"
+                    type={mostrarPassword ? 'text' : 'password'}
+                    placeholder="Mínimo 8 caracteres, una mayúscula y un número"
+                    onChange={handleChange}
+                    value={form.password}
+                    style={{ ...inputStyle('password'), paddingRight: '40px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarPassword(!mostrarPassword)}
+                    style={{
+                      position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+                      display: 'flex', alignItems: 'center', color: '#9ca3af',
+                    }}
+                    aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    tabIndex={-1}
+                  >
+                    {mostrarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
                 {errorText('password')}
                 {/* Barra de fuerza */}
                 {form.password.length > 0 && (
