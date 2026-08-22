@@ -121,6 +121,11 @@ USE_TZ = True
 # --- ARCHIVOS ESTÁTICOS ---
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # a donde collectstatic copia todo
+# Se mantiene junto con STORAGES (más abajo) porque el comando collectstatic
+# de django-cloudinary-storage revisa este atributo directamente y truena
+# con AttributeError si no existe, aunque Django ya no lo use para resolver
+# el storage real.
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # --- ARCHIVOS DE MEDIA (imágenes subidas por usuarios) ---
 # Antes se guardaban en disco local (BASE_DIR / 'media'), pero el disco de
