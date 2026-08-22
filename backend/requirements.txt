@@ -10,7 +10,11 @@ python-dotenv==1.2.2
 sqlparse==0.5.5
 tzdata==2026.2
 
-# --- Agregados para deploy en Railway ---
+# --- Agregados para deploy en producción (Render) ---
 dj-database-url==3.1.2
 gunicorn==23.0.0
 whitenoise==6.8.2
+
+# --- Agregados para almacenamiento de imágenes en Cloudinary ---
+cloudinary==1.46.0
+django-cloudinary-storage==0.3.0

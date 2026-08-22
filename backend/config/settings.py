@@ -28,7 +28,12 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+
+    # Cloudinary — debe ir ANTES de staticfiles para que intercepte
+    # correctamente el manejo de archivos de media.
+    'cloudinary_storage',
     "django.contrib.staticfiles",
+    'cloudinary',
 
     # Terceros
     'rest_framework',
@@ -119,10 +124,27 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # a donde collectstatic copia todo
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # --- ARCHIVOS DE MEDIA (imágenes subidas por usuarios) ---
-# OJO: el disco de Railway es efímero. Esto sirve para desarrollo local;
-# en producción real conviene mover esto a Supabase Storage o Railway Volumes.
+# Antes se guardaban en disco local (BASE_DIR / 'media'), pero el disco de
+# Render es efímero: cada deploy o reinicio del servicio borra lo subido
+# después del último deploy. Por eso el media ahora vive en Cloudinary,
+# que persiste sin importar cuántas veces se reinicie el backend.
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
+
+if not all(CLOUDINARY_STORAGE.values()):
+    raise ValueError(
+        'Faltan variables de entorno de Cloudinary '
+        '(CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET). '
+        'Sin ellas, las imágenes subidas (eventos, cursos, artículos) no '
+        'se van a guardar correctamente.'
+    )
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
