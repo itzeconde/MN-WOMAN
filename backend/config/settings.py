@@ -121,7 +121,6 @@ USE_TZ = True
 # --- ARCHIVOS ESTÁTICOS ---
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # a donde collectstatic copia todo
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # --- ARCHIVOS DE MEDIA (imágenes subidas por usuarios) ---
 # Antes se guardaban en disco local (BASE_DIR / 'media'), pero el disco de
@@ -144,7 +143,18 @@ if not all(CLOUDINARY_STORAGE.values()):
         'se van a guardar correctamente.'
     )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# Forma moderna de configurar storages (reemplaza a DEFAULT_FILE_STORAGE y
+# STATICFILES_STORAGE, que quedaron obsoletos desde Django 4.2 y ya no
+# surten efecto en Django 6 — por eso las imágenes se seguían guardando
+# en disco local aunque DEFAULT_FILE_STORAGE apuntara a Cloudinary).
+STORAGES = {
+    'default': {
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
