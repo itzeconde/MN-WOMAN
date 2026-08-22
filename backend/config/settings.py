@@ -131,7 +131,18 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # a donde collectstatic copia todo
 # detiene TODO el build si falta uno solo. Sin Manifest, Whitenoise sigue
 # comprimiendo y sirviendo los estáticos normalmente, solo sin nombres
 # de archivo con hash para cache-busting (diferencia menor, no funcional).
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# Se mantiene junto con STORAGES (más abajo) porque el comando collectstatic
+# de django-cloudinary-storage revisa este atributo directamente y truena
+# con AttributeError si no existe, aunque Django ya no lo use para resolver
+# el storage real.
+# Usamos el storage BÁSICO de Django (solo copia archivos), no las variantes
+# de Whitenoise que comprimen/validan cada archivo durante el build. Estas
+# variantes tronaban con FileNotFoundError/MissingFileError porque el propio
+# paquete de Django 6.0.5 trae assets del admin incompletos (ícono, xregexp.js,
+# etc. — no es algo de este proyecto). WhiteNoise igual sirve y comprime al
+# vuelo en producción vía su middleware, así que no se pierde funcionalidad,
+# solo la optimización de comprimir antes de tiempo durante el deploy.
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 # --- ARCHIVOS DE MEDIA (imágenes subidas por usuarios) ---
 # Antes se guardaban en disco local (BASE_DIR / 'media'), pero el disco de
@@ -163,7 +174,7 @@ STORAGES = {
         'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
     },
 }
 
