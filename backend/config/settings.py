@@ -121,27 +121,6 @@ USE_TZ = True
 # --- ARCHIVOS ESTÁTICOS ---
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # a donde collectstatic copia todo
-# Se mantiene junto con STORAGES (más abajo) porque el comando collectstatic
-# de django-cloudinary-storage revisa este atributo directamente y truena
-# con AttributeError si no existe, aunque Django ya no lo use para resolver
-# el storage real.
-# Usamos la variante SIN "Manifest": la versión con Manifest valida que
-# todo archivo referenciado en un CSS exista físicamente (ej. admin/css/
-# base.css referencia un ícono que esta versión de Django no incluye) y
-# detiene TODO el build si falta uno solo. Sin Manifest, Whitenoise sigue
-# comprimiendo y sirviendo los estáticos normalmente, solo sin nombres
-# de archivo con hash para cache-busting (diferencia menor, no funcional).
-# Se mantiene junto con STORAGES (más abajo) porque el comando collectstatic
-# de django-cloudinary-storage revisa este atributo directamente y truena
-# con AttributeError si no existe, aunque Django ya no lo use para resolver
-# el storage real.
-# Usamos el storage BÁSICO de Django (solo copia archivos), no las variantes
-# de Whitenoise que comprimen/validan cada archivo durante el build. Estas
-# variantes tronaban con FileNotFoundError/MissingFileError porque el propio
-# paquete de Django 6.0.5 trae assets del admin incompletos (ícono, xregexp.js,
-# etc. — no es algo de este proyecto). WhiteNoise igual sirve y comprime al
-# vuelo en producción vía su middleware, así que no se pierde funcionalidad,
-# solo la optimización de comprimir antes de tiempo durante el deploy.
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 # --- ARCHIVOS DE MEDIA (imágenes subidas por usuarios) ---
@@ -165,10 +144,6 @@ if not all(CLOUDINARY_STORAGE.values()):
         'se van a guardar correctamente.'
     )
 
-# Forma moderna de configurar storages (reemplaza a DEFAULT_FILE_STORAGE y
-# STATICFILES_STORAGE, que quedaron obsoletos desde Django 4.2 y ya no
-# surten efecto en Django 6 — por eso las imágenes se seguían guardando
-# en disco local aunque DEFAULT_FILE_STORAGE apuntara a Cloudinary).
 STORAGES = {
     'default': {
         'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
@@ -238,3 +213,34 @@ if not DEBUG:
 
 # Modelo de usuario personalizado
 AUTH_USER_MODEL = 'users.User'
+
+# --- LOGGING ---
+# Sin esto, con DEBUG=False, los errores 500 no se imprimen a ningún lado y
+# es imposible diagnosticar fallas en producción viendo solo los logs de
+# Render. Esta configuración es estándar para cualquier proyecto Django en
+# producción, no es temporal.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}

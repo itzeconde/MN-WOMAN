@@ -38,7 +38,8 @@ class EventoSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'title', 'description', 'date', 'start_time',
             'end_time', 'location', 'hotel', 'status', 'cover_image',
-            'referral_goal', 'total_asistentes', 'meta_referidos',
+            'referral_goal', 'limite_asistentes', 'costo',
+            'total_asistentes', 'meta_referidos',
             'cupo_lleno', 'esta_vencido', 'agenda', 'created_at'
         )
 
