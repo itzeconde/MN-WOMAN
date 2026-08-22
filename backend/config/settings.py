@@ -125,11 +125,13 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # a donde collectstatic copia todo
 # de django-cloudinary-storage revisa este atributo directamente y truena
 # con AttributeError si no existe, aunque Django ya no lo use para resolver
 # el storage real.
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# Evita que collectstatic truene si algún CSS (ej. del admin de Django)
-# referencia un archivo estático que no se encontró — lo deja pasar en vez
-# de detener el build completo por un ícono/asset menor.
-WHITENOISE_MANIFEST_STRICT = False
+# Usamos la variante SIN "Manifest": la versión con Manifest valida que
+# todo archivo referenciado en un CSS exista físicamente (ej. admin/css/
+# base.css referencia un ícono que esta versión de Django no incluye) y
+# detiene TODO el build si falta uno solo. Sin Manifest, Whitenoise sigue
+# comprimiendo y sirviendo los estáticos normalmente, solo sin nombres
+# de archivo con hash para cache-busting (diferencia menor, no funcional).
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # --- ARCHIVOS DE MEDIA (imágenes subidas por usuarios) ---
 # Antes se guardaban en disco local (BASE_DIR / 'media'), pero el disco de
@@ -161,7 +163,7 @@ STORAGES = {
         'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
     },
 }
 
