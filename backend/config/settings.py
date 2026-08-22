@@ -126,6 +126,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # a donde collectstatic copia todo
 # con AttributeError si no existe, aunque Django ya no lo use para resolver
 # el storage real.
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Evita que collectstatic truene si algún CSS (ej. del admin de Django)
+# referencia un archivo estático que no se encontró — lo deja pasar en vez
+# de detener el build completo por un ícono/asset menor.
+WHITENOISE_MANIFEST_STRICT = False
 
 # --- ARCHIVOS DE MEDIA (imágenes subidas por usuarios) ---
 # Antes se guardaban en disco local (BASE_DIR / 'media'), pero el disco de
