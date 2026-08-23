@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getSolicitudes, accionSolicitud } from '../../api/usuarios'
+import { getSolicitudes, accionSolicitud, toggleUsuario } from '../../api/usuarios'
 import { paginacionBotonStyle, COLOR_MARCA, COLOR_MARCA_CLARO, COLOR_BORDE } from '../../styles/tokens'
 import {
   Mail, Phone, Briefcase, MapPin, Clock, Calendar,
   Check, X, Inbox, Search, ChevronLeft, ChevronRight,
+  UserX, UserCheck,
 } from 'lucide-react'
 
 interface Solicitud {
@@ -109,6 +110,22 @@ export default function AdminSolicitudes() {
       setSolicitudes(prev => prev.filter(s => s.id !== solicitudArechazar))
       setSeleccionada(null)
       setModalRechazo(false)
+    } finally {
+      setProcesando(false)
+    }
+  }
+
+  const handleToggleActivo = async (id: number, activarDe: boolean) => {
+    const mensaje = activarDe
+      ? '¿Desactivar a esta usuaria? Dejará de aparecer en el directorio y no podrá iniciar sesión.'
+      : '¿Reactivar a esta usuaria? Volverá a aparecer en el directorio y podrá iniciar sesión.'
+    if (!confirm(mensaje)) return
+
+    setProcesando(true)
+    try {
+      const { activo } = await toggleUsuario(id)
+      setSolicitudes(prev => prev.map(s => (s.id === id ? { ...s, is_active: activo } : s)))
+      setSeleccionada(prev => (prev && prev.id === id ? { ...prev, is_active: activo } : prev))
     } finally {
       setProcesando(false)
     }
@@ -260,6 +277,7 @@ export default function AdminSolicitudes() {
                     boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
                     display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap',
                     cursor: 'pointer', transition: 'all 0.15s',
+                    opacity: tabActiva === 'aprobada' && !s.is_active ? 0.6 : 1,
                   }}>
                     <div style={{
                       width: '48px', height: '48px', borderRadius: '50%', flexShrink: 0,
@@ -273,8 +291,15 @@ export default function AdminSolicitudes() {
                       }
                     </div>
                     <div style={{ flex: 1, minWidth: '160px' }}>
-                      <p style={{ fontWeight: '700', color: '#111827', fontSize: '14px', margin: '0 0 2px 0' }}>
+                      <p style={{ fontWeight: '700', color: '#111827', fontSize: '14px', margin: '0 0 2px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {s.nombre_completo}
+                        {tabActiva === 'aprobada' && !s.is_active && (
+                          <span style={{
+                            fontSize: '10px', fontWeight: '700', color: '#6b7280',
+                            background: '#f3f4f6', padding: '2px 8px', borderRadius: '20px',
+                            textTransform: 'uppercase', letterSpacing: '0.03em',
+                          }}>Desactivada</span>
+                        )}
                       </p>
                       <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
                         {s.company} · {SECTORES[s.business_sector] || s.business_sector}
@@ -295,6 +320,23 @@ export default function AdminSolicitudes() {
                           padding: '8px 16px', borderRadius: '8px', border: '1px solid #fee2e2',
                           background: '#fff5f5', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#ef4444'
                         }}><X size={13} /> Rechazar</button>
+                      </div>
+                    )}
+                    {tabActiva === 'aprobada' && (
+                      <div style={{ display: 'flex', gap: '8px' }} onClick={e => e.stopPropagation()}>
+                        {s.is_active ? (
+                          <button onClick={() => handleToggleActivo(s.id, true)} disabled={procesando} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            padding: '8px 16px', borderRadius: '8px', border: '1px solid #fee2e2',
+                            background: '#fff5f5', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#ef4444'
+                          }}><UserX size={13} /> Desactivar</button>
+                        ) : (
+                          <button onClick={() => handleToggleActivo(s.id, false)} disabled={procesando} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            padding: '8px 16px', borderRadius: '8px', border: '1px solid #dcfce7',
+                            background: '#f0fdf4', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#16a34a'
+                          }}><UserCheck size={13} /> Reactivar</button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -361,6 +403,18 @@ export default function AdminSolicitudes() {
                 <p style={{ fontSize: '13px', color: COLOR_MARCA, fontWeight: '600', margin: 0 }}>
                   {seleccionada.company}
                 </p>
+                {tabActiva === 'aprobada' && (
+                  <span style={{
+                    display: 'inline-block', marginTop: '8px',
+                    fontSize: '11px', fontWeight: '700',
+                    color: seleccionada.is_active ? '#16a34a' : '#6b7280',
+                    background: seleccionada.is_active ? '#dcfce7' : '#f3f4f6',
+                    padding: '3px 10px', borderRadius: '20px',
+                    textTransform: 'uppercase', letterSpacing: '0.03em',
+                  }}>
+                    {seleccionada.is_active ? 'Activa' : 'Desactivada'}
+                  </span>
+                )}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
@@ -399,6 +453,26 @@ export default function AdminSolicitudes() {
                     background: '#fff5f5', color: '#ef4444', cursor: 'pointer',
                     fontWeight: '700', fontSize: '14px'
                   }}><X size={14} /> Rechazar solicitud</button>
+                </div>
+              )}
+
+              {tabActiva === 'aprobada' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {seleccionada.is_active ? (
+                    <button onClick={() => handleToggleActivo(seleccionada.id, true)} disabled={procesando} style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      padding: '12px', borderRadius: '10px', border: '1px solid #fee2e2',
+                      background: '#fff5f5', color: '#ef4444', cursor: 'pointer',
+                      fontWeight: '700', fontSize: '14px'
+                    }}><UserX size={14} /> Desactivar usuaria</button>
+                  ) : (
+                    <button onClick={() => handleToggleActivo(seleccionada.id, false)} disabled={procesando} style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      padding: '12px', borderRadius: '10px', border: 'none',
+                      background: '#16a34a', color: 'white', cursor: 'pointer',
+                      fontWeight: '700', fontSize: '14px'
+                    }}><UserCheck size={14} /> Reactivar usuaria</button>
+                  )}
                 </div>
               )}
             </div>
