@@ -19,12 +19,12 @@ def enviar_correo_recuperacion(destinatario_email: str, destinatario_nombre: str
             "email": settings.BREVO_SENDER_EMAIL,
         },
         "to": [{"email": destinatario_email, "name": destinatario_nombre}],
-        "subject": "Recupera tu contraseña — MN WOMAN",
+        "subject": "Recupera tu contraseña — MN WOMEN",
         "htmlContent": f"""
             <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
                 <h2 style="color: #B66878;">Recupera tu contraseña</h2>
                 <p>Hola {destinatario_nombre},</p>
-                <p>Recibimos una solicitud para restablecer tu contraseña en MN WOMAN.
+                <p>Recibimos una solicitud para restablecer tu contraseña en MN WOMEN.
                    Si fuiste tú, haz clic en el siguiente botón:</p>
                 <p style="margin: 24px 0;">
                     <a href="{link_reset}"

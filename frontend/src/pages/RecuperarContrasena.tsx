@@ -99,7 +99,7 @@ export default function RecuperarContrasena() {
             <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>Revisa tu correo</h2>
             <p style={{ color: '#6b7280', fontSize: '14px' }}>
               Si el correo <strong style={{ color: '#374151' }}>{email}</strong> está registrado, te llegará un
-              link para restablecer tu contraseña en los próximos minutos. Revisa también tu carpeta de spam.
+              link para restablecer tu contraseña en los próximos minutos. 
             </p>
           </div>
         )}
