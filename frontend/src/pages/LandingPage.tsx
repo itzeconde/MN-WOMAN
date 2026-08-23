@@ -93,7 +93,7 @@ const LandingPage = () => {
 
   // Temas de Interés: el primero se vuelve la tarjeta grande, el resto va en la lista chica
   const articuloDestacado = articles[0]
-  const articulosLista = articles.slice(1, 6)
+  const articulosLista = articles.slice(1, 5)
 
   return (
     <main style={{ fontFamily: "'Inter', 'Helvetica Neue', sans-serif", backgroundColor: '#FBF8F4' }}>
@@ -158,11 +158,22 @@ const LandingPage = () => {
           flex: 1 1 340px;
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          justify-content: space-between;
+        }
+        .articulo-chico-item {
+          padding: 14px 0;
+          border-bottom: 1px solid #f0e6e9;
+        }
+        .articulo-chico-item:first-child {
+          padding-top: 0;
+        }
+        .articulo-chico-item:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
         }
         .articulo-chico-thumb {
-          width: 76px;
-          height: 76px;
+          width: 72px;
+          height: 72px;
           flex-shrink: 0;
         }
         .articulo-chico-titulo {
@@ -209,7 +220,7 @@ const LandingPage = () => {
           .colabs { gap: 20px; }
           .colabs-section { padding: 40px 20px; }
           .articulo-destacado-grande { min-height: 280px; }
-          .articulo-chico-thumb { width: 64px; height: 64px; }
+          .articulo-chico-thumb { width: 56px; height: 56px; }
         }
       `}</style>
 
@@ -585,7 +596,7 @@ const LandingPage = () => {
                 </div>
               </a>
 
-              {/* Lista chica: el resto */}
+              {/* Lista chica: el resto (máx. 4, como lista con separadores en vez de cards apiladas) */}
               {articulosLista.length > 0 && (
                 <div className="articulos-lista-chica">
                   {articulosLista.map(articulo => (
@@ -594,23 +605,22 @@ const LandingPage = () => {
                       href={articulo.external_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="card-hover"
+                      className="articulo-chico-item"
                       style={{
-                        textDecoration: 'none', backgroundColor: '#fff', border: '1px solid #f0e6e9',
-                        borderRadius: '14px', padding: '12px', display: 'flex', alignItems: 'center', gap: '14px',
+                        textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '14px',
                       }}
                     >
                       <div className="articulo-chico-thumb" style={{ borderRadius: '10px', overflow: 'hidden', background: '#FDF0F2' }}>
                         {articulo.cover_image_url
                           ? <img src={articulo.cover_image_url} alt={articulo.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🌸</div>
+                          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🌸</div>
                         }
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <span style={{ fontSize: '11px', fontWeight: '700', color: '#B66878', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                           {articulo.category_display}
                         </span>
-                        <p className="articulo-chico-titulo" style={{ fontSize: '14.5px', fontWeight: '700', color: '#0f0a0b', margin: '4px 0 0', lineHeight: '1.4' }}>
+                        <p className="articulo-chico-titulo" style={{ fontSize: '14.5px', fontWeight: '600', color: '#0f0a0b', margin: '4px 0 0', lineHeight: '1.4' }}>
                           {articulo.title}
                         </p>
                       </div>
