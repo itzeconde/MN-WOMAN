@@ -6,6 +6,8 @@ import LandingPage from './pages/LandingPage'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import Privacidad from './pages/Privacidad'
+import RecuperarContrasena from './pages/RecuperarContrasena'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/dashboard/Dashboard'
 import Directorio from './pages/directorio/Directorio'
 import PerfilPublico from './pages/directorio/PerfilPublico'
@@ -82,6 +84,8 @@ function AppRoutes() {
 
       <Route path="/login" element={<RutaPublica><Navbar /><Login /></RutaPublica>} />
       <Route path="/register" element={<RutaPublica><Navbar /><Register /></RutaPublica>} />
+      <Route path="/recuperar-contrasena" element={<RutaPublica><RecuperarContrasena /></RutaPublica>} />
+      <Route path="/reset-password" element={<RutaPublica><ResetPassword /></RutaPublica>} />
       <Route path="/privacidad" element={<Privacidad />} />
 
       <Route path="/admin" element={<RutaAdmin><AdminLayout /></RutaAdmin>}>

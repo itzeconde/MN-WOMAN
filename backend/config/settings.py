@@ -172,6 +172,7 @@ REST_FRAMEWORK = {
         'user': '1000/hour',
         'register': '5/hour',
         'login_status': '10/min',
+        'password_reset': '5/hour',
     },
 }
 
@@ -213,6 +214,13 @@ if not DEBUG:
 
 # Modelo de usuario personalizado
 AUTH_USER_MODEL = 'users.User'
+
+# --- BREVO (envío de correos transaccionales) ---
+# Usado para el flujo de recuperación de contraseña. Ver users/utils_email.py.
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
+BREVO_SENDER_EMAIL = os.getenv('BREVO_SENDER_EMAIL', 'noreply@mnwoman.com')
+BREVO_SENDER_NAME = os.getenv('BREVO_SENDER_NAME', 'MN WOMAN')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
 # --- LOGGING ---
 # Sin esto, con DEBUG=False, los errores 500 no se imprimen a ningún lado y

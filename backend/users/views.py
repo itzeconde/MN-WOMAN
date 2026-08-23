@@ -1,3 +1,7 @@
+from django.conf import settings
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework import generics, permissions, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,6 +12,7 @@ from .serializers import (
     UserSerializer, RegisterSerializer, DirectorioSerializer,
     PerfilSerializer, SolicitudSerializer,
 )
+from .utils_email import enviar_correo_recuperacion
 
 
 class EsAdmin(permissions.BasePermission):
@@ -32,6 +37,10 @@ class RegisterThrottle(AnonRateThrottle):
 
 class LoginStatusThrottle(AnonRateThrottle):
     scope = 'login_status'
+
+
+class PasswordResetThrottle(AnonRateThrottle):
+    scope = 'password_reset'
 
 
 class RegisterView(generics.CreateAPIView):
@@ -188,3 +197,72 @@ class ConsultarStatusView(APIView):
             'status': user.status,
             'rechazo_motivo': user.rechazo_motivo,
         })
+
+
+# ── RECUPERACIÓN DE CONTRASEÑA ──────────────────────────────────────────────
+
+password_reset_token = PasswordResetTokenGenerator()
+
+
+class PasswordResetRequestView(APIView):
+    """
+    Recibe un email y, si existe una cuenta con ese correo, dispara el
+    correo de recuperación vía Brevo. Responde igual exista o no la cuenta,
+    para no filtrar qué correos están registrados en la plataforma.
+    """
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [PasswordResetThrottle]
+
+    def post(self, request):
+        email = (request.data.get('email') or '').strip()
+
+        if not email:
+            return Response({'error': 'El correo es requerido'}, status=400)
+
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            # Misma respuesta que si sí existiera, a propósito.
+            return Response({'mensaje': 'Si el correo existe, se envió un link de recuperación'})
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = password_reset_token.make_token(user)
+        link_reset = f"{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}"
+
+        nombre = user.first_name or user.username
+        enviar_correo_recuperacion(user.email, nombre, link_reset)
+
+        return Response({'mensaje': 'Si el correo existe, se envió un link de recuperación'})
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    Valida uid + token y, si son correctos, actualiza la contraseña.
+    """
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [PasswordResetThrottle]
+
+    def post(self, request):
+        uid = request.data.get('uid', '')
+        token = request.data.get('token', '')
+        new_password = request.data.get('new_password', '')
+
+        if not uid or not token or not new_password:
+            return Response({'error': 'Faltan datos'}, status=400)
+
+        if len(new_password) < 8:
+            return Response({'error': 'La contraseña debe tener al menos 8 caracteres'}, status=400)
+
+        try:
+            user_pk = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_pk)
+        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+            return Response({'error': 'El link no es válido o ya expiró'}, status=400)
+
+        if not password_reset_token.check_token(user, token):
+            return Response({'error': 'El link no es válido o ya expiró'}, status=400)
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({'mensaje': 'Contraseña actualizada correctamente'})

@@ -6,6 +6,7 @@ from .views import (
     AdminSolicitudesView, AdminAccionSolicitudView,
     AdminUsuariosView, AdminToggleUsuarioView,
     ConsultarStatusView,
+    PasswordResetRequestView, PasswordResetConfirmView,
 )
 
 urlpatterns = [
@@ -17,6 +18,8 @@ urlpatterns = [
     path('directorio/', DirectorioView.as_view(), name='directorio'),
     path('directorio/<int:pk>/', PerfilPublicoView.as_view(), name='perfil_publico'),
     path('consultar-status/', ConsultarStatusView.as_view(), name='consultar_status'),
+    path('password-reset/request/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('password-reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 
     # Admin
     path('admin/solicitudes/', AdminSolicitudesView.as_view(), name='admin_solicitudes'),

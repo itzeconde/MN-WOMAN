@@ -94,7 +94,7 @@ export default function Login() {
             </div>
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: '10px' }}>
             <label style={{ fontSize: '14px', fontWeight: '500' }}>Contraseña</label>
             <div style={{ position: 'relative', marginTop: '4px' }}>
               <input
@@ -122,6 +122,12 @@ export default function Login() {
                 {mostrarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+          </div>
+
+          <div style={{ textAlign: 'right', marginBottom: '16px' }}>
+            <Link to="/recuperar-contrasena" style={{ fontSize: '13px', color: '#B66878', fontWeight: '500', textDecoration: 'none' }}>
+              ¿Olvidaste tu contraseña?
+            </Link>
           </div>
 
           {error && (
