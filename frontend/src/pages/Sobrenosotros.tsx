@@ -4,14 +4,12 @@ import { useNavigate } from 'react-router-dom'
 // ── IMÁGENES LOCALES ────────────────────────────────────────────────────
 // Cada fundadora tiene su propia foto. Guarda los archivos en src/assets/
 // con estos nombres exactos (o cambia el import si les pusiste otro nombre).
-import fotoOrigen from '../assets/foto-origen.jpg'
+import fotoOrigen from '../assets/Rosario Texis.jpg'
 import fotoGabriela from '../assets/Gabi Moreno.jpg'
 import fotoIsis from '../assets/Isis.jpg'
 import fotoMarisol from '../assets/Marisol Fernandez.jpg'
 import fotoLaura from '../assets/Laura Silva.jpg'
-// Falta la foto de Rosario Texis. En cuanto la tengas, agrega su import
-// aquí (por ejemplo: import fotoRosario from '../assets/rosario.jpg')
-// y reemplázala abajo en su tarjeta.
+import fotoRosario from '../assets/Rosario Texis.jpg'
 
 const FOTO_ORIGEN = fotoOrigen
 
@@ -85,8 +83,7 @@ Cargos:
   {
     nombre: 'Rosario Texis',
     rol: 'Fundadora, MN WOMAN',
-    // Placeholder mientras llega su foto real — reemplaza FOTO_ORIGEN por su import cuando la tengas.
-    foto: fotoOrigen,
+    foto: fotoRosario,
     frase: '',
     semblanza: `Próximamente agregaremos la semblanza completa de Rosario Texis.`,
   },
