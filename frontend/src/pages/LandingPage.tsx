@@ -5,6 +5,14 @@ import BannerSlot from '../components/BannerSlot'
 import api from '../api/axios'
 import fotoPrincipal from '../assets/hero-1.jpg'
 
+// ── LOGOS DE COLABORADORES ──────────────────────────────────────────────
+// Agrega los imports conforme te vayan mandando los logos que faltan.
+// Formato recomendado: PNG con fondo transparente.
+import logoMomento from '../assets/logo momento 2022.png'
+import logoMalinche from '../assets/las hijas de la malinche_logo vectores.png'
+import logoNetworking from '../assets/logo_MNW.png'
+import logoTlaxqui from '../assets/LOGO TLAXQUI.png'
+
 const FOTO_PRINCIPAL = fotoPrincipal
 
 interface Article {
@@ -46,6 +54,16 @@ interface Institucion {
   horario: string
   direccion: string
 }
+
+// ── COLABORADORES ────────────────────────────────────────────────────────
+// "logo" es opcional: si aún no tienes el archivo, deja el campo fuera
+// (o en undefined) y automáticamente se muestra el nombre en texto.
+const COLABORADORES = [
+  { nombre: 'Revista Momento', url: 'https://www.revistamomento.com.mx/', logo: logoMomento },
+  { nombre: 'Las Hijas de la Malinche', url: 'https://www.youtube.com/@lashijasdelamalinche724', logo: logoMalinche },
+  { nombre: 'Festival Tlaxqui', url: 'https://tlaxqui.com/', logo: logoTlaxqui },
+  { nombre: 'Networking', url: 'https://www.facebook.com/MarcaNetworking/', logo: logoNetworking },
+]
 
 const LandingPage = () => {
   const navigate = useNavigate()
@@ -130,6 +148,18 @@ const LandingPage = () => {
 
         /* Colaboradores */
         .colabs { display: flex; justify-content: center; align-items: center; gap: 48px; flex-wrap: wrap; }
+        .colab-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          text-decoration: none;
+        }
+        .colab-logo {
+          height: 60px;
+          width: auto;
+          object-fit: contain;
+        }
 
         /* CTA */
         .cta-section { padding: 100px 64px; text-align: center; }
@@ -672,25 +702,29 @@ const LandingPage = () => {
             Con el respaldo de
           </p>
           <div className="colabs">
-            {[
-              { nombre: 'Revista Momento', url: 'https://www.revistamomento.com.mx/' },
-              { nombre: 'Las Hijas de la Malinche', url: 'https://www.youtube.com/@lashijasdelamalinche724' },
-              { nombre: 'Festival Tlaxqui', url: 'https://tlaxqui.com/' },
-              { nombre: 'Networking', url: 'https://www.facebook.com/MarcaNetworking/' },
-            ].map((colab, i, arr) => (
-              <span key={colab.nombre} style={{ display: 'flex', alignItems: 'center', gap: '48px' }}>
-                <a
-                  href={colab.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ fontSize: '17px', fontWeight: '600', color: '#c9b6bb', letterSpacing: '0.04em', textDecoration: 'none' }}
+            {COLABORADORES.map((colab) => (
+              <a
+                key={colab.nombre}
+                href={colab.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="colab-item"
+              >
+                {colab.logo && (
+                  <img
+                    src={colab.logo}
+                    alt={colab.nombre}
+                    className="colab-logo"
+                  />
+                )}
+                <span
+                  style={{ fontSize: '17px', fontWeight: '600', color: '#c9b6bb', letterSpacing: '0.04em', transition: 'color 0.2s ease' }}
                   onMouseEnter={e => { e.currentTarget.style.color = '#B66878' }}
                   onMouseLeave={e => { e.currentTarget.style.color = '#c9b6bb' }}
                 >
                   {colab.nombre}
-                </a>
-                {i < arr.length - 1 && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#C9A15A', opacity: 0.5, display: 'inline-block' }} />}
-              </span>
+                </span>
+              </a>
             ))}
           </div>
         </div>
