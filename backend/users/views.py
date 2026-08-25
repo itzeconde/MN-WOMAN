@@ -171,9 +171,17 @@ class ConsultarStatusView(APIView):
     """
     Verifica el status de una solicitud SIN depender de authenticate(),
     porque authenticate() de Django siempre regresa None para usuarios
-    con is_active=False (pendientes y rechazadas) sin importar si la
-    contraseña es correcta. Aquí se valida la contraseña directamente
-    con check_password(), que sí funciona independientemente de is_active.
+    con is_active=False (pendientes, rechazadas y desactivadas) sin
+    importar si la contraseña es correcta. Aquí se valida la contraseña
+    directamente con check_password(), que sí funciona independientemente
+    de is_active.
+
+    Caso especial: una cuenta con status='aprobada' pero is_active=False
+    es una cuenta que el admin desactivó manualmente (no una solicitud
+    pendiente ni rechazada). Se distingue con un status virtual
+    'desactivada' para que el frontend le muestre a la usuaria un mensaje
+    correcto en vez de decirle "aprobada" cuando en realidad no puede
+    iniciar sesión.
     """
     permission_classes = [permissions.AllowAny]
     throttle_classes = [LoginStatusThrottle]
@@ -192,6 +200,12 @@ class ConsultarStatusView(APIView):
 
         if not user.check_password(password):
             return Response({'error': 'Credenciales incorrectas'}, status=401)
+
+        if user.status == 'aprobada' and not user.is_active:
+            return Response({
+                'status': 'desactivada',
+                'rechazo_motivo': 'Tu cuenta ha sido desactivada. Contacta al equipo de MN WOMAN si crees que es un error.',
+            })
 
         return Response({
             'status': user.status,

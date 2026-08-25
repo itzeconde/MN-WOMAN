@@ -44,6 +44,10 @@ export default function Login() {
         setError(motivo)
         return
       }
+      if (statusData.status === 'desactivada') {
+        setError(statusData.rechazo_motivo || 'Tu cuenta ha sido desactivada. Contacta al equipo de MN WOMEN si crees que es un error.')
+        return
+      }
 
       const data = await login(usernameCompleto, form.password)
       const perfil = await doLogin(data.access, data.refresh)

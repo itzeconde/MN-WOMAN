@@ -4,10 +4,8 @@ import { Shield, Users, TrendingUp, Heart, Clock, MapPin, Calendar } from 'lucid
 import BannerSlot from '../components/BannerSlot'
 import api from '../api/axios'
 import fotoPrincipal from '../assets/hero-1.jpg'
-import fotoSecundaria from '../assets/hero-2.jpg'
 
 const FOTO_PRINCIPAL = fotoPrincipal
-const FOTO_SECUNDARIA = fotoSecundaria
 
 interface Article {
   id: number
@@ -88,8 +86,13 @@ const LandingPage = () => {
       .catch(() => {})
   }, [])
 
+  // Parsea una fecha 'YYYY-MM-DD' como fecha local, evitando que JS la
+  // interprete como medianoche UTC (lo cual la recorre un día hacia atrás
+  // en zonas horarias negativas como la de México).
+  const parseFechaLocal = (fecha: string) => new Date(fecha + 'T00:00:00')
+
   const formatFecha = (fecha: string) =>
-    new Date(fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+    parseFechaLocal(fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
 
   // Temas de Interés: el primero se vuelve la tarjeta grande, el resto va en la lista chica
   const articuloDestacado = articles[0]
@@ -286,7 +289,7 @@ const LandingPage = () => {
           </div>
 
           {/* ── Columna imagen: collage de fotos ── */}
-          <div className="hero-illustration" style={{ flex: '1 1 400px', maxWidth: '420px', width: '100%', position: 'relative' }}>
+          <div className="hero-illustration" style={{ flex: '1 1 480px', maxWidth: '520px', width: '100%', position: 'relative' }}>
             {/* halo suave detrás de la foto */}
             <div style={{
               position: 'absolute', top: '-20px', left: '-20px', right: '20px', bottom: '20px',
@@ -304,20 +307,6 @@ const LandingPage = () => {
             }}>
               <img
                 src={FOTO_PRINCIPAL}
-                alt="Miembro de la red MN WOMAN"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              />
-            </div>
-
-            {/* foto secundaria, circular, sobrepuesta */}
-            <div style={{
-              position: 'absolute', zIndex: 2, bottom: '-6%', left: '-8%',
-              width: '34%', aspectRatio: '1 / 1', borderRadius: '50%',
-              overflow: 'hidden', border: '5px solid #fff',
-              boxShadow: '0 12px 28px rgba(0,0,0,0.14)',
-            }}>
-              <img
-                src={FOTO_SECUNDARIA}
                 alt="Miembro de la red MN WOMAN"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />
@@ -439,10 +428,10 @@ const LandingPage = () => {
                       boxShadow: '0 4px 12px rgba(0,0,0,0.1)', textAlign: 'center',
                     }}>
                       <div style={{ fontSize: '11px', fontWeight: '700', color: '#B66878', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        {new Date(evento.date).toLocaleDateString('es-MX', { month: 'short' }).replace('.', '')}
+                        {parseFechaLocal(evento.date).toLocaleDateString('es-MX', { month: 'short' }).replace('.', '')}
                       </div>
                       <div style={{ fontSize: '20px', fontWeight: '800', color: '#0f0a0b', lineHeight: '1.1' }}>
-                        {new Date(evento.date).getDate()}
+                        {parseFechaLocal(evento.date).getDate()}
                       </div>
                     </div>
                   </div>
@@ -683,11 +672,23 @@ const LandingPage = () => {
             Con el respaldo de
           </p>
           <div className="colabs">
-            {['Revista Momento', 'Las Hijas de la Malinche', 'Festival Tlaxqui', 'Networking'].map((colab, i, arr) => (
-              <span key={colab} style={{ display: 'flex', alignItems: 'center', gap: '48px' }}>
-                <span style={{ fontSize: '17px', fontWeight: '600', color: '#c9b6bb', letterSpacing: '0.04em' }}>
-                  {colab}
-                </span>
+            {[
+              { nombre: 'Revista Momento', url: 'https://www.revistamomento.com.mx/' },
+              { nombre: 'Las Hijas de la Malinche', url: 'https://www.youtube.com/@lashijasdelamalinche724' },
+              { nombre: 'Festival Tlaxqui', url: 'https://tlaxqui.com/' },
+              { nombre: 'Networking', url: 'https://www.facebook.com/MarcaNetworking/' },
+            ].map((colab, i, arr) => (
+              <span key={colab.nombre} style={{ display: 'flex', alignItems: 'center', gap: '48px' }}>
+                <a
+                  href={colab.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '17px', fontWeight: '600', color: '#c9b6bb', letterSpacing: '0.04em', textDecoration: 'none' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#B66878' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = '#c9b6bb' }}
+                >
+                  {colab.nombre}
+                </a>
                 {i < arr.length - 1 && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#C9A15A', opacity: 0.5, display: 'inline-block' }} />}
               </span>
             ))}

@@ -1,11 +1,17 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 // ── IMÁGENES LOCALES ────────────────────────────────────────────────────
-// Por ahora todas usan la misma imagen de prueba (foto-origen.jpg) que está
-// directo en src/assets/. Cuando tengas las fotos reales de cada fundadora,
-// agrégalas a src/assets/ y crea un import nuevo para cada una, por ejemplo:
-//   import fotoMarisol from '../assets/marisol.jpg'
+// Cada fundadora tiene su propia foto. Guarda los archivos en src/assets/
+// con estos nombres exactos (o cambia el import si les pusiste otro nombre).
 import fotoOrigen from '../assets/foto-origen.jpg'
+import fotoGabriela from '../assets/Gabi Moreno.jpg'
+import fotoIsis from '../assets/Isis.jpg'
+import fotoMarisol from '../assets/Marisol Fernandez.jpg'
+import fotoLaura from '../assets/Laura Silva.jpg'
+// Falta la foto de Rosario Texis. En cuanto la tengas, agrega su import
+// aquí (por ejemplo: import fotoRosario from '../assets/rosario.jpg')
+// y reemplázala abajo en su tarjeta.
 
 const FOTO_ORIGEN = fotoOrigen
 
@@ -14,31 +20,81 @@ const FOTO_ORIGEN = fotoOrigen
 // La cuadrícula se acomoda sola sin importar cuántas sean (1, 2, 3, 5, etc).
 // - foto: usa el import de arriba (agrega más imports cuando tengas más fotos).
 // - nombre: nombre completo.
-// - rol: cargo o forma en que quieres que se le identifique.
-// - frase (opcional): quítala si no quieres cita, déjala como '' o bórrala del objeto.
+// - rol: cargo o forma en que quieres que se le identifique (se ve en la tarjeta).
+// - semblanza: texto completo que aparece al hacer clic en la tarjeta.
 const FUNDADORAS = [
   {
-    nombre: 'Nombre Apellido',
-    rol: 'Fundadora de MN WOMAN',
-    foto: fotoOrigen,
+    nombre: 'Gabriela Moreno Carpinteyro',
+    rol: 'Médica Pediatra, Especialista en Salud Pública',
+    foto: fotoGabriela,
     frase: '',
+    semblanza: `Médica especialista en Pediatría, con una sólida trayectoria de más de tres décadas en los ámbitos de la salud pública, la administración hospitalaria, la gestión de servicios médicos y la seguridad hospitalaria. Cuenta con formación especializada en Administración de Hospitales, Control Interno, Administración y Gestión de Riesgos, Auditoría en Instituciones de Salud con Normas Internacionales, así como en Verificación Sanitaria de Bancos de Sangre. Asimismo, está certificada por la Universidad de las Américas Puebla en el desarrollo de habilidades gerenciales y de liderazgo.
+
+A lo largo de su trayectoria profesional, ha desempeñado diversos cargos directivos y médicos de alta responsabilidad. Fue Subdirectora General Médica del ISSSTEP y, previamente, Subdirectora Administrativa del Hospital de Especialidades de la misma institución.
+
+También se desempeñó como Directora del Hospital Regional "Lic. Emilio Sánchez Piedras", en Tzompantepec, Tlaxcala, durante seis años, donde contribuyó al fortalecimiento de la operación y la gestión hospitalaria.
+
+Fue pionera del Programa de Trasplantes en Tlaxcala, impulsando la creación del Consejo Estatal de Trasplantes y contribuyendo a la realización del primer trasplante renal en el estado.`,
   },
   {
-    nombre: 'Marisol Fernandez Muñoz',
+    nombre: 'Diana Isis Flores Gutiérrez',
+    rol: 'Titular del Programa STEM, SEP Tlaxcala',
+    foto: fotoIsis,
+    frase: '',
+    semblanza: `Titular del programa STEM en la Secretaría de Educación Pública del Estado.
+
+Finalista del Premio Docentes Extraordinarios National Teacher Prize México 2020, distinción que reconoce a docentes con prácticas innovadoras y de alto impacto.
+
+Representó a Tlaxcala y a México durante la COP28, celebrada en Emiratos Árabes Unidos, donde estableció vínculos con organismos y fundaciones de prestigio internacional. De ese trabajo surgieron alianzas con Siemens Stiftung, Fundación Robotix y Fundación Televisa la Red STEM Latinoamérica, mismas que han fortalecido el desarrollo de programas orientados a la educación STEM en nuestro estado.
+
+Como resultado de estos esfuerzos, Tlaxcala se consolidó como el primer estado del país en asumirse como Territorio STEM, impulsando políticas y estrategias para fortalecer la enseñanza de la ciencia, la tecnología, la ingeniería y las matemáticas. Destacan particularmente las Olimpiadas STEM, en las que actualmente participan cientos de niñas, niños y jóvenes, existiendo ya compromisos institucionales que requieren continuidad las Misiones Internacionales STEM, que han permitido que niñas, niños y jóvenes puedan viajar a países de Latinoamérica a presentar proyectos STEM que realizan en sus comunidades.`,
+  },
+  {
+    nombre: 'Marisol Fernández Muñoz',
     rol: 'Directora, Revista Momento',
-    foto: fotoOrigen,
+    foto: fotoMarisol,
     frase: '',
+    semblanza: `Marisol Fernández Muñoz es comunicóloga con más de 30 años de trayectoria en los medios de comunicación, destacándose por su compromiso con el periodismo, la comunicación estratégica y la generación de espacios de diálogo que impulsan el desarrollo empresarial, social y cultural.
+
+Es directora general de Revista Momento, medio que se ha consolidado como una plataforma de difusión desde una línea editorial de hacer periodismo social, con ediciones especiales para mujeres, empresarios, jóvenes y enfocada a la salud, que transforman su entorno a través de la innovación, el liderazgo y la responsabilidad social. Bajo su dirección, la publicación ha alcanzado importantes reconocimientos, obteniendo 29 Premios Estatales de Periodismo, reflejo de la calidad, profesionalismo y compromiso editorial que distinguen a su equipo. Asimismo, ha sido nominada a la Presea Miguel N. Lira, uno de los máximos reconocimientos que distinguen la trayectoria y aportación al periodismo y la comunicación en Tlaxcala.
+
+A lo largo de su carrera ha desarrollado proyectos editoriales, de comunicación institucional y producción de contenidos, construyendo puentes entre el sector empresarial, el gobierno, la academia y la sociedad civil. Su labor se distingue por dar voz a historias que inspiran, fortalecen el tejido social y generan un impacto positivo en la comunidad.
+
+Actualmente es conductora y productora del podcast Las Hijas de la Malinche, un espacio que visibiliza las experiencias, retos y logros de mujeres que, desde distintos ámbitos, contribuyen a la construcción de una sociedad más equitativa, incluyente y participativa. Este espacio fue reconocido por la organización Mujeres en Consenso por su aportación a dar voz a las mujeres.
+
+Convencida de que la comunicación es una herramienta para transformar realidades, Marisol Fernández Muñoz continúa impulsando iniciativas que fortalecen el liderazgo, promueven el emprendimiento, fomentan la libertad de expresión y generan alianzas estratégicas que contribuyen al desarrollo de Tlaxcala y de México.`,
   },
   {
-    nombre: 'Nombre Apellido',
-    rol: 'Co-fundadora',
+    nombre: 'Laura Lizbeth Silva Delgado',
+    rol: 'Coordinadora Hospitalaria de Donación de Órganos y Trasplantes',
+    foto: fotoLaura,
+    frase: '',
+    semblanza: `Médico Cirujano por la Universidad Autónoma de Guerrero.
+
+Formación como Coordinadora Hospitalaria de Donación de Órganos y Tejidos con Fines de Trasplante por la UNAM y el Centro Nacional de Trasplantes.
+
+Diplomado en "Comunicación en situaciones críticas" por la UNAM.
+
+Doctorado "Honoris Causa" por el Claustro Doctoral Iberoamericano, Guadalajara, Jalisco, en 2019.
+
+Cargos:
+• Coordinadora Hospitalaria de Donación de Órganos y Trasplantes de 2015 a 2025
+• Jefa de Arbitraje Médico en la Comisión Estatal de Arbitraje Médico de Tlaxcala, 2022-2023
+• Actualmente adscrita a la Unidad Médica IMSS Bienestar Santorum`,
+  },
+  {
+    nombre: 'Rosario Texis',
+    rol: 'Fundadora, MN WOMAN',
+    // Placeholder mientras llega su foto real — reemplaza FOTO_ORIGEN por su import cuando la tengas.
     foto: fotoOrigen,
     frase: '',
+    semblanza: `Próximamente agregaremos la semblanza completa de Rosario Texis.`,
   },
 ]
 
 const SobreNosotros = () => {
   const navigate = useNavigate()
+  const [fundadoraActiva, setFundadoraActiva] = useState<typeof FUNDADORAS[number] | null>(null)
 
   return (
     <main style={{ fontFamily: "'Inter', 'Helvetica Neue', sans-serif" }}>
@@ -46,13 +102,17 @@ const SobreNosotros = () => {
         .section-pad { padding: 96px 64px; }
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
         .grid-3 {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
+          display: flex;
+          flex-wrap: wrap;
           justify-content: center;
           gap: 24px;
         }
+        .fundadora-card {
+          flex: 0 1 300px;
+        }
         .card-hover {
           transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+          cursor: pointer;
         }
         .card-hover:hover {
           transform: translateY(-3px);
@@ -63,6 +123,17 @@ const SobreNosotros = () => {
         .origen-grid { display: flex; align-items: center; gap: 56px; }
         .origen-text { flex: 1 1 420px; }
         .origen-media { flex: 1 1 280px; max-width: 300px; position: relative; }
+
+        .modal-overlay {
+          position: fixed; inset: 0; background: rgba(15, 10, 11, 0.55);
+          display: flex; align-items: center; justify-content: center;
+          padding: 24px; z-index: 1000;
+        }
+        .modal-content {
+          background: #fff; borderRadius: 20px; max-width: 640px; width: 100%;
+          max-height: 85vh; overflow-y: auto; position: relative;
+          border-radius: 20px;
+        }
 
         @media (max-width: 900px) {
           .section-pad { padding: 64px 32px; }
@@ -384,7 +455,11 @@ const SobreNosotros = () => {
                 borderRadius: '50%', overflow: 'hidden',
                 boxShadow: '0 20px 44px rgba(182,104,120,0.2)',
               }}>
-                <img src={FOTO_ORIGEN} alt="Diagnóstico con mujeres de Tlaxcala" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img
+                  src={FOTO_ORIGEN}
+                  alt="Diagnóstico con mujeres de Tlaxcala"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%', display: 'block' }}
+                />
               </div>
 
 
@@ -405,23 +480,32 @@ const SobreNosotros = () => {
             </h2>
             <p style={{ fontSize: '15px', color: '#7a6870', margin: '0 auto', maxWidth: '560px' }}>
               Un proyecto nacido de la visión y el trabajo de mujeres comprometidas con Tlaxcala.
+              Toca una tarjeta para conocer su semblanza completa.
             </p>
           </div>
 
           <div className="grid-3">
             {FUNDADORAS.map((persona) => (
-              <div key={persona.nombre + persona.rol} className="card-hover" style={{ border: '1px solid #f0e6e9', borderRadius: '16px', padding: '32px 26px', background: '#fff', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+              <div
+                key={persona.nombre}
+                className="card-hover fundadora-card"
+                onClick={() => setFundadoraActiva(persona)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFundadoraActiva(persona) } }}
+                style={{ border: '1px solid #f0e6e9', borderRadius: '16px', padding: '32px 26px', background: '#fff', textAlign: 'center', position: 'relative', overflow: 'hidden' }}
+              >
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, #B66878, #d4889a)' }} />
 
                 <div style={{
-                  width: '84px', height: '84px', borderRadius: '50%', margin: '0 auto 18px',
+                  width: '128px', height: '128px', borderRadius: '50%', margin: '0 auto 18px',
                   overflow: 'hidden', border: '3px solid #FDF0F2',
                   boxShadow: '0 6px 16px rgba(182,104,120,0.15)',
                 }}>
                   <img
                     src={persona.foto}
                     alt={persona.nombre}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%', display: 'block' }}
                   />
                 </div>
 
@@ -454,6 +538,62 @@ const SobreNosotros = () => {
           </div>
         </div>
       </section>
+
+      {/* ── MODAL DE SEMBLANZA ── */}
+      {fundadoraActiva && (
+        <div
+          className="modal-overlay"
+          onClick={() => setFundadoraActiva(null)}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setFundadoraActiva(null)}
+              aria-label="Cerrar"
+              style={{
+                position: 'absolute', top: '16px', right: '16px',
+                width: '34px', height: '34px', borderRadius: '50%',
+                border: 'none', background: '#f3f4f6', color: '#6b7280',
+                fontSize: '18px', cursor: 'pointer', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', zIndex: 2,
+              }}
+            >
+              ×
+            </button>
+
+            <div style={{ padding: '36px 32px 32px', textAlign: 'center' }}>
+              <div style={{
+                width: '132px', height: '132px', borderRadius: '50%', margin: '0 auto 18px',
+                overflow: 'hidden', border: '3px solid #FDF0F2',
+                boxShadow: '0 6px 16px rgba(182,104,120,0.15)',
+              }}>
+                <img
+                  src={fundadoraActiva.foto}
+                  alt={fundadoraActiva.nombre}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%', display: 'block' }}
+                />
+              </div>
+
+              <h3 style={{ fontSize: '22px', fontWeight: '800', color: '#0f0a0b', margin: '0 0 4px', letterSpacing: '-0.01em' }}>
+                {fundadoraActiva.nombre}
+              </h3>
+              <p style={{ fontSize: '14px', color: '#B66878', fontWeight: '600', margin: '0 0 24px' }}>
+                {fundadoraActiva.rol}
+              </p>
+
+              <div style={{ textAlign: 'left' }}>
+                {fundadoraActiva.semblanza.split('\n\n').map((parrafo, i) => (
+                  <p key={i} style={{ fontSize: '14.5px', color: '#4b3f43', lineHeight: '1.75', margin: '0 0 16px', whiteSpace: 'pre-line' }}>
+                    {parrafo}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
