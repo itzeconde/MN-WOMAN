@@ -244,7 +244,7 @@ const Navbar = () => {
       <nav className="navbar">
         {/* Logo */}
         <Link to="/" onClick={() => setMenuMovilAbierto(false)}>
-          <img src={logo} alt="MN WOMAN" style={{ height: '80px', cursor: 'pointer' }} />
+          <img src={logo} alt="MN WOMEN" style={{ height: '80px', cursor: 'pointer' }} />
         </Link>
 
         {/* Links desktop */}

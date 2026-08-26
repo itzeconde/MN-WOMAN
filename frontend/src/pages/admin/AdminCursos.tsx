@@ -256,7 +256,7 @@ export default function AdminCursos() {
               Gestión de <span style={{ color: COLOR_MARCA }}>Cursos</span>
             </h1>
             <p style={{ fontSize: "15px", color: "#6b7280", margin: "8px 0 0" }}>
-              Publica y administra los cursos informativos de MN WOMAN.
+              Publica y administra los cursos informativos de MN WOMEN.
             </p>
           </div>
           <button onClick={abrirCrear} style={{

@@ -22,7 +22,7 @@ type Persona = {
 }
 
 // ── FUNDADORA ───────────────────────────────────────────────────────────
-// Solo va aquí la persona que es fundadora de MN WOMAN.
+// Solo va aquí la persona que es fundadora de MN WOMEN.
 const FUNDADORA: Persona = {
   nombre: 'Marisol Fernández Muñoz',
   rol: 'Directora, Revista Momento',
@@ -298,7 +298,7 @@ const SobreNosotros = () => {
             Una red construida <span style={{ color: '#B66878' }}>por y para</span> mujeres de Tlaxcala
           </h1>
           <p style={{ fontSize: '17px', color: '#6b5b61', lineHeight: '1.75', margin: '0 auto', maxWidth: '560px' }}>
-            MN WOMAN nació para conectar, impulsar y visibilizar a mujeres emprendedoras,
+            MN WOMEN nació para conectar, impulsar y visibilizar a mujeres emprendedoras,
             profesionales y académicas, creando un espacio de crecimiento colectivo en Tlaxcala.
           </p>
         </div>
@@ -553,7 +553,7 @@ const SobreNosotros = () => {
                 Nacimos escuchando a las mujeres de Tlaxcala
               </h2>
               <p style={{ fontSize: '15px', color: '#7a6870', lineHeight: '1.8', margin: '0 0 20px', maxWidth: '560px' }}>
-                MN WOMAN surgió de un diagnóstico realizado con más de 70 mujeres de la red de
+                MN WOMEN surgió de un diagnóstico realizado con más de 70 mujeres de la red de
                 Revista Momento, cuyas respuestas definieron los módulos que hoy forman la
                 plataforma: directorio, reuniones y eventos, servicios, oportunidades, cursos,
                 línea de apoyo 911 y temas de interés.
@@ -599,7 +599,7 @@ const SobreNosotros = () => {
               Nuestra raíz
             </span>
             <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#0f0a0b', margin: '12px 0 10px', letterSpacing: '-0.02em' }}>
-              La fundadora de MN WOMAN
+              La fundadora de MN WOMEN
             </h2>
             <p style={{ fontSize: '15px', color: '#7a6870', margin: '0 auto', maxWidth: '560px' }}>
               Toca la tarjeta para conocer su semblanza completa.
@@ -625,7 +625,7 @@ const SobreNosotros = () => {
 
             <div className="fundadora-content">
               <span style={{ fontSize: '12px', fontWeight: '700', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#B66878' }}>
-                Fundadora de MN WOMAN
+                Fundadora de MN WOMEN
               </span>
               <h3 style={{ fontSize: '27px', fontWeight: '800', color: '#0f0a0b', margin: '10px 0 4px', letterSpacing: '-0.02em' }}>
                 {FUNDADORA.nombre}
@@ -659,7 +659,7 @@ const SobreNosotros = () => {
               Nuestras raíces
             </span>
             <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#0f0a0b', margin: '12px 0 10px', letterSpacing: '-0.02em' }}>
-              Las aliadas que impulsaron a MN WOMAN
+              Las aliadas que impulsaron a MN WOMEN
             </h2>
             <p style={{ fontSize: '15px', color: '#7a6870', margin: '0 auto', maxWidth: '560px' }}>
               Mujeres comprometidas con Tlaxcala que acompañaron el nacimiento de este proyecto.

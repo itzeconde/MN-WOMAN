@@ -7,7 +7,7 @@ const Footer = () => {
       textAlign: 'center',
     }}>
       <p style={{ fontSize: '14px' }}>
-        © 2026 MN WOMAN. Todos los derechos reservados. Red Empresarial Femenina de Tlaxcala.
+        © 2026 MN WOMEN. Todos los derechos reservados. Red Empresarial Femenina de Tlaxcala.
       </p>
     </footer>
   )

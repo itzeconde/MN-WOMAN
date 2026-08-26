@@ -144,7 +144,7 @@ const Cursos = () => {
 
         <div style={{ position: 'relative', maxWidth: '1200px', margin: '0 auto', padding: '48px 20px 36px' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: COLOR_MARCA }}>
-            <Sparkles size={12} /> Centro de Formación MN WOMAN
+            <Sparkles size={12} /> Centro de Formación MN WOMEN
           </span>
           <h1 style={{ fontSize: '34px', fontWeight: '800', color: '#111827', margin: '12px 0 12px', lineHeight: '1.22', letterSpacing: '-0.01em' }}>
             Cursos y Programas

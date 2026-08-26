@@ -16,7 +16,7 @@ import {
   COLOR_BORDE,
 } from '../../styles/tokens'
 
-// ── LÍNEA EXCLUSIVA MN WOMAN ────────────────────────────────────────────
+// ── LÍNEA EXCLUSIVA MN WOMEN ────────────────────────────────────────────
 // TODO: reemplazar con el link real del grupo de WhatsApp (o número si al
 // final deciden un chat directo en vez de grupo).
 // Formato del link de un grupo:
@@ -283,7 +283,7 @@ export default function Linea911() {
           padding: '56px 24px',
         }}
       >
-        {/* WHATSAPP MN WOMAN */}
+        {/* WHATSAPP MN WOMEN */}
         <div
           style={{
             background: `linear-gradient(135deg, ${COLOR_MARCA} 0%, #e08b9d 100%)`,
@@ -336,7 +336,7 @@ export default function Linea911() {
                 marginBottom: '8px',
               }}
             >
-              Exclusivo MN WOMAN
+              Exclusivo MN WOMEN
             </span>
 
             <h3
@@ -782,7 +782,7 @@ export default function Linea911() {
               margin: '0 auto',
             }}
           >
-            MN WOMAN está aquí para acompañarte en ese
+            MN WOMEN está aquí para acompañarte en ese
             primer paso. No tienes que tener todo claro
             para pedir apoyo, basta con saber que algo no
             está bien.

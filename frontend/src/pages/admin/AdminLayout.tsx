@@ -95,7 +95,7 @@ export default function AdminLayout() {
 
         {/* Logo */}
         <div style={{ padding: '24px 20px', borderBottom: '1px solid #f3f4f6' }}>
-          <img src={logo} alt="MN WOMAN" style={{ height: '48px' }} />
+          <img src={logo} alt="MN WOMEN" style={{ height: '48px' }} />
           <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '6px', fontWeight: '600', letterSpacing: '0.05em' }}>
             PANEL ADMINISTRACIÓN
           </p>
@@ -163,7 +163,7 @@ export default function AdminLayout() {
           >
             ☰
           </button>
-          <img src={logo} alt="MN WOMAN" style={{ height: '32px' }} />
+          <img src={logo} alt="MN WOMEN" style={{ height: '32px' }} />
         </div>
 
         {/* Contenido */}
