@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 // ── IMÁGENES LOCALES ────────────────────────────────────────────────────
 // Cada fundadora tiene su propia foto. Guarda los archivos en src/assets/
 // con estos nombres exactos (o cambia el import si les pusiste otro nombre).
-import fotoOrigen from '../assets/Rosario Texis.jpg'
+import fotoOrigen from '../assets/foto-origen.jpeg'
 import fotoGabriela from '../assets/Gabi Moreno.jpg'
 import fotoIsis from '../assets/Isis.jpg'
 import fotoMarisol from '../assets/Marisol Fernandez.jpg'
@@ -82,10 +82,17 @@ Cargos:
   },
   {
     nombre: 'Rosario Texis',
-    rol: 'Fundadora, MN WOMAN',
+    rol: 'Académica, investigadora y activista laxcalteca',
     foto: fotoRosario,
     frase: '',
-    semblanza: `Próximamente agregaremos la semblanza completa de Rosario Texis.`,
+    semblanza: `
+María del Rosario Texis Zúñiga es una destacada académica, investigadora y activista tlaxcalteca cuya trayectoria se ha construido desde la educación, la investigación y la defensa de los derechos de las mujeres, niñas y adolescentes.
+Es Licenciada en Trabajo Social, Maestra en Ciencias Sociales y Doctora en Educación por la Universidad Autónoma de Tlaxcala, además de contar con una especialidad en sexología educativa. Su experiencia profesional y académica se ha enfocado particularmente en los estudios de género, la violencia sexual, los derechos sexuales y reproductivos, así como en la educación y la salud socioemocional.
+Desde hace más de dos décadas ha participado activamente en la promoción y defensa de los derechos sexuales y reproductivos en Tlaxcala. Es directora y representante estatal de la Red por los Derechos Sexuales y Reproductivos en México (DDESER), organización desde la cual ha impulsado acciones de información, acompañamiento, capacitación e incidencia social para mujeres y jóvenes.
+Su trabajo también ha tenido una importante dimensión académica. Como docente de la Universidad Autónoma de Tlaxcala, ha participado en proyectos de investigación, formación y vinculación relacionados con género, violencia, embarazo infantil, derechos humanos y educación. Asimismo, ha colaborado en espacios nacionales e internacionales de análisis y discusión sobre estas problemáticas.
+Uno de los ejes más importantes de su trayectoria ha sido la prevención y atención de la violencia sexual contra niñas y adolescentes, así como la construcción de herramientas educativas que permitan transformar las condiciones que generan desigualdad y violencia. Su trabajo ha buscado llevar estos temas a las comunidades y generar redes de acompañamiento y prevención.
+Rosario Texis se ha distinguido también por su participación constante en el debate público en Tlaxcala, particularmente en torno a los derechos de las mujeres y el derecho a decidir. Su labor combina la investigación académica con el activismo y la incidencia social, convirtiéndola en una de las voces referentes en el estado en materia de género y derechos sexuales y reproductivos.
+Más que una trayectoria académica, la historia de Rosario Texis representa una vida dedicada a transformar realidades: desde las aulas, la investigación y la sociedad civil, ha trabajado para que las mujeres, niñas y adolescentes conozcan, ejerzan y defiendan sus derechos.`,
   },
 ]
 

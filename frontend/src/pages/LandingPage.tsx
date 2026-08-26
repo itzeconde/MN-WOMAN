@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { Shield, Users, TrendingUp, Heart, Clock, MapPin, Calendar } from 'lucide-react'
 import BannerSlot from '../components/BannerSlot'
 import api from '../api/axios'
-import fotoPrincipal from '../assets/hero-1.jpg'
+import fotoPrincipal from '../assets/foto-origen.jpg'
 
 // ── LOGOS DE COLABORADORES ──────────────────────────────────────────────
 // Agrega los imports conforme te vayan mandando los logos que faltan.
 // Formato recomendado: PNG con fondo transparente.
 import logoMomento from '../assets/logo momento 2022.png'
 import logoMalinche from '../assets/las hijas de la malinche_logo vectores.png'
-import logoNetworking from '../assets/logo_MNW.png'
+import logoNetworking from '../assets/logo MNW Tlaxcala.jpg'
 import logoTlaxqui from '../assets/LOGO TLAXQUI.png'
 
 const FOTO_PRINCIPAL = fotoPrincipal
@@ -156,8 +156,8 @@ const LandingPage = () => {
           text-decoration: none;
         }
         .colab-logo {
-          height: 60px;
-          width: auto;
+          height: 64px;
+          width: 140px;
           object-fit: contain;
         }
 
@@ -251,6 +251,7 @@ const LandingPage = () => {
           .cta-section { padding: 56px 20px; }
           .cta-title { font-size: 27px; }
           .colabs { gap: 20px; }
+          .colab-logo { height: 48px; width: 100px; }
           .colabs-section { padding: 40px 20px; }
           .articulo-destacado-grande { min-height: 280px; }
           .articulo-chico-thumb { width: 56px; height: 56px; }
