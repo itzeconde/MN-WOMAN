@@ -319,47 +319,28 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* ── Columna imagen: collage de fotos ── */}
+          {/* ── Columna imagen: foto completa ── */}
           <div className="hero-illustration" style={{ flex: '1 1 480px', maxWidth: '520px', width: '100%', position: 'relative' }}>
             {/* halo suave detrás de la foto */}
             <div style={{
               position: 'absolute', top: '-20px', left: '-20px', right: '20px', bottom: '20px',
-              borderRadius: '50%',
+              borderRadius: '24px',
               background: 'linear-gradient(160deg, #fce3e8, #f8d3db)',
               zIndex: 0,
             }} />
 
-            {/* foto principal, circular */}
+            {/* foto principal, completa (sin recorte circular) */}
             <div style={{
-              position: 'relative', zIndex: 1, width: '100%', aspectRatio: '1 / 1',
-              borderRadius: '50%',
+              position: 'relative', zIndex: 1, width: '100%',
+              borderRadius: '24px',
               overflow: 'hidden',
               boxShadow: '0 24px 50px rgba(182,104,120,0.22)',
             }}>
               <img
                 src={FOTO_PRINCIPAL}
-                alt="Miembro de la red MN WOMAN"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                alt="Miembro de la red MN WOMEN"
+                style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
               />
-            </div>
-
-            {/* tarjeta flotante */}
-            <div style={{
-              position: 'absolute', zIndex: 2, top: '8%', right: '-10%',
-              background: '#fff', borderRadius: '14px', padding: '12px 16px',
-              boxShadow: '0 12px 28px rgba(0,0,0,0.12)',
-              display: 'flex', alignItems: 'center', gap: '10px',
-              maxWidth: '190px',
-            }}>
-              <span style={{
-                width: '34px', height: '34px', borderRadius: '10px', backgroundColor: '#FDF0F2',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <Users size={16} color="#B66878" />
-              </span>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: '#3a2c30', lineHeight: '1.3' }}>
-                Comunidad activa en Tlaxcala
-              </span>
             </div>
           </div>
         </div>
@@ -507,7 +488,7 @@ const LandingPage = () => {
             <div className="section-header">
               <div>
                 <span style={{ backgroundColor: '#FDF0F2', color: '#B66878', padding: '5px 14px', borderRadius: '100px', fontSize: '13px', fontWeight: '600', letterSpacing: '0.04em' }}>
-                  Centro de Formación MN WOMAN
+                  Centro de Formación MN WOMEN
                 </span>
                 <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#0f0a0b', margin: '14px 0 6px', letterSpacing: '-0.02em' }}>
                   Impulsa tu <span style={{ color: '#B66878' }}>liderazgo</span>
